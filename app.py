@@ -451,6 +451,179 @@ class HardwareResponseParser:
         parsed_data['type'] = 'text'
         return parsed_data
 
+    @staticmethod
+    def _parse_link_status(response: str, parsed_data: Dict) -> Dict:
+        """Parse link/connection status responses including showport"""
+
+        # Check if this is a showport response
+        if 'showport' in response.lower() or 'port slot' in response.lower():
+            parsed_data['type'] = 'showport'
+            parsed_data['parsed'] = HardwareResponseParser._parse_showport_structure(response)
+            return parsed_data
+
+        # Standard link status patterns (existing code)
+        status_patterns = {
+            'link_up': r'(?:link|connection)[:\s]*(up|down|active|inactive)',
+            'speed': r'(?:speed|rate)[:\s]*([0-9]+)\s*([kmg]?bps|hz)?',
+            'errors': r'(?:error|err)[:\s]*([0-9]+)',
+            'packets': r'(?:packet|pkt)[:\s]*([0-9]+)',
+            'signal_strength': r'(?:signal|rssi)[:\s]*(-?[0-9]+)',
+        }
+
+        link_info = {}
+        for key, pattern in status_patterns.items():
+            match = re.search(pattern, response, re.IGNORECASE)
+            if match:
+                link_info[key] = match.group(1).strip()
+
+        parsed_data['parsed'] = link_info
+        parsed_data['type'] = 'link_status'
+        return parsed_data
+
+    @staticmethod
+    def _parse_showport_structure(response: str) -> Dict:
+        """Parse structured showport command output"""
+        showport_data = {
+            'ports': [],
+            'upstream': None,
+            'golden_finger': None,
+            'total_ports': 0,
+            'connected_ports': 0
+        }
+
+        lines = response.split('\n')
+        current_section = None
+
+        for line in lines:
+            line = line.strip()
+            if not line or '-' in line[:20]:  # Skip divider lines
+                continue
+
+            # Detect sections
+            if 'port slot' in line.lower():
+                current_section = 'ports'
+                continue
+            elif 'port upstream' in line.lower():
+                current_section = 'upstream'
+                continue
+            elif 'golden finger' in line.lower():
+                current_section = 'golden_finger'
+                continue
+
+            # Parse based on current section
+            if current_section == 'ports' and ':' in line:
+                port_info = HardwareResponseParser._parse_port_line(line)
+                if port_info:
+                    showport_data['ports'].append(port_info)
+
+            elif current_section == 'upstream' and ':' in line:
+                showport_data['upstream'] = HardwareResponseParser._parse_port_line(line)
+
+            elif current_section == 'golden_finger' and ':' in line:
+                showport_data['golden_finger'] = HardwareResponseParser._parse_golden_finger_line(line)
+
+        # Calculate summary statistics
+        showport_data['total_ports'] = len(showport_data['ports'])
+        showport_data['connected_ports'] = len([p for p in showport_data['ports'] if p.get('connected', False)])
+
+        return showport_data
+
+    @staticmethod
+    def _parse_port_line(line: str) -> Dict:
+        """Parse individual port line from showport output"""
+        # Example: "Port80: speed 06, width 08, max_speed06, max_width08"
+        port_match = re.match(r'^(Port\d+|Port\s+Upstream):\s*(.+)$', line, re.IGNORECASE)
+        if not port_match:
+            return None
+
+        port_name = port_match.group(1).strip()
+        specs = port_match.group(2)
+
+        # Extract values using regex
+        speed_match = re.search(r'speed\s+(\d+)', specs, re.IGNORECASE)
+        width_match = re.search(r'width\s+(\d+)', specs, re.IGNORECASE)
+        max_speed_match = re.search(r'max_speed\s*(\d+)', specs, re.IGNORECASE)
+        max_width_match = re.search(r'max_width\s*(\d+)', specs, re.IGNORECASE)
+
+        speed = int(speed_match.group(1)) if speed_match else 0
+        width = int(width_match.group(1)) if width_match else 0
+        max_speed = int(max_speed_match.group(1)) if max_speed_match else 0
+        max_width = int(max_width_match.group(1)) if max_width_match else 0
+
+        # Determine connection status and generation
+        connected = speed > 1
+        generation = HardwareResponseParser._get_generation_from_speed(speed)
+        width_display = HardwareResponseParser._get_width_display(width)
+        max_width_display = HardwareResponseParser._get_width_display(max_width)
+
+        return {
+            'name': port_name,
+            'speed': speed,
+            'width': width,
+            'max_speed': max_speed,
+            'max_width': max_width,
+            'connected': connected,
+            'generation': generation,
+            'width_display': width_display,
+            'max_width_display': max_width_display
+        }
+
+    @staticmethod
+    def _parse_golden_finger_line(line: str) -> Dict:
+        """Parse golden finger line from showport output"""
+        # Example: "Golden finger: speed 06, width 08, max_width = 16"
+        specs = line.split(':', 1)[1] if ':' in line else line
+
+        speed_match = re.search(r'speed\s+(\d+)', specs, re.IGNORECASE)
+        width_match = re.search(r'width\s+(\d+)', specs, re.IGNORECASE)
+        max_width_match = re.search(r'max_width\s*=?\s*(\d+)', specs, re.IGNORECASE)
+
+        speed = int(speed_match.group(1)) if speed_match else 0
+        width = int(width_match.group(1)) if width_match else 0
+        max_width = int(max_width_match.group(1)) if max_width_match else 0
+
+        generation = HardwareResponseParser._get_generation_from_speed(speed)
+        width_display = HardwareResponseParser._get_width_display(width)
+        max_width_display = HardwareResponseParser._get_width_display(max_width)
+
+        return {
+            'speed': speed,
+            'width': width,
+            'max_width': max_width,
+            'generation': generation,
+            'width_display': width_display,
+            'max_width_display': max_width_display
+        }
+
+    @staticmethod
+    def _get_generation_from_speed(speed: int) -> Dict:
+        """Convert speed code to generation information"""
+        if speed == 6:
+            return {'text': 'Gen6', 'class': 'gen6'}
+        elif speed == 5:
+            return {'text': 'Gen5', 'class': 'gen5'}
+        elif speed == 4:
+            return {'text': 'Gen4', 'class': 'gen4'}
+        elif speed == 1:
+            return {'text': 'No Connection', 'class': 'no-connection'}
+        else:
+            return {'text': 'Unknown', 'class': 'no-connection'}
+
+    @staticmethod
+    def _get_width_display(width: int) -> str:
+        """Convert width code to display string"""
+        if width == 2:
+            return 'x2'
+        elif width == 4:
+            return 'x4'
+        elif width == 8:
+            return 'x8'
+        elif width == 16:
+            return 'x16'
+        elif width > 0:
+            return f'x{width}'
+        else:
+            return '--'
 
 class CalypsoPyManager:
     """Main manager for CalypsoPy+ hardware interface"""

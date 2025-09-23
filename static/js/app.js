@@ -31,30 +31,17 @@ function toggleDeveloperMode() {
     isDeveloperMode = document.getElementById('developerModeToggle').checked;
 
     if (isDeveloperMode) {
-        // Enable all dashboards
+        // Unlock all dashboards
         document.querySelectorAll('.nav-item').forEach(item => {
             item.classList.remove('disabled');
             item.style.opacity = '1';
             item.style.pointerEvents = 'auto';
         });
 
-        // Enable command inputs (for UI development)
-        document.querySelectorAll('input[id$="CommandInput"]').forEach(input => {
-            input.disabled = false;
-        });
-        document.querySelectorAll('button[id^="send"]').forEach(btn => {
-            btn.disabled = false;
-        });
-
-        // Update connection status to show developer mode
-        const statusElement = document.getElementById('connectionStatus');
-        statusElement.className = 'connection-status connected';
-        statusElement.innerHTML = `<div class="status-dot"></div><span>Developer Mode</span>`;
-
-        showNotification('Developer Mode enabled - Dashboards unlocked for development', 'success');
+        showNotification('Developer Mode enabled - All dashboards unlocked', 'success');
 
     } else {
-        // If not connected to real device, disable dashboards
+        // Lock dashboards if not connected
         if (!isConnected) {
             document.querySelectorAll('.nav-item').forEach(item => {
                 if (item.dataset.dashboard !== 'connection' && item.dataset.dashboard !== 'analytics') {
@@ -63,19 +50,6 @@ function toggleDeveloperMode() {
                     item.style.pointerEvents = 'none';
                 }
             });
-
-            // Disable command inputs
-            document.querySelectorAll('input[id$="CommandInput"]').forEach(input => {
-                input.disabled = true;
-            });
-            document.querySelectorAll('button[id^="send"]').forEach(btn => {
-                btn.disabled = true;
-            });
-
-            // Reset connection status
-            const statusElement = document.getElementById('connectionStatus');
-            statusElement.className = 'connection-status disconnected';
-            statusElement.innerHTML = `<div class="status-dot"></div><span>Disconnected</span>`;
         }
 
         showNotification('Developer Mode disabled', 'info');
@@ -261,6 +235,12 @@ function switchDashboard(dashboardId) {
             item.classList.add('active');
         }
     });
+
+    if (dashboardId === 'link_status') {
+        setTimeout(() => {
+            loadLinkStatus();
+        }, 500);
+    }
 
     // Update dashboard content
     document.querySelectorAll('.dashboard-content').forEach(dashboard => {
@@ -815,6 +795,305 @@ async function loadPorts() {
     }
 }
 
+/**
+ * Parse showport command response
+ */
+function parseShowportResponse(response) {
+    const lines = response.split('\n');
+    const portData = {
+        ports: [],
+        upstream: null,
+        goldenFinger: null
+    };
+
+    let currentSection = null;
+
+    for (let line of lines) {
+        line = line.trim();
+        if (!line || line.includes('---')) continue;
+
+        // Detect sections
+        if (line.toLowerCase().includes('port slot')) {
+            currentSection = 'ports';
+            continue;
+        } else if (line.toLowerCase().includes('port upstream')) {
+            currentSection = 'upstream';
+            continue;
+        } else if (line.toLowerCase().includes('golden finger')) {
+            currentSection = 'goldenFinger';
+            continue;
+        }
+
+        // Parse port data based on current section
+        if (currentSection === 'ports' && line.includes(':')) {
+            const portInfo = parsePortLine(line);
+            if (portInfo) {
+                portData.ports.push(portInfo);
+            }
+        } else if (currentSection === 'upstream' && line.includes(':')) {
+            portData.upstream = parsePortLine(line);
+        } else if (currentSection === 'goldenFinger' && line.includes(':')) {
+            portData.goldenFinger = parseGoldenFingerLine(line);
+        }
+    }
+
+    return portData;
+}
+
+/**
+ * Parse individual port line
+ */
+function parsePortLine(line) {
+    // Example: "Port80: speed 06, width 08, max_speed06, max_width08"
+    const portMatch = line.match(/^(Port\d+|Port\s+Upstream):\s*(.+)$/i);
+    if (!portMatch) return null;
+
+    const portName = portMatch[1].trim();
+    const specs = portMatch[2];
+
+    // Extract values using regex
+    const speedMatch = specs.match(/speed\s+(\d+)/i);
+    const widthMatch = specs.match(/width\s+(\d+)/i);
+    const maxSpeedMatch = specs.match(/max_speed\s*(\d+)/i);
+    const maxWidthMatch = specs.match(/max_width\s*(\d+)/i);
+
+    const speed = speedMatch ? parseInt(speedMatch[1]) : 0;
+    const width = widthMatch ? parseInt(widthMatch[1]) : 0;
+    const maxSpeed = maxSpeedMatch ? parseInt(maxSpeedMatch[1]) : 0;
+    const maxWidth = maxWidthMatch ? parseInt(maxWidthMatch[1]) : 0;
+
+    return {
+        name: portName,
+        speed: speed,
+        width: width,
+        maxSpeed: maxSpeed,
+        maxWidth: maxWidth,
+        connected: speed > 1, // Connected if speed > 1
+        generation: getGenerationFromSpeed(speed),
+        widthDisplay: getWidthDisplay(width),
+        maxWidthDisplay: getWidthDisplay(maxWidth)
+    };
+}
+
+/**
+ * Parse golden finger line
+ */
+function parseGoldenFingerLine(line) {
+    // Example: "Golden finger: speed 06, width 08, max_width = 16"
+    const specs = line.split(':')[1] || line;
+
+    const speedMatch = specs.match(/speed\s+(\d+)/i);
+    const widthMatch = specs.match(/width\s+(\d+)/i);
+    const maxWidthMatch = specs.match(/max_width\s*=?\s*(\d+)/i);
+
+    const speed = speedMatch ? parseInt(speedMatch[1]) : 0;
+    const width = widthMatch ? parseInt(widthMatch[1]) : 0;
+    const maxWidth = maxWidthMatch ? parseInt(maxWidthMatch[1]) : 0;
+
+    return {
+        speed: speed,
+        width: width,
+        maxWidth: maxWidth,
+        generation: getGenerationFromSpeed(speed),
+        widthDisplay: getWidthDisplay(width),
+        maxWidthDisplay: getWidthDisplay(maxWidth)
+    };
+}
+
+/**
+ * Convert speed code to generation display
+ */
+function getGenerationFromSpeed(speed) {
+    switch (speed) {
+        case 6: return { text: 'Gen6', class: 'gen6' };
+        case 5: return { text: 'Gen5', class: 'gen5' };
+        case 4: return { text: 'Gen4', class: 'gen4' };
+        case 1: return { text: 'No Connection', class: 'no-connection' };
+        default: return { text: 'Unknown', class: 'no-connection' };
+    }
+}
+
+/**
+ * Convert width code to display
+ */
+function getWidthDisplay(width) {
+    switch (width) {
+        case 2: return 'x2';
+        case 4: return 'x4';
+        case 8: return 'x8';
+        case 16: return 'x16';
+        default: return width > 0 ? `x${width}` : '--';
+    }
+}
+
+/**
+ * Update the Link Status Dashboard UI
+ */
+function updateLinkStatusDashboard(portData) {
+    // Update metrics
+    const totalPorts = portData.ports.length;
+    const connectedPorts = portData.ports.filter(p => p.connected).length;
+    const generations = portData.ports.filter(p => p.connected).map(p => p.speed);
+    const highestGen = generations.length > 0 ? Math.max(...generations) : 0;
+
+    document.getElementById('totalPorts').textContent = totalPorts;
+    document.getElementById('connectedPorts').textContent = connectedPorts;
+    document.getElementById('highestGen').textContent = highestGen > 0 ? `Gen${highestGen}` : '--';
+
+    // Calculate total bandwidth (simplified)
+    const totalBandwidth = portData.ports
+        .filter(p => p.connected)
+        .reduce((sum, p) => sum + (p.speed * p.width), 0);
+    document.getElementById('totalBandwidth').textContent = totalBandwidth > 0 ? `${totalBandwidth} GT/s` : '--';
+
+    // Update port status grid
+    const portGrid = document.getElementById('portStatusGrid');
+    portGrid.innerHTML = '';
+
+    if (portData.ports.length === 0) {
+        portGrid.innerHTML = `
+            <div class="port-status-loading">
+                <p>No port data available</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Create port status items
+    portData.ports.forEach(port => {
+        const portItem = createPortStatusItem(port);
+        portGrid.appendChild(portItem);
+    });
+
+    // Update upstream status
+    if (portData.upstream) {
+        updateUpstreamStatus(portData.upstream);
+    }
+
+    // Update golden finger status
+    if (portData.goldenFinger) {
+        updateGoldenFingerStatus(portData.goldenFinger);
+    }
+}
+
+/**
+ * Create a port status item element
+ */
+function createPortStatusItem(port) {
+    const item = document.createElement('div');
+    item.className = `port-status-item ${port.connected ? 'connected' : 'disconnected'}`;
+
+    const generation = port.generation;
+
+    item.innerHTML = `
+        <div class="port-header">
+            <div class="port-name">${port.name}</div>
+            <div class="port-led ${port.connected ? 'connected' : 'disconnected'}"></div>
+        </div>
+        
+        <div class="port-specs">
+            <div class="port-spec">
+                <span class="port-spec-label">Speed:</span>
+                <span class="port-spec-value">${port.speed.toString().padStart(2, '0')}</span>
+            </div>
+            <div class="port-spec">
+                <span class="port-spec-label">Width:</span>
+                <span class="port-spec-value">${port.widthDisplay}</span>
+            </div>
+            <div class="port-spec">
+                <span class="port-spec-label">Max Speed:</span>
+                <span class="port-spec-value">${port.maxSpeed.toString().padStart(2, '0')}</span>
+            </div>
+            <div class="port-spec">
+                <span class="port-spec-label">Max Width:</span>
+                <span class="port-spec-value">${port.maxWidthDisplay}</span>
+            </div>
+        </div>
+        
+        <div style="text-align: center;">
+            <span class="port-generation ${generation.class}">${generation.text}</span>
+        </div>
+    `;
+
+    return item;
+}
+
+/**
+ * Update upstream status display
+ */
+function updateUpstreamStatus(upstream) {
+    document.getElementById('upstreamConnectionStatus').textContent = upstream.connected ? 'Connected' : 'Disconnected';
+    document.getElementById('upstreamSpeed').textContent = upstream.generation.text;
+    document.getElementById('upstreamWidth').textContent = upstream.widthDisplay;
+    document.getElementById('upstreamMaxSpeed').textContent = `Gen${upstream.maxSpeed}`;
+    document.getElementById('upstreamMaxWidth').textContent = upstream.maxWidthDisplay;
+}
+
+/**
+ * Update golden finger status display
+ */
+function updateGoldenFingerStatus(goldenFinger) {
+    document.getElementById('goldenFingerSpeed').textContent = goldenFinger.generation.text;
+    document.getElementById('goldenFingerWidth').textContent = goldenFinger.widthDisplay;
+    document.getElementById('goldenFingerMaxWidth').textContent = goldenFinger.maxWidthDisplay;
+}
+
+/**
+ * Execute showport command and update dashboard
+ */
+function loadLinkStatus() {
+    if (!isConnected && !isDeveloperMode) {
+        return;
+    }
+
+    // Show loading state
+    const portGrid = document.getElementById('portStatusGrid');
+    portGrid.innerHTML = `
+        <div class="port-status-loading">
+            <div class="loading"></div>
+            <p>Loading port status...</p>
+        </div>
+    `;
+
+    if (isDeveloperMode && !isConnected) {
+        // Demo data for developer mode
+        setTimeout(() => {
+            const demoResponse = `
+Cmd>showport
+Port Slot-----------------------------------------------------------------
+--------------------
+
+Port80: speed 06, width 08, max_speed06, max_width08
+Port112: speed 06, width 08, max_speed06, max_width16
+Port128: speed 06, width 08, max_speed06, max_width16
+Port Upstream-------------------------------------------------------------
+--------------------
+
+Golden finger: speed 06, width 08, max_width = 16
+Cmd>[]
+            `;
+
+            addConsoleEntry('linkConsole', 'command', '> showport');
+            addConsoleEntry('linkConsole', 'response', demoResponse, formatTimestamp());
+
+            const portData = parseShowportResponse(demoResponse);
+            updateLinkStatusDashboard(portData);
+        }, 1000);
+    } else {
+        // Real command execution
+        executeCommand('showport', 'link_status');
+    }
+}
+
+/**
+ * Refresh link status
+ */
+function refreshLinkStatus() {
+    showNotification('Refreshing link status...', 'info');
+    loadLinkStatus();
+}
+
+
 // =============================================================================
 // EVENT HANDLERS
 // =============================================================================
@@ -832,7 +1111,7 @@ function setupEventHandlers() {
             }
         });
     });
-
+    document.getElementById('developerModeToggle')?.addEventListener('change', toggleDeveloperMode);
     // Connection controls
     document.getElementById('connectBtn')?.addEventListener('click', () => {
         const port = document.getElementById('portSelect').value;

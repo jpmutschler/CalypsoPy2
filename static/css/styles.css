@@ -1103,3 +1103,174 @@ body {
     border-radius: 50%;
     background: currentColor;
 }
+
+/* Link Status Dashboard Specific Styles */
+.port-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 15px;
+    min-height: 200px;
+}
+
+.port-status-loading {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: var(--secondary-gray);
+    font-style: italic;
+}
+
+.port-status-item {
+    background: var(--light-gray);
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.port-status-item.connected {
+    border-left-color: #22c55e;
+    background: rgba(34, 197, 94, 0.05);
+}
+
+.port-status-item.disconnected {
+    border-left-color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.port-status-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px var(--shadow-medium);
+}
+
+.port-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.port-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--dark-black);
+}
+
+.port-led {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.port-led.connected {
+    background: #22c55e;
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+}
+
+.port-led.disconnected {
+    background: #ef4444;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+.port-specs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.port-spec {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+}
+
+.port-spec-label {
+    color: var(--secondary-gray);
+    font-weight: 500;
+}
+
+.port-spec-value {
+    color: var(--dark-black);
+    font-weight: 700;
+    font-family: 'Monaco', monospace;
+}
+
+.port-generation {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.port-generation.gen6 {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+}
+
+.port-generation.gen5 {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.port-generation.gen4 {
+    background: rgba(251, 191, 36, 0.1);
+    color: #fbbf24;
+}
+
+.port-generation.no-connection {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.connection-details {
+    display: grid;
+    gap: 12px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--light-gray);
+    border-radius: 6px;
+}
+
+.detail-label {
+    font-size: 13px;
+    color: var(--secondary-gray);
+    font-weight: 600;
+}
+
+.detail-value {
+    font-size: 13px;
+    color: var(--dark-black);
+    font-weight: 700;
+    font-family: 'Monaco', monospace;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .port-status-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .port-specs {
+        grid-template-columns: 1fr;
+    }
+}
