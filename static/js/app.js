@@ -21,6 +21,67 @@ let systemMetrics = {
 // Chart instance
 let responseChart;
 
+// Developer Mode State
+let isDeveloperMode = false;
+
+/**
+ * Toggle Developer Mode - Simply enables/disables dashboard access
+ */
+function toggleDeveloperMode() {
+    isDeveloperMode = document.getElementById('developerModeToggle').checked;
+
+    if (isDeveloperMode) {
+        // Enable all dashboards
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.remove('disabled');
+            item.style.opacity = '1';
+            item.style.pointerEvents = 'auto';
+        });
+
+        // Enable command inputs (for UI development)
+        document.querySelectorAll('input[id$="CommandInput"]').forEach(input => {
+            input.disabled = false;
+        });
+        document.querySelectorAll('button[id^="send"]').forEach(btn => {
+            btn.disabled = false;
+        });
+
+        // Update connection status to show developer mode
+        const statusElement = document.getElementById('connectionStatus');
+        statusElement.className = 'connection-status connected';
+        statusElement.innerHTML = `<div class="status-dot"></div><span>Developer Mode</span>`;
+
+        showNotification('Developer Mode enabled - Dashboards unlocked for development', 'success');
+
+    } else {
+        // If not connected to real device, disable dashboards
+        if (!isConnected) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                if (item.dataset.dashboard !== 'connection' && item.dataset.dashboard !== 'analytics') {
+                    item.classList.add('disabled');
+                    item.style.opacity = '0.5';
+                    item.style.pointerEvents = 'none';
+                }
+            });
+
+            // Disable command inputs
+            document.querySelectorAll('input[id$="CommandInput"]').forEach(input => {
+                input.disabled = true;
+            });
+            document.querySelectorAll('button[id^="send"]').forEach(btn => {
+                btn.disabled = true;
+            });
+
+            // Reset connection status
+            const statusElement = document.getElementById('connectionStatus');
+            statusElement.className = 'connection-status disconnected';
+            statusElement.innerHTML = `<div class="status-dot"></div><span>Disconnected</span>`;
+        }
+
+        showNotification('Developer Mode disabled', 'info');
+    }
+}
+
 // =============================================================================
 // UTILITY FUNCTIONS
 // =============================================================================
@@ -187,9 +248,9 @@ function updateConnectionStatus(connected, port = null) {
  * Switch between dashboards
  */
 function switchDashboard(dashboardId) {
-    // Prevent switching to other dashboards when not connected (except connection dashboard)
-    if (!isConnected && dashboardId !== 'connection' && dashboardId !== 'analytics') {
-        showNotification('Please connect to a device first before accessing dashboards', 'warning');
+    // Allow switching if connected OR in developer mode
+    if (!isConnected && !isDeveloperMode && dashboardId !== 'connection' && dashboardId !== 'analytics') {
+        showNotification('Please connect to a device or enable Developer Mode', 'warning');
         return;
     }
 
@@ -211,16 +272,15 @@ function switchDashboard(dashboardId) {
         targetDashboard.classList.add('active');
         currentDashboard = dashboardId;
 
-        // Auto-fetch data for device info dashboard
-        if (dashboardId === 'device_info' && isConnected && currentPort) {
-            // Auto-execute sysinfo command when entering device info dashboard
+        // Only auto-execute commands if actually connected (not in developer mode)
+        if (dashboardId === 'device_info' && isConnected && currentPort && !isDeveloperMode) {
             setTimeout(() => {
                 executeCommand('sysinfo', 'device_info');
             }, 500);
         }
 
-        // Load dashboard-specific data if connected
-        if (isConnected && currentPort) {
+        // Load dashboard-specific data only if actually connected
+        if (isConnected && currentPort && !isDeveloperMode) {
             socket.emit('get_dashboard_data', {
                 dashboard: dashboardId,
                 port: currentPort
@@ -233,8 +293,17 @@ function switchDashboard(dashboardId) {
  * Execute command on connected device
  */
 function executeCommand(command, dashboardId = currentDashboard) {
+    // In developer mode, just show a simple message
+    if (isDeveloperMode && !isConnected) {
+        const consoleId = `${dashboardId}Console`;
+        addConsoleEntry(consoleId, 'command', `> ${command}`);
+        addConsoleEntry(consoleId, 'response', 'Developer Mode: Command not executed (no hardware connected)', formatTimestamp());
+        return;
+    }
+
+    // Original logic for real connections
     if (!isConnected || !currentPort) {
-        showNotification('Please connect to a device first', 'error');
+        showNotification('Please connect to a device or enable Developer Mode for UI development', 'error');
         return;
     }
 
@@ -268,6 +337,19 @@ function executeCommand(command, dashboardId = currentDashboard) {
     // Update metrics
     systemMetrics.totalCommands++;
     document.getElementById('commandCount').textContent = systemMetrics.totalCommands;
+}
+
+function setupDeveloperModeEventHandlers() {
+    const developerToggle = document.getElementById('developerModeToggle');
+    if (developerToggle) {
+        developerToggle.addEventListener('change', toggleDeveloperMode);
+    }
+
+    // Simple export for debugging
+    window.CalypsoPy.developerMode = {
+    toggle: toggleDeveloperMode,
+    isActive: () => isDeveloperMode
+    };
 }
 
 /**

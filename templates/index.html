@@ -137,6 +137,7 @@
                         </div>
                     </div>
 
+
                     <div class="card">
                         <div class="card-header">
                             <div class="card-title">
@@ -149,6 +150,22 @@
                             <p style="color: var(--secondary-gray); font-style: italic;">No device connected</p>
                         </div>
 
+                        <!-- Simple Developer Mode Toggle -->
+                        <div style="margin-top: 20px; padding: 15px; background: rgba(121, 0, 0, 0.05); border-radius: 10px; border-left: 4px solid var(--primary-red);">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div>
+                                    <h4 style="color: var(--primary-red); margin: 0 0 5px 0; font-size: 16px;">🔧 Developer Mode</h4>
+                                    <p style="color: var(--secondary-gray); font-size: 13px; margin: 0;">
+                                        Unlock all dashboards for development without hardware connection
+                                    </p>
+                                </div>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="developerModeToggle" style="transform: scale(1.2);">
+                                    <span style="font-weight: 600; color: var(--dark-black);">Enable</span>
+                                </label>
+                            </div>
+                    </div>
+
                         <div style="margin-top: 20px; padding: 15px; background: var(--light-gray); border-radius: 10px;">
                             <h4 style="color: var(--primary-red); margin-bottom: 10px; font-size: 16px;">🚀 Getting Started</h4>
                             <ol style="color: var(--secondary-gray); font-size: 14px; line-height: 1.6; margin-left: 20px;">
@@ -156,7 +173,7 @@
                                 <li>Click "Refresh Ports" to scan for new devices</li>
                                 <li>Select your device from the dropdown menu</li>
                                 <li>Click "Connect Device" to establish connection</li>
-                                <li>Once connected, you'll be taken to Device Information</li>
+                                <li><strong>OR</strong> Enable Developer Mode to access dashboards without hardware</li>
                             </ol>
                         </div>
                     </div>
