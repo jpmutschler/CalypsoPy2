@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 CalypsoPy+ by Serial Cables
-Professional Serial Communication Interface for Serial Cables Hardware Development
+Professional Serial Communication Interface for Hardware Development
 """
 
 import asyncio
@@ -140,7 +140,15 @@ class HardwareResponseParser:
 
     @staticmethod
     def _parse_device_info(response: str, parsed_data: Dict) -> Dict:
-        """Parse device information responses"""
+        """Parse device information responses including sysinfo"""
+        # Check if this is a sysinfo response
+        if 'sysinfo' in response.lower() or any(
+                keyword in response for keyword in ['s/n', 'company', 'model', 'version', 'thermal', 'voltage']):
+            parsed_data['type'] = 'sysinfo'
+            parsed_data['parsed'] = HardwareResponseParser._parse_sysinfo_structure(response)
+            return parsed_data
+
+        # Standard device info patterns
         info_patterns = {
             'model': r'(?:model|device|part)[:\s]+([A-Za-z0-9\-_]+)',
             'version': r'(?:version|ver|fw)[:\s]+([0-9\.]+)',
@@ -158,6 +166,108 @@ class HardwareResponseParser:
         parsed_data['parsed'] = device_info
         parsed_data['type'] = 'device_info'
         return parsed_data
+
+    @staticmethod
+    def _parse_sysinfo_structure(response: str) -> Dict:
+        """Parse structured sysinfo command output"""
+        sysinfo_data = {
+            'hardware': {},
+            'thermal': {},
+            'voltages': [],
+            'current': {},
+            'ports': [],
+            'errors': []
+        }
+
+        lines = response.split('\n')
+        current_section = None
+
+        for line in lines:
+            line = line.strip()
+            if not line or line.startswith('=') or line.startswith('-'):
+                continue
+
+            # Detect sections
+            if 'ver' in line.lower() or 's/n' in line:
+                current_section = 'hardware'
+            elif 'thermal' in line.lower():
+                current_section = 'thermal'
+            elif 'voltage' in line.lower():
+                current_section = 'voltages'
+            elif 'current' in line.lower():
+                current_section = 'current'
+            elif 'port' in line.lower():
+                current_section = 'ports'
+            elif 'error' in line.lower():
+                current_section = 'errors'
+
+            # Parse based on current section
+            if current_section == 'hardware':
+                if 's/n' in line:
+                    match = re.search(r's/n\s*:\s*([A-Za-z0-9]+)', line)
+                    if match:
+                        sysinfo_data['hardware']['serial'] = match.group(1)
+                elif 'company' in line:
+                    match = re.search(r'company\s*:\s*(.+)', line)
+                    if match:
+                        sysinfo_data['hardware']['company'] = match.group(1).strip()
+                elif 'model' in line:
+                    match = re.search(r'model\s*:\s*(.+)', line)
+                    if match:
+                        sysinfo_data['hardware']['model'] = match.group(1).strip()
+                elif 'version' in line:
+                    match = re.search(r'version\s*:\s*([0-9\.]+)', line)
+                    if match:
+                        sysinfo_data['hardware']['version'] = match.group(1)
+                elif 'sdk' in line.lower():
+                    match = re.search(r'sdk.*:\s*(.+)', line)
+                    if match:
+                        sysinfo_data['hardware']['sdk_version'] = match.group(1).strip()
+
+            elif current_section == 'thermal':
+                if 'temperature' in line:
+                    match = re.search(r'(\d+)\s*degree', line)
+                    if match:
+                        sysinfo_data['thermal']['board_temperature'] = int(match.group(1))
+                elif 'fan' in line:
+                    match = re.search(r'(\d+)\s*rpm', line)
+                    if match:
+                        sysinfo_data['thermal']['fan_speed'] = int(match.group(1))
+
+            elif current_section == 'voltages':
+                voltage_match = re.search(r'(\d+\.?\d*v?)\s+voltage\s*:\s*(\d+)\s*mv', line, re.IGNORECASE)
+                if voltage_match:
+                    rail = voltage_match.group(1)
+                    voltage = int(voltage_match.group(2))
+                    sysinfo_data['voltages'].append({
+                        'rail': rail.upper() if rail.endswith('V') else rail.upper() + 'V',
+                        'voltage': voltage,
+                        'unit': 'mV',
+                        'status': 'normal'  # Could be enhanced with actual status parsing
+                    })
+
+            elif current_section == 'current':
+                current_match = re.search(r'(\d+)\s*ma', line, re.IGNORECASE)
+                if current_match:
+                    sysinfo_data['current']['board_current'] = int(current_match.group(1))
+
+            elif current_section == 'ports':
+                port_match = re.search(r'(port\d+):\s*(.+)', line, re.IGNORECASE)
+                if port_match:
+                    sysinfo_data['ports'].append({
+                        'name': port_match.group(1).title(),
+                        'specs': port_match.group(2)
+                    })
+
+            elif current_section == 'errors':
+                error_match = re.search(r'(\d+\.?\d*v?)\s+.*error\s*:\s*(\d+)', line, re.IGNORECASE)
+                if error_match:
+                    sysinfo_data['errors'].append({
+                        'type': error_match.group(1).upper(),
+                        'count': int(error_match.group(2))
+                    })
+
+        return sysinfo_data
 
     @staticmethod
     def _parse_link_status(response: str, parsed_data: Dict) -> Dict:
@@ -394,34 +504,47 @@ class CalypsoPyManager:
         return ports
 
     def connect(self, port: str, baudrate: int = 115200, timeout: float = 2.0) -> Dict[str, Any]:
-        """Connect to hardware device"""
+        """Connect to hardware device with CalypsoPy+ standard settings"""
         with self.connection_lock:
             if port in self.connections:
                 return {'success': True, 'message': f'Already connected to {port}'}
 
             try:
+                # CalypsoPy+ Standard Serial Settings:
+                # Baud Rate: 115,200 bps
+                # Data Bits: 8
+                # Parity: None
+                # Stop Bits: 1
+                # Flow Control: None
+                # Timeout: 2.0 seconds
+
                 ser = serial.Serial(
                     port=port,
-                    baudrate=baudrate,
-                    timeout=timeout,
-                    parity=serial.PARITY_NONE,
-                    stopbits=serial.STOPBITS_ONE,
-                    bytesize=serial.EIGHTBITS,
-                    rtscts=False,
-                    dsrdtr=False
+                    baudrate=115200,  # Fixed: 115,200 bps
+                    timeout=2.0,  # Fixed: 2.0 seconds
+                    parity=serial.PARITY_NONE,  # Fixed: None
+                    stopbits=serial.STOPBITS_ONE,  # Fixed: 1 bit
+                    bytesize=serial.EIGHTBITS,  # Fixed: 8 bits
+                    rtscts=False,  # Fixed: No RTS/CTS flow control
+                    dsrdtr=False,  # Fixed: No DSR/DTR flow control
+                    xonxoff=False  # Fixed: No XON/XOFF flow control
                 )
 
                 self.connections[port] = ser
                 self.command_history[port] = deque(maxlen=self.max_history)
 
-                logger.info(f"CalypsoPy+: Connected to {port} at {baudrate} baud")
+                logger.info(f"CalypsoPy+: Connected to {port} with standard settings (115200-8-N-1)")
                 return {
                     'success': True,
                     'message': f'Connected to {port}',
                     'connection_info': {
                         'port': port,
-                        'baudrate': baudrate,
-                        'timeout': timeout,
+                        'baudrate': 115200,
+                        'databits': 8,
+                        'parity': 'None',
+                        'stopbits': 1,
+                        'flowcontrol': 'None',
+                        'timeout': 2.0,
                         'timestamp': datetime.now().isoformat()
                     }
                 }
@@ -617,12 +740,11 @@ def handle_connect():
 
 @socketio.on('connect_device')
 def handle_connect_device(data):
-    """Handle device connection request"""
+    """Handle device connection request with CalypsoPy+ standard settings"""
     port = data.get('port')
-    baudrate = data.get('baudrate', 115200)
-    timeout = data.get('timeout', 2.0)
 
-    result = calypso_manager.connect(port, baudrate, timeout)
+    # Use CalypsoPy+ standard settings regardless of client parameters
+    result = calypso_manager.connect(port)
     emit('connection_result', result)
 
     if result['success']:

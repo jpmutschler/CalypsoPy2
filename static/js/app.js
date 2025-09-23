@@ -131,6 +131,7 @@ function updateConnectionStatus(connected, port = null) {
                 <div style="color: var(--dark-black);">
                     <strong>Port:</strong> ${port}<br>
                     <strong>Status:</strong> <span style="color: #22c55e;">Active</span><br>
+                    <strong>Settings:</strong> 115200-8-N-1<br>
                     <strong>Connected:</strong> ${new Date().toLocaleString()}
                 </div>
             `;
@@ -186,6 +187,14 @@ function switchDashboard(dashboardId) {
         targetDashboard.classList.add('active');
         currentDashboard = dashboardId;
 
+        // Auto-fetch data for device info dashboard
+        if (dashboardId === 'device_info' && isConnected && currentPort) {
+            // Auto-execute sysinfo command when entering device info dashboard
+            setTimeout(() => {
+                executeCommand('sysinfo', 'device_info');
+            }, 500);
+        }
+
         // Load dashboard-specific data if connected
         if (isConnected && currentPort) {
             socket.emit('get_dashboard_data', {
@@ -235,6 +244,168 @@ function executeCommand(command, dashboardId = currentDashboard) {
     // Update metrics
     systemMetrics.totalCommands++;
     document.getElementById('commandCount').textContent = systemMetrics.totalCommands;
+}
+
+/**
+ * Parse and display sysinfo data
+ */
+function parseSysinfoData(rawData) {
+    // For development, use example data structure
+    const exampleData = {
+        hardware: {
+            serial: 'G8H144125062062',
+            company: 'SerialCables,Inc.',
+            model: 'PC16-RN-xkmjl-835-144',
+            version: '0.1.0',
+            date: 'Jul 18 2025 11:35:16',
+            sdk_version: '0 34 160 29'
+        },
+        thermal: {
+            board_temperature: 55,
+            fan_speed: 6310
+        },
+        voltages: [
+            { rail: '0.8V', voltage: 800, unit: 'mV', status: 'normal' },
+            { rail: '0.86V', voltage: 864, unit: 'mV', status: 'normal' },
+            { rail: '1.2V', voltage: 1204, unit: 'mV', status: 'normal' },
+            { rail: '1.5V', voltage: 1532, unit: 'mV', status: 'normal' }
+        ],
+        current: {
+            board_current: 10240
+        },
+        errors: [
+            { type: '0.8V', count: 0 },
+            { type: '0.86V', count: 0 },
+            { type: '1.2V', count: 0 },
+            { type: '1.5V', count: 0 }
+        ],
+        ports: [
+            { name: 'Port80', specs: 'speed D1, width D0, max_speed06, max_width16' },
+            { name: 'Port112', specs: 'speed D1, width D0, max_speed06, max_width16' },
+            { name: 'Port128', specs: 'speed D1, width D0, max_speed06, max_width16' }
+        ]
+    };
+
+    // Update hardware information
+    document.getElementById('hwSerialNumber').textContent = exampleData.hardware.serial;
+    document.getElementById('hwCompany').textContent = exampleData.hardware.company;
+    document.getElementById('hwModel').textContent = exampleData.hardware.model;
+    document.getElementById('hwVersion').textContent = exampleData.hardware.version;
+    document.getElementById('sdkVersion').textContent = exampleData.hardware.sdk_version;
+
+    // Update metric cards
+    document.getElementById('deviceModel').textContent = exampleData.hardware.model.split('-')[0];
+    document.getElementById('firmwareVersion').textContent = exampleData.hardware.version;
+    document.getElementById('serialNumber').textContent = exampleData.hardware.serial.substring(0, 12) + '...';
+    document.getElementById('boardTemp').textContent = exampleData.thermal.board_temperature + '°C';
+
+    // Update thermal information
+    document.getElementById('thermalBoardTemp').textContent = exampleData.thermal.board_temperature + '°C';
+    document.getElementById('fanSpeed').textContent = exampleData.thermal.fan_speed.toLocaleString() + ' RPM';
+
+    // Update thermal status based on temperature
+    const tempStatus = document.getElementById('thermalBoardStatus');
+    const temp = exampleData.thermal.board_temperature;
+    if (temp < 60) {
+        tempStatus.textContent = 'Normal';
+        tempStatus.className = 'thermal-status normal';
+    } else if (temp < 80) {
+        tempStatus.textContent = 'Warning';
+        tempStatus.className = 'thermal-status warning';
+    } else {
+        tempStatus.textContent = 'Critical';
+        tempStatus.className = 'thermal-status critical';
+    }
+
+    // Update fan speed bar (assuming max 10000 RPM)
+    const fanSpeedPercentage = Math.min((exampleData.thermal.fan_speed / 10000) * 100, 100);
+    document.getElementById('fanSpeedBar').style.width = fanSpeedPercentage + '%';
+
+    // Update voltage sensors
+    const voltageGrid = document.getElementById('voltageGrid');
+    voltageGrid.innerHTML = '';
+    exampleData.voltages.forEach(voltage => {
+        const voltageItem = document.createElement('div');
+        voltageItem.className = `voltage-item ${voltage.status}`;
+        voltageItem.innerHTML = `
+            <div class="voltage-label">${voltage.rail}</div>
+            <div class="voltage-value">${voltage.voltage}</div>
+            <div class="voltage-unit">${voltage.unit}</div>
+        `;
+        voltageGrid.appendChild(voltageItem);
+    });
+
+    // Update current status
+    document.getElementById('boardCurrent').textContent = exampleData.current.board_current + ' mA';
+
+    // Update port configuration
+    const portGrid = document.getElementById('portGrid');
+    portGrid.innerHTML = '';
+    exampleData.ports.forEach((port, index) => {
+        const portItem = document.createElement('div');
+        portItem.className = 'port-item active';
+        portItem.innerHTML = `
+            <div class="port-icon">${80 + (index * 32)}</div>
+            <div class="port-details">
+                <div class="port-name">${port.name}</div>
+                <div class="port-specs">${port.specs}</div>
+            </div>
+        `;
+        portGrid.appendChild(portItem);
+    });
+
+    // Update error status
+    const errorGrid = document.getElementById('errorGrid');
+    errorGrid.innerHTML = '';
+    exampleData.errors.forEach(error => {
+        const errorItem = document.createElement('div');
+        errorItem.className = error.count === 0 ? 'error-item no-error' : 'error-item has-error';
+        errorItem.innerHTML = `
+            <div class="error-label">${error.type} Voltage</div>
+            <div class="error-count">${error.count}</div>
+        `;
+        errorGrid.appendChild(errorItem);
+    });
+
+    // Show success notification
+    showNotification('System information updated successfully', 'success');
+}
+
+/**
+ * Update dashboard-specific data displays
+ */
+function updateDashboardData(data) {
+    if (!data.data || !data.data.parsed) return;
+
+    const dashboard = data.dashboard || currentDashboard;
+    const parsed = data.data.parsed;
+    const rawResponse = data.data.raw;
+
+    // Handle sysinfo command specifically
+    if (dashboard === 'device_info' && (data.data.command === 'sysinfo' || rawResponse.includes('sysinfo'))) {
+        parseSysinfoData(rawResponse);
+        return;
+    }
+
+    // Update device info metrics (fallback for other commands)
+    if (dashboard === 'device_info') {
+        if (parsed.model) document.getElementById('deviceModel').textContent = parsed.model;
+        if (parsed.version) document.getElementById('firmwareVersion').textContent = parsed.version;
+        if (parsed.serial) document.getElementById('serialNumber').textContent = parsed.serial;
+    }
+
+    // Update link status metrics
+    if (dashboard === 'link_status') {
+        if (parsed.link_up) document.getElementById('linkState').textContent = parsed.link_up;
+        if (parsed.signal_strength) document.getElementById('signalStrength').textContent = parsed.signal_strength + ' dBm';
+        if (parsed.errors) document.getElementById('errorCount').textContent = parsed.errors;
+        if (parsed.packets) document.getElementById('packetCount').textContent = parsed.packets;
+    }
+
+    // Update firmware version
+    if (dashboard === 'firmware' && parsed.version) {
+        document.getElementById('currentFwVersion').value = parsed.version;
+    }
 }
 
 /**
@@ -392,37 +563,6 @@ async function loadPorts() {
     }
 }
 
-/**
- * Update dashboard-specific data displays
- */
-function updateDashboardData(data) {
-    if (!data.data || !data.data.parsed) return;
-
-    const dashboard = data.dashboard || currentDashboard;
-    const parsed = data.data.parsed;
-
-    // Update device info metrics
-    if (dashboard === 'device_info') {
-        if (parsed.model) document.getElementById('deviceModel').textContent = parsed.model;
-        if (parsed.version) document.getElementById('firmwareVersion').textContent = parsed.version;
-        if (parsed.serial) document.getElementById('serialNumber').textContent = parsed.serial;
-        document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
-    }
-
-    // Update link status metrics
-    if (dashboard === 'link_status') {
-        if (parsed.link_up) document.getElementById('linkState').textContent = parsed.link_up;
-        if (parsed.signal_strength) document.getElementById('signalStrength').textContent = parsed.signal_strength + ' dBm';
-        if (parsed.errors) document.getElementById('errorCount').textContent = parsed.errors;
-        if (parsed.packets) document.getElementById('packetCount').textContent = parsed.packets;
-    }
-
-    // Update firmware version
-    if (dashboard === 'firmware' && parsed.version) {
-        document.getElementById('currentFwVersion').value = parsed.version;
-    }
-}
-
 // =============================================================================
 // EVENT HANDLERS
 // =============================================================================
@@ -444,8 +584,6 @@ function setupEventHandlers() {
     // Connection controls
     document.getElementById('connectBtn')?.addEventListener('click', () => {
         const port = document.getElementById('portSelect').value;
-        const baudrate = parseInt(document.getElementById('baudrateSelect').value);
-        const timeout = parseFloat(document.getElementById('timeoutInput').value);
 
         if (!port) return;
 
@@ -453,7 +591,12 @@ function setupEventHandlers() {
         btn.innerHTML = '<div class="loading"></div> Connecting...';
         btn.disabled = true;
 
-        socket.emit('connect_device', { port, baudrate, timeout });
+        // Use hardcoded serial settings
+        socket.emit('connect_device', {
+            port: port,
+            baudrate: 115200,
+            timeout: 2.0
+        });
     });
 
     document.getElementById('disconnectBtn')?.addEventListener('click', () => {
@@ -516,6 +659,15 @@ function setupEventHandlers() {
                 executeCommand(command, dashboardId);
             }
         });
+    });
+
+    // Refresh device info button
+    document.getElementById('refreshDeviceInfo')?.addEventListener('click', () => {
+        if (!isConnected) {
+            showNotification('Please connect to a device first', 'error');
+            return;
+        }
+        executeCommand('sysinfo', 'device_info');
     });
 
     // Reset buttons
@@ -862,6 +1014,7 @@ window.CalypsoPy = {
     showNotification,
     loadPorts,
     toggleMobileMenu,
+    parseSysinfoData,
     systemMetrics,
     isConnected: () => isConnected,
     currentPort: () => currentPort,

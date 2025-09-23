@@ -113,22 +113,15 @@
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Baud Rate</label>
-                            <select id="baudrateSelect" class="form-control">
-                                <option value="9600">9,600 bps</option>
-                                <option value="19200">19,200 bps</option>
-                                <option value="38400">38,400 bps</option>
-                                <option value="57600">57,600 bps</option>
-                                <option value="115200" selected>115,200 bps</option>
-                                <option value="230400">230,400 bps</option>
-                                <option value="460800">460,800 bps</option>
-                                <option value="921600">921,600 bps</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Timeout (seconds)</label>
-                            <input type="number" id="timeoutInput" class="form-control" value="2.0" step="0.1" min="0.1" max="10.0">
+                            <label class="form-label">Connection Properties</label>
+                            <div style="background: var(--light-gray); padding: 15px; border-radius: 10px; font-size: 14px; color: var(--secondary-gray);">
+                                <strong>Baud Rate:</strong> 115,200 bps<br>
+                                <strong>Data Bits:</strong> 8<br>
+                                <strong>Parity:</strong> None<br>
+                                <strong>Stop Bits:</strong> 1<br>
+                                <strong>Flow Control:</strong> None<br>
+                                <strong>Timeout:</strong> 2.0 seconds
+                            </div>
                         </div>
 
                         <div style="display: flex; gap: 15px; flex-wrap: wrap;">
@@ -163,9 +156,10 @@
             <div id="device_info-dashboard" class="dashboard-content active">
                 <div class="dashboard-header">
                     <h2 class="dashboard-title">Device Information</h2>
-                    <p class="dashboard-subtitle">Retrieve detailed information about the connected hardware device</p>
+                    <p class="dashboard-subtitle">Hardware identification and system status information</p>
                 </div>
 
+                <!-- System Overview Cards -->
                 <div class="metrics-row">
                     <div class="metric-card">
                         <div class="metric-value" id="deviceModel">Unknown</div>
@@ -180,17 +174,138 @@
                         <div class="metric-label">Serial Number</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-value" id="lastUpdate">Never</div>
-                        <div class="metric-label">Last Updated</div>
+                        <div class="metric-value" id="boardTemp">--°C</div>
+                        <div class="metric-label">Board Temperature</div>
                     </div>
                 </div>
 
                 <div class="dashboard-grid">
+                    <!-- Hardware Information -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">🔧</div>
+                                Hardware Information
+                            </div>
+                            <button class="btn btn-sm btn-outline" id="refreshDeviceInfo">
+                                <span>🔄</span> Refresh
+                            </button>
+                        </div>
+
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <label class="info-label">S/N</label>
+                                <span class="info-value" id="hwSerialNumber">--</span>
+                            </div>
+                            <div class="info-item">
+                                <label class="info-label">Company</label>
+                                <span class="info-value" id="hwCompany">--</span>
+                            </div>
+                            <div class="info-item">
+                                <label class="info-label">Model</label>
+                                <span class="info-value" id="hwModel">--</span>
+                            </div>
+                            <div class="info-item">
+                                <label class="info-label">Version</label>
+                                <span class="info-value" id="hwVersion">--</span>
+                            </div>
+                            <div class="info-item">
+                                <label class="info-label">SDK Version</label>
+                                <span class="info-value" id="sdkVersion">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thermal Status -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">🌡️</div>
+                                Thermal Status
+                            </div>
+                        </div>
+
+                        <div class="thermal-display">
+                            <div class="thermal-item">
+                                <div class="thermal-label">Board Temperature</div>
+                                <div class="thermal-value" id="thermalBoardTemp">--°C</div>
+                                <div class="thermal-status" id="thermalBoardStatus">Normal</div>
+                            </div>
+                            <div class="thermal-item">
+                                <div class="thermal-label">Fan Speed</div>
+                                <div class="thermal-value" id="fanSpeed">-- RPM</div>
+                                <div class="thermal-bar">
+                                    <div class="thermal-bar-fill" id="fanSpeedBar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Voltage Sensors -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">⚡</div>
+                                Voltage Sensors
+                            </div>
+                        </div>
+
+                        <div class="voltage-grid" id="voltageGrid">
+                            <!-- Voltage items will be populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Current Status -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">🔋</div>
+                                Current Status
+                            </div>
+                        </div>
+
+                        <div class="current-display">
+                            <div class="current-item">
+                                <div class="current-label">Board Current</div>
+                                <div class="current-value" id="boardCurrent">-- mA</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Port Configuration -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">🔌</div>
+                                Port Configuration
+                            </div>
+                        </div>
+
+                        <div class="port-grid" id="portGrid">
+                            <!-- Port items will be populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Error Status -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">⚠️</div>
+                                Error Status
+                            </div>
+                        </div>
+
+                        <div class="error-grid" id="errorGrid">
+                            <!-- Error items will be populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Command Interface -->
                     <div class="card command-interface">
                         <div class="card-header">
                             <div class="card-title">
                                 <div class="card-icon">💬</div>
-                                Device Info Commands
+                                Device Commands
                             </div>
                             <div class="card-actions">
                                 <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--secondary-gray);">
@@ -207,36 +322,36 @@
                         </div>
 
                         <div class="command-presets" id="devicePresets">
-                            <div class="preset-btn" data-cmd="ATI" data-desc="Device identification">
-                                <div class="preset-title">Device ID</div>
-                                <div class="preset-command">ATI</div>
+                            <div class="preset-btn" data-cmd="sysinfo" data-desc="System information">
+                                <div class="preset-title">System Info</div>
+                                <div class="preset-command">sysinfo</div>
                             </div>
-                            <div class="preset-btn" data-cmd="AT+VERSION?" data-desc="Firmware version">
-                                <div class="preset-title">Firmware Ver</div>
-                                <div class="preset-command">AT+VERSION?</div>
+                            <div class="preset-btn" data-cmd="version" data-desc="Firmware version">
+                                <div class="preset-title">Version Info</div>
+                                <div class="preset-command">version</div>
                             </div>
-                            <div class="preset-btn" data-cmd="AT+CGMM" data-desc="Device model">
-                                <div class="preset-title">Device Model</div>
-                                <div class="preset-command">AT+CGMM</div>
+                            <div class="preset-btn" data-cmd="temp" data-desc="Temperature readings">
+                                <div class="preset-title">Temperature</div>
+                                <div class="preset-command">temp</div>
                             </div>
-                            <div class="preset-btn" data-cmd="AT+CGSN" data-desc="Serial number">
-                                <div class="preset-title">Serial Number</div>
-                                <div class="preset-command">AT+CGSN</div>
+                            <div class="preset-btn" data-cmd="voltage" data-desc="Voltage readings">
+                                <div class="preset-title">Voltage</div>
+                                <div class="preset-command">voltage</div>
                             </div>
-                            <div class="preset-btn" data-cmd="AT+CGMR" data-desc="Revision info">
-                                <div class="preset-title">Revision</div>
-                                <div class="preset-command">AT+CGMR</div>
+                            <div class="preset-btn" data-cmd="current" data-desc="Current readings">
+                                <div class="preset-title">Current</div>
+                                <div class="preset-command">current</div>
                             </div>
-                            <div class="preset-btn" data-cmd="AT+CGMI" data-desc="Manufacturer">
-                                <div class="preset-title">Manufacturer</div>
-                                <div class="preset-command">AT+CGMI</div>
+                            <div class="preset-btn" data-cmd="status" data-desc="Overall status">
+                                <div class="preset-title">Status</div>
+                                <div class="preset-command">status</div>
                             </div>
                         </div>
 
                         <div class="console-container" id="deviceConsole">
                             <div class="console-entry command">
                                 <div class="console-timestamp">System Ready</div>
-                                <div class="console-content">CalypsoPy+ Device Info Dashboard initialized. Connect to a device and execute commands.</div>
+                                <div class="console-content">CalypsoPy+ Device Info Dashboard initialized. Connect to a device to view system information.</div>
                             </div>
                         </div>
                     </div>
