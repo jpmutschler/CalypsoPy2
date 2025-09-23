@@ -7,7 +7,7 @@
 const socket = io();
 
 // Application state
-let currentDashboard = 'device_info';
+let currentDashboard = 'connection';  // Start with connection dashboard
 let currentPort = null;
 let isConnected = false;
 let systemMetrics = {
@@ -145,6 +145,15 @@ function updateConnectionStatus(connected, port = null) {
             btn.disabled = false;
         });
 
+        // Enable dashboard navigation (remove disabled class)
+        document.querySelectorAll('.nav-item').forEach(item => {
+            if (item.dataset.dashboard !== 'connection') {
+                item.classList.remove('disabled');
+                item.style.opacity = '1';
+                item.style.pointerEvents = 'auto';
+            }
+        });
+
     } else {
         statusElement.className = 'connection-status disconnected';
         statusElement.innerHTML = `<div class="status-dot"></div><span>Disconnected</span>`;
@@ -162,6 +171,15 @@ function updateConnectionStatus(connected, port = null) {
         document.querySelectorAll('button[id^="send"]').forEach(btn => {
             btn.disabled = true;
         });
+
+        // Disable dashboard navigation (except connection and analytics)
+        document.querySelectorAll('.nav-item').forEach(item => {
+            if (item.dataset.dashboard !== 'connection' && item.dataset.dashboard !== 'analytics') {
+                item.classList.add('disabled');
+                item.style.opacity = '0.5';
+                item.style.pointerEvents = 'none';
+            }
+        });
     }
 }
 
@@ -169,6 +187,12 @@ function updateConnectionStatus(connected, port = null) {
  * Switch between dashboards
  */
 function switchDashboard(dashboardId) {
+    // Prevent switching to other dashboards when not connected (except connection dashboard)
+    if (!isConnected && dashboardId !== 'connection' && dashboardId !== 'analytics') {
+        showNotification('Please connect to a device first before accessing dashboards', 'warning');
+        return;
+    }
+
     // Update navigation
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
@@ -946,6 +970,13 @@ function setupSocketHandlers() {
         if (data.success) {
             updateConnectionStatus(true, data.connection_info.port);
             showNotification(`Connected to ${data.connection_info.port}`, 'success');
+
+            // Auto-switch to Device Information dashboard after successful connection
+            setTimeout(() => {
+                switchDashboard('device_info');
+                showNotification('Switched to Device Information - Loading system data...', 'info');
+            }, 1000);  // Small delay to let user see the success message
+
         } else {
             showNotification(data.message, 'error');
         }
@@ -960,6 +991,13 @@ function setupSocketHandlers() {
 
         if (data.success) {
             showNotification(data.message, 'success');
+
+            // Auto-switch back to Connection dashboard after disconnection
+            setTimeout(() => {
+                switchDashboard('connection');
+                showNotification('Disconnected - Please connect to a device to continue', 'info');
+            }, 1000);
+
         } else {
             showNotification(data.message, 'error');
         }
