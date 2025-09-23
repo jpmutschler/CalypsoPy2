@@ -155,8 +155,17 @@
             <!-- Device Info Dashboard -->
             <div id="device_info-dashboard" class="dashboard-content active">
                 <div class="dashboard-header">
-                    <h2 class="dashboard-title">Device Information</h2>
-                    <p class="dashboard-subtitle">Hardware identification and system status information</p>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div>
+                            <h2 class="dashboard-title">Device Information</h2>
+                            <p class="dashboard-subtitle">Hardware identification and system status information</p>
+                        </div>
+                        <div style="display: flex; gap: 15px;">
+                            <button class="btn btn-outline" id="exportDeviceInfo">
+                                <span>📄</span> Export Report
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- System Overview Cards -->

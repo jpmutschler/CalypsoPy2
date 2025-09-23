@@ -793,6 +793,25 @@ body {
     background: var(--primary-red);
 }
 
+/* Dashboard Header Enhancements */
+.dashboard-header .btn {
+    white-space: nowrap;
+    min-width: 140px;
+}
+
+.dashboard-header .btn-outline {
+    border-color: var(--primary-red);
+    color: var(--primary-red);
+    background: transparent;
+}
+
+.dashboard-header .btn-outline:hover {
+    background: var(--primary-red);
+    color: var(--pure-white);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(121, 0, 0, 0.3);
+}
+
 /* Device Information Specific Styles */
 .info-grid {
     display: grid;
