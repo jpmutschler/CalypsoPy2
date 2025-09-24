@@ -606,54 +606,6 @@
                             </table>
                         </div>
                     </div>
-
-                    <!-- Command Interface -->
-                    <div class="card command-interface">
-                        <div class="card-header">
-                            <div class="card-title">
-                                <div class="card-icon">💬</div>
-                                Bifurcation Commands
-                            </div>
-                            <div class="card-actions">
-                                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--secondary-gray);">
-                                    <input type="checkbox" id="useCacheBifurcation" checked> Use cache
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="command-input-group">
-                            <input type="text" id="bifurcationCommandInput" class="form-control" placeholder="Enter bifurcation command..." disabled>
-                            <button id="sendBifurcationCmd" class="btn btn-primary" disabled>
-                                <span>📤</span> Send
-                            </button>
-                        </div>
-
-                        <div class="command-presets" id="bifurcationPresets">
-                            <div class="preset-btn" data-cmd="showmode" data-desc="Show current SBR mode">
-                                <div class="preset-title">Show Mode</div>
-                                <div class="preset-command">showmode</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="getconfig" data-desc="Get PCIe configuration">
-                                <div class="preset-title">Get Config</div>
-                                <div class="preset-command">getconfig</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="checkstatus" data-desc="Check bifurcation status">
-                                <div class="preset-title">Check Status</div>
-                                <div class="preset-command">checkstatus</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="listmodes" data-desc="List available modes">
-                                <div class="preset-title">List Modes</div>
-                                <div class="preset-command">listmodes</div>
-                            </div>
-                        </div>
-
-                        <div class="console-container" id="bifurcationConsole">
-                            <div class="console-entry command">
-                                <div class="console-timestamp">System Ready</div>
-                                <div class="console-content">Bifurcation dashboard initialized. Checking current PCIe configuration...</div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -896,8 +848,7 @@
     </div>
 
     <!-- CalypsoPy+ Scripts -->
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/dashboards.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
 </body>
 </html>
