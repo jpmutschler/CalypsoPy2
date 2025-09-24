@@ -27,6 +27,12 @@
         </div>
 
         <div class="header-controls">
+            <div class="developer-mode-toggle">
+                <label style="display: flex; align-items: center; gap: 8px; color: rgba(255, 255, 255, 0.8); font-size: 13px; font-weight: 500; cursor: pointer;">
+                    <input type="checkbox" id="developerMode" style="transform: scale(1.2);">
+                    <span>🔓 Developer Mode</span>
+                </label>
+            </div>
             <div id="connectionStatus" class="connection-status disconnected">
                 <div class="status-dot"></div>
                 <span>Disconnected</span>
@@ -55,9 +61,9 @@
                     <div class="nav-icon">📡</div>
                     <div class="nav-text">Link Status</div>
                 </div>
-                <div class="nav-item" data-dashboard="port_config">
-                    <div class="nav-icon">⚙️</div>
-                    <div class="nav-text">Port Configuration</div>
+                <div class="nav-item" data-dashboard="bifurcation">
+                    <div class="nav-icon">🔀</div>
+                    <div class="nav-text">Bifurcation</div>
                 </div>
                 <div class="nav-item" data-dashboard="i2c">
                     <div class="nav-icon">🔗</div>
@@ -134,9 +140,11 @@
                             <button id="refreshBtn" class="btn btn-outline">
                                 <span>🔄</span> Refresh Ports
                             </button>
+                            <button id="testApiBtn" class="btn btn-outline" style="background-color: #28a745; color: white;">
+                                <span>🧪</span> Test API
+                            </button>
                         </div>
                     </div>
-
 
                     <div class="card">
                         <div class="card-header">
@@ -150,22 +158,6 @@
                             <p style="color: var(--secondary-gray); font-style: italic;">No device connected</p>
                         </div>
 
-                        <!-- Simple Developer Mode Toggle -->
-                        <div style="margin-top: 20px; padding: 15px; background: rgba(121, 0, 0, 0.05); border-radius: 10px; border-left: 4px solid var(--primary-red);">
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <div>
-                                    <h4 style="color: var(--primary-red); margin: 0 0 5px 0; font-size: 16px;">🔧 Developer Mode</h4>
-                                    <p style="color: var(--secondary-gray); font-size: 13px; margin: 0;">
-                                        Unlock all dashboards for development without hardware connection
-                                    </p>
-                                </div>
-                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                    <input type="checkbox" id="developerModeToggle" style="transform: scale(1.2);">
-                                    <span style="font-weight: 600; color: var(--dark-black);">Enable</span>
-                                </label>
-                            </div>
-                    </div>
-
                         <div style="margin-top: 20px; padding: 15px; background: var(--light-gray); border-radius: 10px;">
                             <h4 style="color: var(--primary-red); margin-bottom: 10px; font-size: 16px;">🚀 Getting Started</h4>
                             <ol style="color: var(--secondary-gray); font-size: 14px; line-height: 1.6; margin-left: 20px;">
@@ -173,7 +165,7 @@
                                 <li>Click "Refresh Ports" to scan for new devices</li>
                                 <li>Select your device from the dropdown menu</li>
                                 <li>Click "Connect Device" to establish connection</li>
-                                <li><strong>OR</strong> Enable Developer Mode to access dashboards without hardware</li>
+                                <li>Once connected, you'll be taken to Device Information</li>
                             </ol>
                         </div>
                     </div>
@@ -396,315 +388,313 @@
             </div>
 
             <!-- Link Status Dashboard -->
-                <div id="link_status-dashboard" class="dashboard-content">
+            <div id="link_status-dashboard" class="dashboard-content">
+                <div class="dashboard-header">
+                    <h2 class="dashboard-title">Link Status</h2>
+                    <p class="dashboard-subtitle">Monitor communication link quality and connection statistics</p>
+                </div>
+
+                <div class="metrics-row">
+                    <div class="metric-card">
+                        <div class="metric-value" id="linkState">Unknown</div>
+                        <div class="metric-label">Link State</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="signalStrength">-</div>
+                        <div class="metric-label">Signal Strength</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="errorCount">0</div>
+                        <div class="metric-label">Error Count</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="packetCount">0</div>
+                        <div class="metric-label">Packet Count</div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="card command-interface">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">📡</div>
+                                Link Status Commands
+                            </div>
+                        </div>
+
+                        <div class="command-input-group">
+                            <input type="text" id="linkCommandInput" class="form-control" placeholder="Enter link status command..." disabled>
+                            <button id="sendLinkCmd" class="btn btn-primary" disabled>
+                                <span>📤</span> Send
+                            </button>
+                        </div>
+
+                        <div class="command-presets" id="linkPresets">
+                            <div class="preset-btn" data-cmd="AT+CSQ" data-desc="Signal quality">
+                                <div class="preset-title">Signal Quality</div>
+                                <div class="preset-command">AT+CSQ</div>
+                            </div>
+                            <div class="preset-btn" data-cmd="AT+COPS?" data-desc="Network status">
+                                <div class="preset-title">Network Status</div>
+                                <div class="preset-command">AT+COPS?</div>
+                            </div>
+                            <div class="preset-btn" data-cmd="AT+CREG?" data-desc="Registration status">
+                                <div class="preset-title">Registration</div>
+                                <div class="preset-command">AT+CREG?</div>
+                            </div>
+                            <div class="preset-btn" data-cmd="LINK_STATUS" data-desc="Link diagnostics">
+                                <div class="preset-title">Link Diag</div>
+                                <div class="preset-command">LINK_STATUS</div>
+                            </div>
+                        </div>
+
+                        <div class="console-container" id="linkConsole">
+                            <div class="console-entry command">
+                                <div class="console-timestamp">System Ready</div>
+                                <div class="console-content">Link Status monitoring ready. Execute commands to check connection quality.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bifurcation Dashboard -->
+            <div id="bifurcation-dashboard" class="dashboard-content">
                 <div class="dashboard-header">
                     <div style="display: flex; justify-content: space-between; align-items: flex-end;">
                         <div>
-                            <h2 class="dashboard-title">Link Status</h2>
-                            <p class="dashboard-subtitle">Monitor port connectivity and link quality in real-time</p>
+                            <h2 class="dashboard-title">PCIe Bifurcation Configuration</h2>
+                            <p class="dashboard-subtitle">Monitor and configure PCIe lane bifurcation modes</p>
                         </div>
                         <div style="display: flex; gap: 15px;">
-                            <button class="btn btn-outline" id="refreshLinkStatus">
-                                <span>🔄</span> Refresh Status
+                            <button class="btn btn-outline" id="refreshBifurcation">
+                                <span>🔄</span> Refresh Mode
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Port Status Overview Cards -->
+                <!-- Current Mode Overview -->
                 <div class="metrics-row">
                     <div class="metric-card">
-                        <div class="metric-value" id="totalPorts">--</div>
-                        <div class="metric-label">Total Ports</div>
+                        <div class="metric-value" id="currentSBRMode">--</div>
+                        <div class="metric-label">Current SBR Mode</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-value" id="connectedPorts">--</div>
-                        <div class="metric-label">Connected Ports</div>
+                        <div class="metric-value" id="goldenFingerConfig">--</div>
+                        <div class="metric-label">Golden Finger</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-value" id="highestGen">--</div>
-                        <div class="metric-label">Highest Generation</div>
+                        <div class="metric-value" id="straddlePCIE">--</div>
+                        <div class="metric-label">Straddle PCIE</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-value" id="totalBandwidth">--</div>
-                        <div class="metric-label">Total Bandwidth</div>
+                        <div class="metric-value" id="mcioStatus">--</div>
+                        <div class="metric-label">MCIO Status</div>
                     </div>
                 </div>
 
                 <div class="dashboard-grid">
-                    <!-- Port Status Display -->
-                    <div class="card" style="grid-column: span 2;">
+                    <!-- Current Configuration Card -->
+                    <div class="card">
                         <div class="card-header">
                             <div class="card-title">
-                                <div class="card-icon">🔌</div>
-                                Port Status Overview
+                                <div class="card-icon">🔀</div>
+                                Current Bifurcation Mode
                             </div>
-                            <div class="card-actions">
-                                <div style="display: flex; align-items: center; gap: 15px; font-size: 12px; color: var(--secondary-gray);">
-                                    <div style="display: flex; align-items: center; gap: 5px;">
-                                        <div class="port-led connected"></div>
-                                        <span>Connected</span>
+                        </div>
+
+                        <div id="bifurcationModeDisplay" class="bifurcation-mode-display">
+                            <div class="bifurcation-mode-card">
+                                <div class="bifurcation-mode-header">
+                                    <span class="bifurcation-mode-number">Mode: --</span>
+                                    <span class="bifurcation-status-badge active">ACTIVE</span>
+                                </div>
+                                <div class="bifurcation-mode-details">
+                                    <div class="bifurcation-detail-row">
+                                        <span class="detail-label">Golden Finger:</span>
+                                        <span class="detail-value" id="modeGoldenFinger">--</span>
                                     </div>
-                                    <div style="display: flex; align-items: center; gap: 5px;">
-                                        <div class="port-led disconnected"></div>
-                                        <span>No Connection</span>
+                                    <div class="bifurcation-detail-row">
+                                        <span class="detail-label">Straddle PCIE:</span>
+                                        <span class="detail-value" id="modeStraddlePCIE">--</span>
+                                    </div>
+                                    <div class="bifurcation-detail-row">
+                                        <span class="detail-label">Left MCIO:</span>
+                                        <span class="detail-value" id="modeLeftMCIO">--</span>
+                                    </div>
+                                    <div class="bifurcation-detail-row">
+                                        <span class="detail-label">Right MCIO:</span>
+                                        <span class="detail-value" id="modeRightMCIO">--</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-                        <div id="portStatusGrid" class="port-status-grid">
-                            <!-- Port status items will be populated dynamically -->
-                            <div class="port-status-loading">
-                                <div class="loading"></div>
-                                <p>Loading port status...</p>
-                            </div>
-                        </div>
                     </div>
 
-                    <!-- Upstream/Downstream Details -->
-                    <div class="card">
+                    <!-- Available Modes Table -->
+                    <div class="card bifurcation-modes-table">
                         <div class="card-header">
                             <div class="card-title">
-                                <div class="card-icon">📡</div>
-                                Upstream Status
+                                <div class="card-icon">📋</div>
+                                Available Bifurcation Modes
                             </div>
                         </div>
 
-                        <div id="upstreamStatus" class="connection-details">
-                            <!-- Upstream details will be populated -->
-                            <div class="detail-item">
-                                <span class="detail-label">Status:</span>
-                                <span class="detail-value" id="upstreamConnectionStatus">--</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Speed:</span>
-                                <span class="detail-value" id="upstreamSpeed">--</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Width:</span>
-                                <span class="detail-value" id="upstreamWidth">--</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Max Speed:</span>
-                                <span class="detail-value" id="upstreamMaxSpeed">--</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Max Width:</span>
-                                <span class="detail-value" id="upstreamMaxWidth">--</span>
-                            </div>
+                        <div class="bifurcation-table-container">
+                            <table class="bifurcation-table">
+                                <thead>
+                                    <tr>
+                                        <th>SBR Mode</th>
+                                        <th>Golden Finger</th>
+                                        <th>Straddle PCIE</th>
+                                        <th>Left MCIO</th>
+                                        <th>Right MCIO</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bifurcationTableBody">
+                                    <tr data-mode="0">
+                                        <td><span class="mode-indicator">0</span></td>
+                                        <td><span class="lane-config">X16(SSC)</span></td>
+                                        <td><span class="lane-config">X16(CC)</span></td>
+                                        <td><span class="lane-config">X16(CC)</span></td>
+                                        <td><span class="lane-config">X16(CC)</span></td>
+                                    </tr>
+                                    <tr data-mode="1">
+                                        <td><span class="mode-indicator">1</span></td>
+                                        <td><span class="lane-config">X16(SSC)</span></td>
+                                        <td><span class="lane-config">X16(CC)</span></td>
+                                        <td><span class="lane-config">X8(CC)</span></td>
+                                        <td><span class="lane-config">X8(CC)</span></td>
+                                    </tr>
+                                    <tr data-mode="2">
+                                        <td><span class="mode-indicator">2</span></td>
+                                        <td><span class="lane-config">X16(SSC)</span></td>
+                                        <td><span class="lane-config">X16(CC)</span></td>
+                                        <td><span class="lane-config">X4(CC)</span></td>
+                                        <td><span class="lane-config">X4(CC)</span></td>
+                                    </tr>
+                                    <tr data-mode="3">
+                                        <td><span class="mode-indicator">3</span></td>
+                                        <td><span class="lane-config">X16(SSC)</span></td>
+                                        <td><span class="lane-config">X16(CC)</span></td>
+                                        <td><span class="lane-config">X2(CC)</span></td>
+                                        <td><span class="lane-config">X2(CC)</span></td>
+                                    </tr>
+                                    <tr data-mode="4">
+                                        <td><span class="mode-indicator">4</span></td>
+                                        <td><span class="lane-config">X16(SSC)</span></td>
+                                        <td><span class="lane-config">X16(CC)</span></td>
+                                        <td><span class="lane-config">X8(CC)</span></td>
+                                        <td><span class="lane-config">X16(CC)</span></td>
+                                    </tr>
+                                    <tr data-mode="5">
+                                        <td><span class="mode-indicator">5</span></td>
+                                        <td><span class="lane-config">X16(SSC)</span></td>
+                                        <td><span class="lane-config">X16(CC)</span></td>
+                                        <td><span class="lane-config">X4(CC)</span></td>
+                                        <td><span class="lane-config">X16(CC)</span></td>
+                                    </tr>
+                                    <tr data-mode="6">
+                                        <td><span class="mode-indicator">6</span></td>
+                                        <td><span class="lane-config">X16(SSC)</span></td>
+                                        <td><span class="lane-config">X16(CC)</span></td>
+                                        <td><span class="lane-config">X16(CC)</span></td>
+                                        <td><span class="lane-config">X4(CC)</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
-                    <!-- Golden Finger Status -->
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="card-title">
-                                <div class="card-icon">🔗</div>
-                                Golden Finger
-                            </div>
-                        </div>
-
-                        <div id="goldenFingerStatus" class="connection-details">
-                            <div class="detail-item">
-                                <span class="detail-label">Speed:</span>
-                                <span class="detail-value" id="goldenFingerSpeed">--</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Width:</span>
-                                <span class="detail-value" id="goldenFingerWidth">--</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Max Width:</span>
-                                <span class="detail-value" id="goldenFingerMaxWidth">--</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Port Configuration Dashboard -->
-            <div id="port_config-dashboard" class="dashboard-content">
-                <div class="dashboard-header">
-                    <h2 class="dashboard-title">Port Configuration</h2>
-                    <p class="dashboard-subtitle">Configure and monitor serial port settings and parameters</p>
-                </div>
-
-                <div class="dashboard-grid">
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="card-title">
-                                <div class="card-icon">⚙️</div>
-                                Port Settings
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Data Bits</label>
-                            <select class="form-control" id="dataBitsSelect">
-                                <option value="5">5 bits</option>
-                                <option value="6">6 bits</option>
-                                <option value="7">7 bits</option>
-                                <option value="8" selected>8 bits</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Parity</label>
-                            <select class="form-control" id="paritySelect">
-                                <option value="none" selected>None</option>
-                                <option value="odd">Odd</option>
-                                <option value="even">Even</option>
-                                <option value="mark">Mark</option>
-                                <option value="space">Space</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Stop Bits</label>
-                            <select class="form-control" id="stopBitsSelect">
-                                <option value="1" selected>1 bit</option>
-                                <option value="1.5">1.5 bits</option>
-                                <option value="2">2 bits</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Flow Control</label>
-                            <select class="form-control" id="flowControlSelect">
-                                <option value="none" selected>None</option>
-                                <option value="rts_cts">RTS/CTS</option>
-                                <option value="xon_xoff">XON/XOFF</option>
-                            </select>
-                        </div>
-
-                        <button class="btn btn-primary" id="applyPortConfig">
-                            <span>✅</span> Apply Configuration
-                        </button>
-                    </div>
-
+                    <!-- Command Interface -->
                     <div class="card command-interface">
                         <div class="card-header">
                             <div class="card-title">
-                                <div class="card-icon">🔧</div>
-                                Configuration Commands
+                                <div class="card-icon">💬</div>
+                                Bifurcation Commands
+                            </div>
+                            <div class="card-actions">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--secondary-gray);">
+                                    <input type="checkbox" id="useCacheBifurcation" checked> Use cache
+                                </label>
                             </div>
                         </div>
 
-                        <div class="command-presets" id="configPresets">
-                            <div class="preset-btn" data-cmd="AT+IPR?" data-desc="Get baud rate">
-                                <div class="preset-title">Get Baud Rate</div>
-                                <div class="preset-command">AT+IPR?</div>
+                        <div class="command-input-group">
+                            <input type="text" id="bifurcationCommandInput" class="form-control" placeholder="Enter bifurcation command..." disabled>
+                            <button id="sendBifurcationCmd" class="btn btn-primary" disabled>
+                                <span>📤</span> Send
+                            </button>
+                        </div>
+
+                        <div class="command-presets" id="bifurcationPresets">
+                            <div class="preset-btn" data-cmd="showmode" data-desc="Show current SBR mode">
+                                <div class="preset-title">Show Mode</div>
+                                <div class="preset-command">showmode</div>
                             </div>
-                            <div class="preset-btn" data-cmd="AT+ICF?" data-desc="Get format">
-                                <div class="preset-title">Get Format</div>
-                                <div class="preset-command">AT+ICF?</div>
+                            <div class="preset-btn" data-cmd="getconfig" data-desc="Get PCIe configuration">
+                                <div class="preset-title">Get Config</div>
+                                <div class="preset-command">getconfig</div>
                             </div>
-                            <div class="preset-btn" data-cmd="AT+IFC?" data-desc="Flow control">
-                                <div class="preset-title">Flow Control</div>
-                                <div class="preset-command">AT+IFC?</div>
+                            <div class="preset-btn" data-cmd="checkstatus" data-desc="Check bifurcation status">
+                                <div class="preset-title">Check Status</div>
+                                <div class="preset-command">checkstatus</div>
                             </div>
-                            <div class="preset-btn" data-cmd="CONFIG_STATUS" data-desc="Port status">
-                                <div class="preset-title">Port Status</div>
-                                <div class="preset-command">CONFIG_STATUS</div>
+                            <div class="preset-btn" data-cmd="listmodes" data-desc="List available modes">
+                                <div class="preset-title">List Modes</div>
+                                <div class="preset-command">listmodes</div>
                             </div>
                         </div>
 
-                        <div class="console-container" id="configConsole">
+                        <div class="console-container" id="bifurcationConsole">
                             <div class="console-entry command">
                                 <div class="console-timestamp">System Ready</div>
-                                <div class="console-content">Port Configuration dashboard ready. Modify settings and apply configuration.</div>
+                                <div class="console-content">Bifurcation dashboard initialized. Checking current PCIe configuration...</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- I2C/I3C Dashboard -->
+            <!-- I2C Dashboard -->
             <div id="i2c-dashboard" class="dashboard-content">
                 <div class="dashboard-header">
                     <h2 class="dashboard-title">I2C/I3C Interface</h2>
-                    <p class="dashboard-subtitle">Configure and communicate with I2C and I3C devices</p>
+                    <p class="dashboard-subtitle">Configure and monitor I2C/I3C communication interfaces</p>
                 </div>
 
                 <div class="dashboard-grid">
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="card-title">
-                                <div class="card-icon">🔗</div>
-                                I2C Configuration
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Device Address (Hex)</label>
-                            <input type="text" class="form-control" id="i2cAddress" placeholder="0x48" pattern="^0x[0-9A-Fa-f]{1,2}$">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Clock Speed</label>
-                            <select class="form-control" id="i2cSpeed">
-                                <option value="100000">100 kHz (Standard)</option>
-                                <option value="400000" selected>400 kHz (Fast)</option>
-                                <option value="1000000">1 MHz (Fast+)</option>
-                                <option value="3400000">3.4 MHz (High Speed)</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Data to Write (Hex)</label>
-                            <input type="text" class="form-control" id="i2cData" placeholder="0x01 0x02 0x03">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Bytes to Read</label>
-                            <input type="number" class="form-control" id="i2cReadBytes" value="1" min="1" max="255">
-                        </div>
-
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button class="btn btn-primary btn-sm" id="i2cScan">
-                                <span>🔍</span> Scan Bus
-                            </button>
-                            <button class="btn btn-primary btn-sm" id="i2cRead">
-                                <span>📖</span> Read
-                            </button>
-                            <button class="btn btn-primary btn-sm" id="i2cWrite">
-                                <span>✏️</span> Write
-                            </button>
-                        </div>
-                    </div>
-
                     <div class="card command-interface">
                         <div class="card-header">
                             <div class="card-title">
-                                <div class="card-icon">⚡</div>
-                                I2C Commands
+                                <div class="card-icon">🔗</div>
+                                I2C/I3C Commands
                             </div>
+                        </div>
+
+                        <div class="command-input-group">
+                            <input type="text" id="i2cCommandInput" class="form-control" placeholder="Enter I2C/I3C command..." disabled>
+                            <button id="sendI2cCmd" class="btn btn-primary" disabled>
+                                <span>📤</span> Send
+                            </button>
                         </div>
 
                         <div class="command-presets" id="i2cPresets">
                             <div class="preset-btn" data-cmd="I2C_SCAN" data-desc="Scan I2C bus">
-                                <div class="preset-title">Scan I2C Bus</div>
+                                <div class="preset-title">I2C Scan</div>
                                 <div class="preset-command">I2C_SCAN</div>
                             </div>
-                            <div class="preset-btn" data-cmd="I2C_READ 0x48 1" data-desc="Read from device">
-                                <div class="preset-title">Read Device</div>
-                                <div class="preset-command">I2C_READ 0x48 1</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="I2C_WRITE 0x48 0x01" data-desc="Write to device">
-                                <div class="preset-title">Write Device</div>
-                                <div class="preset-command">I2C_WRITE 0x48 0x01</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="I2C_CONFIG" data-desc="Show I2C config">
-                                <div class="preset-title">I2C Config</div>
-                                <div class="preset-command">I2C_CONFIG</div>
+                            <div class="preset-btn" data-cmd="I3C_STATUS" data-desc="I3C status">
+                                <div class="preset-title">I3C Status</div>
+                                <div class="preset-command">I3C_STATUS</div>
                             </div>
                         </div>
 
                         <div class="console-container" id="i2cConsole">
                             <div class="console-entry command">
                                 <div class="console-timestamp">System Ready</div>
-                                <div class="console-content">I2C/I3C interface ready. Configure device address and execute I2C operations.</div>
+                                <div class="console-content">I2C/I3C interface ready for commands.</div>
                             </div>
                         </div>
                     </div>
@@ -715,7 +705,7 @@
             <div id="advanced-dashboard" class="dashboard-content">
                 <div class="dashboard-header">
                     <h2 class="dashboard-title">Advanced Diagnostics</h2>
-                    <p class="dashboard-subtitle">Advanced hardware diagnostics and low-level system access</p>
+                    <p class="dashboard-subtitle">Advanced hardware diagnostics and testing tools</p>
                 </div>
 
                 <div class="dashboard-grid">
@@ -730,41 +720,25 @@
                         <div class="command-input-group">
                             <input type="text" id="advancedCommandInput" class="form-control" placeholder="Enter advanced command..." disabled>
                             <button id="sendAdvancedCmd" class="btn btn-primary" disabled>
-                                <span>⚡</span> Execute
+                                <span>📤</span> Send
                             </button>
                         </div>
 
                         <div class="command-presets" id="advancedPresets">
-                            <div class="preset-btn" data-cmd="REG_READ 0x1000" data-desc="Read register">
-                                <div class="preset-title">Read Register</div>
-                                <div class="preset-command">REG_READ 0x1000</div>
+                            <div class="preset-btn" data-cmd="DIAG_FULL" data-desc="Full diagnostics">
+                                <div class="preset-title">Full Diagnostics</div>
+                                <div class="preset-command">DIAG_FULL</div>
                             </div>
-                            <div class="preset-btn" data-cmd="REG_WRITE 0x1000 0xFF" data-desc="Write register">
-                                <div class="preset-title">Write Register</div>
-                                <div class="preset-command">REG_WRITE 0x1000 0xFF</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="MEM_DUMP 0x0000 256" data-desc="Memory dump">
-                                <div class="preset-title">Memory Dump</div>
-                                <div class="preset-command">MEM_DUMP 0x0000 256</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="DIAG_TEMP" data-desc="Temperature reading">
-                                <div class="preset-title">Temperature</div>
-                                <div class="preset-command">DIAG_TEMP</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="DIAG_VOLT" data-desc="Voltage reading">
-                                <div class="preset-title">Voltage</div>
-                                <div class="preset-command">DIAG_VOLT</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="DEBUG_MODE ON" data-desc="Enable debug">
-                                <div class="preset-title">Debug Mode</div>
-                                <div class="preset-command">DEBUG_MODE ON</div>
+                            <div class="preset-btn" data-cmd="MEM_TEST" data-desc="Memory test">
+                                <div class="preset-title">Memory Test</div>
+                                <div class="preset-command">MEM_TEST</div>
                             </div>
                         </div>
 
                         <div class="console-container" id="advancedConsole">
                             <div class="console-entry command">
                                 <div class="console-timestamp">System Ready</div>
-                                <div class="console-content">Advanced diagnostics ready. Use caution with low-level commands.</div>
+                                <div class="console-content">Advanced diagnostics ready.</div>
                             </div>
                         </div>
                     </div>
@@ -775,84 +749,40 @@
             <div id="resets-dashboard" class="dashboard-content">
                 <div class="dashboard-header">
                     <h2 class="dashboard-title">System Resets</h2>
-                    <p class="dashboard-subtitle">Perform various types of system resets and recovery operations</p>
+                    <p class="dashboard-subtitle">Hardware reset controls and recovery options</p>
                 </div>
 
                 <div class="dashboard-grid">
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="card-title">
-                                <div class="card-icon">🔄</div>
-                                Reset Operations
-                            </div>
-                        </div>
-
-                        <div style="display: grid; gap: 15px;">
-                            <button class="btn btn-outline" id="softReset" style="justify-content: flex-start;">
-                                <span>🔄</span>
-                                <div style="text-align: left;">
-                                    <div style="font-weight: 600;">Soft Reset</div>
-                                    <div style="font-size: 12px; opacity: 0.7;">Restart without losing configuration</div>
-                                </div>
-                            </button>
-
-                            <button class="btn btn-outline" id="hardReset" style="justify-content: flex-start;">
-                                <span>⚡</span>
-                                <div style="text-align: left;">
-                                    <div style="font-weight: 600;">Hard Reset</div>
-                                    <div style="font-size: 12px; opacity: 0.7;">Full power cycle reset</div>
-                                </div>
-                            </button>
-
-                            <button class="btn btn-outline" id="factoryReset" style="justify-content: flex-start; border-color: #ef4444; color: #ef4444;">
-                                <span>🏭</span>
-                                <div style="text-align: left;">
-                                    <div style="font-weight: 600;">Factory Reset</div>
-                                    <div style="font-size: 12px; opacity: 0.7;">Reset to factory defaults (WARNING)</div>
-                                </div>
-                            </button>
-
-                            <button class="btn btn-outline" id="configReset" style="justify-content: flex-start;">
-                                <span>⚙️</span>
-                                <div style="text-align: left;">
-                                    <div style="font-weight: 600;">Configuration Reset</div>
-                                    <div style="font-size: 12px; opacity: 0.7;">Reset configuration only</div>
-                                </div>
-                            </button>
-                        </div>
-                    </div>
-
                     <div class="card command-interface">
                         <div class="card-header">
                             <div class="card-title">
-                                <div class="card-icon">📟</div>
+                                <div class="card-icon">🔄</div>
                                 Reset Commands
                             </div>
                         </div>
 
+                        <div class="command-input-group">
+                            <input type="text" id="resetCommandInput" class="form-control" placeholder="Enter reset command..." disabled>
+                            <button id="sendResetCmd" class="btn btn-primary" disabled>
+                                <span>📤</span> Send
+                            </button>
+                        </div>
+
                         <div class="command-presets" id="resetPresets">
-                            <div class="preset-btn" data-cmd="AT+CFUN=1,1" data-desc="Soft reset">
+                            <div class="preset-btn" data-cmd="SOFT_RESET" data-desc="Soft reset">
                                 <div class="preset-title">Soft Reset</div>
-                                <div class="preset-command">AT+CFUN=1,1</div>
+                                <div class="preset-command">SOFT_RESET</div>
                             </div>
-                            <div class="preset-btn" data-cmd="RESET HARD" data-desc="Hard reset">
+                            <div class="preset-btn" data-cmd="HARD_RESET" data-desc="Hard reset">
                                 <div class="preset-title">Hard Reset</div>
-                                <div class="preset-command">RESET HARD</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="FACTORY_RESET" data-desc="Factory reset">
-                                <div class="preset-title">Factory Reset</div>
-                                <div class="preset-command">FACTORY_RESET</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="RESET_CONFIG" data-desc="Config reset">
-                                <div class="preset-title">Config Reset</div>
-                                <div class="preset-command">RESET_CONFIG</div>
+                                <div class="preset-command">HARD_RESET</div>
                             </div>
                         </div>
 
                         <div class="console-container" id="resetConsole">
                             <div class="console-entry command">
                                 <div class="console-timestamp">System Ready</div>
-                                <div class="console-content">Reset operations ready. Use caution - some operations are irreversible.</div>
+                                <div class="console-content">Reset controls ready. Use caution with reset commands.</div>
                             </div>
                         </div>
                     </div>
@@ -863,77 +793,40 @@
             <div id="firmware-dashboard" class="dashboard-content">
                 <div class="dashboard-header">
                     <h2 class="dashboard-title">Firmware Updates</h2>
-                    <p class="dashboard-subtitle">Manage firmware updates and version control</p>
+                    <p class="dashboard-subtitle">Firmware version management and update controls</p>
                 </div>
 
                 <div class="dashboard-grid">
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="card-title">
-                                <div class="card-icon">⬆️</div>
-                                Firmware Management
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Current Version</label>
-                            <input type="text" class="form-control" id="currentFwVersion" readonly placeholder="Unknown">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Update Progress</label>
-                            <div style="background: var(--light-gray); border-radius: 10px; height: 20px; overflow: hidden;">
-                                <div id="updateProgress" style="background: var(--gradient-primary); height: 100%; width: 0%; transition: width 0.3s ease; border-radius: 10px;"></div>
-                            </div>
-                            <div id="progressText" style="font-size: 12px; color: var(--secondary-gray); margin-top: 5px;">Ready</div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Firmware File</label>
-                            <input type="file" class="form-control" id="firmwareFile" accept=".bin,.hex,.fw">
-                        </div>
-
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button class="btn btn-primary" id="checkUpdate">
-                                <span>🔍</span> Check Version
-                            </button>
-                            <button class="btn btn-outline" id="uploadFirmware" disabled>
-                                <span>⬆️</span> Upload Firmware
-                            </button>
-                        </div>
-                    </div>
-
                     <div class="card command-interface">
                         <div class="card-header">
                             <div class="card-title">
-                                <div class="card-icon">🔧</div>
+                                <div class="card-icon">⬆️</div>
                                 Firmware Commands
                             </div>
                         </div>
 
+                        <div class="command-input-group">
+                            <input type="text" id="firmwareCommandInput" class="form-control" placeholder="Enter firmware command..." disabled>
+                            <button id="sendFirmwareCmd" class="btn btn-primary" disabled>
+                                <span>📤</span> Send
+                            </button>
+                        </div>
+
                         <div class="command-presets" id="firmwarePresets">
-                            <div class="preset-btn" data-cmd="FW_VERSION" data-desc="Check version">
-                                <div class="preset-title">Check Version</div>
+                            <div class="preset-btn" data-cmd="FW_VERSION" data-desc="Firmware version">
+                                <div class="preset-title">FW Version</div>
                                 <div class="preset-command">FW_VERSION</div>
                             </div>
-                            <div class="preset-btn" data-cmd="FW_UPDATE_MODE" data-desc="Update mode">
-                                <div class="preset-title">Update Mode</div>
-                                <div class="preset-command">FW_UPDATE_MODE</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="FW_VERIFY" data-desc="Verify firmware">
-                                <div class="preset-title">Verify FW</div>
-                                <div class="preset-command">FW_VERIFY</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="BOOTLOADER" data-desc="Enter bootloader">
-                                <div class="preset-title">Bootloader</div>
-                                <div class="preset-command">BOOTLOADER</div>
+                            <div class="preset-btn" data-cmd="FW_CHECK" data-desc="Check for updates">
+                                <div class="preset-title">Check Updates</div>
+                                <div class="preset-command">FW_CHECK</div>
                             </div>
                         </div>
 
                         <div class="console-container" id="firmwareConsole">
                             <div class="console-entry command">
                                 <div class="console-timestamp">System Ready</div>
-                                <div class="console-content">Firmware update system ready. Check current version before updating.</div>
+                                <div class="console-content">Firmware management ready.</div>
                             </div>
                         </div>
                     </div>
@@ -944,48 +837,67 @@
             <div id="analytics-dashboard" class="dashboard-content">
                 <div class="dashboard-header">
                     <h2 class="dashboard-title">System Analytics</h2>
-                    <p class="dashboard-subtitle">Performance metrics and system usage statistics</p>
+                    <p class="dashboard-subtitle">Command history, performance metrics, and system analytics</p>
                 </div>
 
                 <div class="metrics-row">
                     <div class="metric-card">
                         <div class="metric-value" id="totalCommands">0</div>
                         <div class="metric-label">Total Commands</div>
-                        <div class="metric-trend up" id="commandsTrend">+0%</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-value" id="successRate">0%</div>
-                        <div class="metric-label">Success Rate</div>
-                        <div class="metric-trend up" id="successTrend">+0%</div>
+                        <div class="metric-value" id="successfulCommands">0</div>
+                        <div class="metric-label">Successful</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="errorCommands">0</div>
+                        <div class="metric-label">Errors</div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-value" id="avgResponseTime">0ms</div>
-                        <div class="metric-label">Avg Response Time</div>
-                        <div class="metric-trend down" id="responseTrend">-0%</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-value" id="cacheHitRate">0%</div>
-                        <div class="metric-label">Cache Hit Rate</div>
-                        <div class="metric-trend up" id="cacheTrend">+0%</div>
+                        <div class="metric-label">Avg Response</div>
                     </div>
                 </div>
 
                 <div class="dashboard-grid">
-                    <div class="card" style="grid-column: span 2;">
+                    <div class="card">
                         <div class="card-header">
                             <div class="card-title">
                                 <div class="card-icon">📊</div>
-                                Response Time Trends
+                                Command Performance
+                            </div>
+                            <button class="btn btn-sm btn-outline" id="clearAnalytics">
+                                <span>🗑️</span> Clear History
+                            </button>
+                        </div>
+
+                        <canvas id="performanceChart" width="400" height="200"></canvas>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">📋</div>
+                                Command History
                             </div>
                         </div>
-                        <canvas id="responseChart" width="400" height="200"></canvas>
+
+                        <div class="command-history" id="commandHistory">
+                            <div class="history-entry">
+                                <div class="history-timestamp">System Start</div>
+                                <div class="history-command">Analytics tracking initialized</div>
+                                <div class="history-status success">System</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- CalypsoPy+ JavaScript Application -->
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <!-- CalypsoPy+ Scripts -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboards.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
 </body>
 </html>

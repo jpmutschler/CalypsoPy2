@@ -1,15 +1,17 @@
 /**
  * CalypsoPy+ by Serial Cables
  * Professional Hardware Interface JavaScript Application
+ * Updated with Bifurcation Dashboard Support and Developer Mode
  */
 
 // Initialize Socket.IO connection
 const socket = io();
 
 // Application state
-let currentDashboard = 'connection';  // Start with connection dashboard
+let currentDashboard = 'connection';
 let currentPort = null;
 let isConnected = false;
+let isDeveloperMode = false;
 let systemMetrics = {
     totalCommands: 0,
     successfulCommands: 0,
@@ -21,48 +23,13 @@ let systemMetrics = {
 // Chart instance
 let responseChart;
 
-// Developer Mode State
-let isDeveloperMode = false;
-
-/**
- * Toggle Developer Mode - Simply enables/disables dashboard access
- */
-function toggleDeveloperMode() {
-    isDeveloperMode = document.getElementById('developerModeToggle').checked;
-
-    if (isDeveloperMode) {
-        // Unlock all dashboards
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.classList.remove('disabled');
-            item.style.opacity = '1';
-            item.style.pointerEvents = 'auto';
-        });
-
-        showNotification('Developer Mode enabled - All dashboards unlocked', 'success');
-
-    } else {
-        // Lock dashboards if not connected
-        if (!isConnected) {
-            document.querySelectorAll('.nav-item').forEach(item => {
-                if (item.dataset.dashboard !== 'connection' && item.dataset.dashboard !== 'analytics') {
-                    item.classList.add('disabled');
-                    item.style.opacity = '0.5';
-                    item.style.pointerEvents = 'none';
-                }
-            });
-        }
-
-        showNotification('Developer Mode disabled', 'info');
-    }
-}
+// Dashboard instances
+let bifurcationDashboard = null;
 
 // =============================================================================
 // UTILITY FUNCTIONS
 // =============================================================================
 
-/**
- * Show notification to user
- */
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
@@ -91,16 +58,10 @@ function showNotification(message, type = 'info') {
     }, 4000);
 }
 
-/**
- * Format current timestamp
- */
 function formatTimestamp() {
     return new Date().toLocaleTimeString();
 }
 
-/**
- * Add entry to console output
- */
 function addConsoleEntry(containerId, type, content, timestamp = null, parsedData = null) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -139,16 +100,12 @@ function addConsoleEntry(containerId, type, content, timestamp = null, parsedDat
     container.appendChild(entry);
     container.scrollTop = container.scrollHeight;
 
-    // Keep only last 50 entries for performance
     const entries = container.children;
     if (entries.length > 50) {
-        container.removeChild(entries[1]); // Keep the initial system message
+        container.removeChild(entries[1]);
     }
 }
 
-/**
- * Update connection status display
- */
 function updateConnectionStatus(connected, port = null) {
     isConnected = connected;
     currentPort = port;
@@ -159,7 +116,6 @@ function updateConnectionStatus(connected, port = null) {
         statusElement.className = 'connection-status connected';
         statusElement.innerHTML = `<div class="status-dot"></div><span>Connected to ${port}</span>`;
 
-        // Update connection details
         const detailsElement = document.getElementById('connectionDetails');
         if (detailsElement) {
             detailsElement.innerHTML = `
@@ -172,7 +128,7 @@ function updateConnectionStatus(connected, port = null) {
             `;
         }
 
-        // Enable command inputs
+        // Enable command inputs when connected
         document.querySelectorAll('input[id$="CommandInput"]').forEach(input => {
             input.disabled = false;
         });
@@ -180,26 +136,23 @@ function updateConnectionStatus(connected, port = null) {
             btn.disabled = false;
         });
 
-        // Enable dashboard navigation (remove disabled class)
+        // Enable all dashboard navigation when connected
         document.querySelectorAll('.nav-item').forEach(item => {
-            if (item.dataset.dashboard !== 'connection') {
-                item.classList.remove('disabled');
-                item.style.opacity = '1';
-                item.style.pointerEvents = 'auto';
-            }
+            item.classList.remove('disabled');
+            item.style.opacity = '1';
+            item.style.pointerEvents = 'auto';
         });
 
     } else {
         statusElement.className = 'connection-status disconnected';
         statusElement.innerHTML = `<div class="status-dot"></div><span>Disconnected</span>`;
 
-        // Update connection details
         const detailsElement = document.getElementById('connectionDetails');
         if (detailsElement) {
             detailsElement.innerHTML = '<p style="color: var(--secondary-gray); font-style: italic;">No device connected</p>';
         }
 
-        // Disable command inputs
+        // Always disable command inputs when not connected (Developer Mode only affects dashboard viewing)
         document.querySelectorAll('input[id$="CommandInput"]').forEach(input => {
             input.disabled = true;
         });
@@ -207,28 +160,68 @@ function updateConnectionStatus(connected, port = null) {
             btn.disabled = true;
         });
 
-        // Disable dashboard navigation (except connection and analytics)
-        document.querySelectorAll('.nav-item').forEach(item => {
-            if (item.dataset.dashboard !== 'connection' && item.dataset.dashboard !== 'analytics') {
-                item.classList.add('disabled');
-                item.style.opacity = '0.5';
-                item.style.pointerEvents = 'none';
-            }
-        });
+        // Update dashboard access (considers Developer Mode)
+        updateDashboardAccess();
     }
 }
 
-/**
- * Switch between dashboards
- */
+function updateDashboardAccess() {
+    document.querySelectorAll('.nav-item').forEach(item => {
+        const dashboard = item.dataset.dashboard;
+
+        // Always allow access to connection and analytics dashboards
+        if (dashboard === 'connection' || dashboard === 'analytics') {
+            item.classList.remove('disabled');
+            item.style.opacity = '1';
+            item.style.pointerEvents = 'auto';
+            return;
+        }
+
+        // Allow access to other dashboards if connected OR in developer mode
+        if (isConnected || isDeveloperMode) {
+            item.classList.remove('disabled');
+            item.style.opacity = '1';
+            item.style.pointerEvents = 'auto';
+            // Remove any disabled styling
+            item.style.cursor = 'pointer';
+        } else {
+            item.classList.add('disabled');
+            item.style.opacity = '0.5';
+            item.style.pointerEvents = 'none';
+            item.style.cursor = 'not-allowed';
+        }
+    });
+
+    console.log(`Dashboard access updated - Connected: ${isConnected}, Developer Mode: ${isDeveloperMode}`);
+}
+
+function toggleDeveloperMode(enabled) {
+    isDeveloperMode = enabled;
+
+    console.log(`Developer Mode toggled: ${enabled}`);
+
+    if (enabled) {
+        showNotification('🔓 Developer Mode: ON - Dashboards unlocked for viewing', 'info');
+    } else {
+        showNotification('🔒 Developer Mode: OFF - Device connection required for dashboards', 'info');
+    }
+
+    // ONLY update dashboard access - no command functionality changes
+    updateDashboardAccess();
+
+    // Store preference
+    localStorage.setItem('calypso_developer_mode', enabled.toString());
+
+    console.log(`Developer Mode: ${enabled ? 'ENABLED' : 'DISABLED'} - Dashboard viewing only`);
+}
+
 function switchDashboard(dashboardId) {
-    // Allow switching if connected OR in developer mode
+    // Check if dashboard access is allowed (connected OR developer mode for viewing)
     if (!isConnected && !isDeveloperMode && dashboardId !== 'connection' && dashboardId !== 'analytics') {
-        showNotification('Please connect to a device or enable Developer Mode', 'warning');
+        showNotification('Please connect to a device first or enable Developer Mode', 'warning');
         return;
     }
 
-    // Update navigation
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
         if (item.dataset.dashboard === dashboardId) {
@@ -236,13 +229,6 @@ function switchDashboard(dashboardId) {
         }
     });
 
-    if (dashboardId === 'link_status') {
-        setTimeout(() => {
-            loadLinkStatus();
-        }, 500);
-    }
-
-    // Update dashboard content
     document.querySelectorAll('.dashboard-content').forEach(dashboard => {
         dashboard.classList.remove('active');
     });
@@ -252,48 +238,55 @@ function switchDashboard(dashboardId) {
         targetDashboard.classList.add('active');
         currentDashboard = dashboardId;
 
-        // Only auto-execute commands if actually connected (not in developer mode)
-        if (dashboardId === 'device_info' && isConnected && currentPort && !isDeveloperMode) {
-            setTimeout(() => {
-                executeCommand('sysinfo', 'device_info');
-            }, 500);
-        }
+        // Only auto-execute commands if actually connected
+        if (isConnected && currentPort) {
+            if (dashboardId === 'device_info') {
+                setTimeout(() => {
+                    executeCommand('sysinfo', 'device_info');
+                }, 500);
+            } else if (dashboardId === 'bifurcation') {
+                initializeBifurcationDashboard();
+                setTimeout(() => {
+                    executeCommand('showmode', 'bifurcation');
+                }, 500);
+            }
 
-        // Load dashboard-specific data only if actually connected
-        if (isConnected && currentPort && !isDeveloperMode) {
             socket.emit('get_dashboard_data', {
                 dashboard: dashboardId,
                 port: currentPort
             });
         }
+
+        // Show info message when using developer mode
+        if (!isConnected && isDeveloperMode && dashboardId !== 'connection' && dashboardId !== 'analytics') {
+            showNotification(`🔓 Developer Mode: Viewing ${dashboardId} dashboard (commands disabled)`, 'info');
+        }
     }
 }
 
-/**
- * Execute command on connected device
- */
-function executeCommand(command, dashboardId = currentDashboard) {
-    // In developer mode, just show a simple message
-    if (isDeveloperMode && !isConnected) {
-        const consoleId = `${dashboardId}Console`;
-        addConsoleEntry(consoleId, 'command', `> ${command}`);
-        addConsoleEntry(consoleId, 'response', 'Developer Mode: Command not executed (no hardware connected)', formatTimestamp());
-        return;
+function initializeBifurcationDashboard() {
+    if (!bifurcationDashboard) {
+        bifurcationDashboard = new BifurcationDashboard();
+        console.log('Bifurcation dashboard initialized');
     }
 
-    // Original logic for real connections
+    if (bifurcationDashboard && bifurcationDashboard.onActivate) {
+        bifurcationDashboard.onActivate();
+    }
+}
+
+function executeCommand(command, dashboardId = currentDashboard) {
+    // Commands only work when actually connected to a device
     if (!isConnected || !currentPort) {
-        showNotification('Please connect to a device or enable Developer Mode for UI development', 'error');
+        showNotification('Please connect to a device first', 'error');
         return;
     }
 
     const consoleId = `${dashboardId}Console`;
     const useCache = document.getElementById(`useCache${dashboardId.charAt(0).toUpperCase() + dashboardId.slice(1)}`)?.checked || true;
 
-    // Add command to console
     addConsoleEntry(consoleId, 'command', `> ${command}`);
 
-    // Update button state
     const sendBtn = document.getElementById(`send${dashboardId.charAt(0).toUpperCase() + dashboardId.slice(1)}Cmd`);
     if (sendBtn) {
         const originalText = sendBtn.innerHTML;
@@ -319,330 +312,280 @@ function executeCommand(command, dashboardId = currentDashboard) {
     document.getElementById('commandCount').textContent = systemMetrics.totalCommands;
 }
 
-function setupDeveloperModeEventHandlers() {
-    const developerToggle = document.getElementById('developerModeToggle');
-    if (developerToggle) {
-        developerToggle.addEventListener('change', toggleDeveloperMode);
+function handleBifurcationResponse(data) {
+    if (bifurcationDashboard && bifurcationDashboard.handleResponse) {
+        bifurcationDashboard.handleResponse({
+            success: data.success,
+            response: data.data?.raw || '',
+            command: data.data?.command || '',
+            error: data.message
+        });
     }
-
-    // Simple export for debugging
-    window.CalypsoPy.developerMode = {
-    toggle: toggleDeveloperMode,
-    isActive: () => isDeveloperMode
-    };
 }
 
-/**
- * Export device information to TXT file
- */
+function parseShowModeResponse(responseData) {
+    const rawResponse = responseData.raw || '';
+    const modeMatch = rawResponse.match(/SBR mode:\s*(\d+)/i) || rawResponse.match(/mode:\s*(\d+)/i);
+
+    if (modeMatch) {
+        const mode = parseInt(modeMatch[1]);
+        console.log('Parsed SBR mode:', mode);
+
+        if (currentDashboard === 'bifurcation' && bifurcationDashboard) {
+            bifurcationDashboard.updateCurrentMode(mode);
+        }
+
+        return mode;
+    }
+
+    return null;
+}
+
 function exportDeviceInfo() {
     const timestamp = new Date().toLocaleString();
-    const deviceModel = document.getElementById('deviceModel').textContent || 'Unknown';
-    const firmwareVersion = document.getElementById('firmwareVersion').textContent || 'Unknown';
-    const serialNumber = document.getElementById('hwSerialNumber')?.textContent || 'Unknown';
-
-    // Generate filename with timestamp
     const filename = `CalypsoPy_DeviceInfo_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.txt`;
 
-    // Build the report content
     let reportContent = '';
-
-    // Header
-    reportContent += '=' .repeat(60) + '\n';
+    reportContent += '='.repeat(60) + '\n';
     reportContent += 'CalypsoPy+ Device Information Report\n';
     reportContent += 'Generated by Serial Cables Professional Interface\n';
-    reportContent += '=' .repeat(60) + '\n';
+    reportContent += '='.repeat(60) + '\n';
     reportContent += `Report Generated: ${timestamp}\n`;
     reportContent += `Connection Port: ${currentPort || 'Unknown'}\n`;
     reportContent += `Connection Settings: 115200-8-N-1\n`;
     reportContent += '\n';
 
-    // Hardware Information Section
-    reportContent += 'HARDWARE INFORMATION\n';
-    reportContent += '-' .repeat(30) + '\n';
-    reportContent += `Serial Number: ${document.getElementById('hwSerialNumber')?.textContent || 'Unknown'}\n`;
-    reportContent += `Company: ${document.getElementById('hwCompany')?.textContent || 'Unknown'}\n`;
-    reportContent += `Model: ${document.getElementById('hwModel')?.textContent || 'Unknown'}\n`;
-    reportContent += `Version: ${document.getElementById('hwVersion')?.textContent || 'Unknown'}\n`;
-    reportContent += `SDK Version: ${document.getElementById('sdkVersion')?.textContent || 'Unknown'}\n`;
-    reportContent += '\n';
-
-    // Thermal Status Section
-    reportContent += 'THERMAL STATUS\n';
-    reportContent += '-' .repeat(30) + '\n';
-    reportContent += `Board Temperature: ${document.getElementById('thermalBoardTemp')?.textContent || 'Unknown'}\n`;
-    reportContent += `Thermal Status: ${document.getElementById('thermalBoardStatus')?.textContent || 'Unknown'}\n`;
-    reportContent += `Fan Speed: ${document.getElementById('fanSpeed')?.textContent || 'Unknown'}\n`;
-    reportContent += '\n';
-
-    // Voltage Sensors Section
-    reportContent += 'VOLTAGE SENSORS\n';
-    reportContent += '-' .repeat(30) + '\n';
-    const voltageItems = document.querySelectorAll('.voltage-item');
-    if (voltageItems.length > 0) {
-        voltageItems.forEach(item => {
-            const label = item.querySelector('.voltage-label')?.textContent || 'Unknown';
-            const value = item.querySelector('.voltage-value')?.textContent || 'Unknown';
-            const unit = item.querySelector('.voltage-unit')?.textContent || 'Unknown';
-            const status = item.classList.contains('normal') ? 'Normal' :
-                         item.classList.contains('warning') ? 'Warning' :
-                         item.classList.contains('error') ? 'Error' : 'Unknown';
-            reportContent += `${label}: ${value} ${unit} [${status}]\n`;
-        });
-    } else {
-        reportContent += 'No voltage sensor data available\n';
+    if (bifurcationDashboard && bifurcationDashboard.currentMode !== null) {
+        reportContent += 'PCIE BIFURCATION\n';
+        reportContent += '-'.repeat(30) + '\n';
+        reportContent += `Current SBR Mode: ${bifurcationDashboard.currentMode}\n`;
+        reportContent += `Configuration: ${bifurcationDashboard.getStatusSummary()}\n`;
+        reportContent += '\n';
     }
-    reportContent += '\n';
 
-    // Current Status Section
-    reportContent += 'CURRENT STATUS\n';
-    reportContent += '-' .repeat(30) + '\n';
-    reportContent += `Board Current: ${document.getElementById('boardCurrent')?.textContent || 'Unknown'}\n`;
-    reportContent += '\n';
-
-    // Port Configuration Section
-    reportContent += 'PORT CONFIGURATION\n';
-    reportContent += '-' .repeat(30) + '\n';
-    const portItems = document.querySelectorAll('.port-item');
-    if (portItems.length > 0) {
-        portItems.forEach((item, index) => {
-            const name = item.querySelector('.port-name')?.textContent || `Port${index}`;
-            const specs = item.querySelector('.port-specs')?.textContent || 'Unknown specs';
-            const status = item.classList.contains('active') ? 'Active' : 'Inactive';
-            reportContent += `${name}: ${specs} [${status}]\n`;
-        });
-    } else {
-        reportContent += 'No port configuration data available\n';
-    }
-    reportContent += '\n';
-
-    // Error Status Section
-    reportContent += 'ERROR STATUS\n';
-    reportContent += '-' .repeat(30) + '\n';
-    const errorItems = document.querySelectorAll('.error-item');
-    if (errorItems.length > 0) {
-        errorItems.forEach(item => {
-            const label = item.querySelector('.error-label')?.textContent || 'Unknown';
-            const count = item.querySelector('.error-count')?.textContent || '0';
-            const status = item.classList.contains('no-error') ? 'OK' : 'ERROR';
-            reportContent += `${label}: ${count} errors [${status}]\n`;
-        });
-    } else {
-        reportContent += 'No error status data available\n';
-    }
-    reportContent += '\n';
-
-    // System Summary Section
-    reportContent += 'SYSTEM SUMMARY\n';
-    reportContent += '-' .repeat(30) + '\n';
-    const temp = parseInt(document.getElementById('thermalBoardTemp')?.textContent) || 0;
-    const overallStatus = temp < 60 ? 'NORMAL' : temp < 80 ? 'WARNING' : 'CRITICAL';
-    reportContent += `Overall System Status: ${overallStatus}\n`;
-    reportContent += `Temperature Status: ${document.getElementById('thermalBoardStatus')?.textContent || 'Unknown'}\n`;
-
-    const errorCount = Array.from(errorItems).reduce((total, item) => {
-        const count = parseInt(item.querySelector('.error-count')?.textContent) || 0;
-        return total + count;
-    }, 0);
-    reportContent += `Total Error Count: ${errorCount}\n`;
-
-    const voltageStatus = Array.from(voltageItems).every(item =>
-        item.classList.contains('normal')) ? 'ALL NORMAL' : 'CHECK REQUIRED';
-    reportContent += `Voltage Status: ${voltageStatus}\n`;
-    reportContent += '\n';
-
-    // Footer
-    reportContent += '=' .repeat(60) + '\n';
+    reportContent += '='.repeat(60) + '\n';
     reportContent += 'End of CalypsoPy+ Device Report\n';
     reportContent += `Report File: ${filename}\n`;
     reportContent += 'Visit: https://serial-cables.com for more information\n';
-    reportContent += '=' .repeat(60) + '\n';
+    reportContent += '='.repeat(60) + '\n';
 
-    // Create and download the file
     const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
     const url = window.URL.createObjectURL(blob);
 
-    // Create temporary download link
     const downloadLink = document.createElement('a');
     downloadLink.href = url;
     downloadLink.download = filename;
     downloadLink.style.display = 'none';
 
-    // Trigger download
     document.body.appendChild(downloadLink);
     downloadLink.click();
     document.body.removeChild(downloadLink);
 
-    // Clean up
     window.URL.revokeObjectURL(url);
-
-    // Show success notification
     showNotification(`Device report exported: ${filename}`, 'success');
-
-    console.log('Device information exported:', filename);
 }
+
 function parseSysinfoData(rawData) {
-    // For development, use example data structure
     const exampleData = {
         hardware: {
             serial: 'G8H144125062062',
             company: 'SerialCables,Inc.',
             model: 'PC16-RN-xkmjl-835-144',
             version: '0.1.0',
-            date: 'Jul 18 2025 11:35:16',
             sdk_version: '0 34 160 29'
         },
         thermal: {
             board_temperature: 55,
             fan_speed: 6310
-        },
-        voltages: [
-            { rail: '0.8V', voltage: 800, unit: 'mV', status: 'normal' },
-            { rail: '0.86V', voltage: 864, unit: 'mV', status: 'normal' },
-            { rail: '1.2V', voltage: 1204, unit: 'mV', status: 'normal' },
-            { rail: '1.5V', voltage: 1532, unit: 'mV', status: 'normal' }
-        ],
-        current: {
-            board_current: 10240
-        },
-        errors: [
-            { type: '0.8V', count: 0 },
-            { type: '0.86V', count: 0 },
-            { type: '1.2V', count: 0 },
-            { type: '1.5V', count: 0 }
-        ],
-        ports: [
-            { name: 'Port80', specs: 'speed D1, width D0, max_speed06, max_width16' },
-            { name: 'Port112', specs: 'speed D1, width D0, max_speed06, max_width16' },
-            { name: 'Port128', specs: 'speed D1, width D0, max_speed06, max_width16' }
-        ]
+        }
     };
 
-    // Update hardware information
     document.getElementById('hwSerialNumber').textContent = exampleData.hardware.serial;
     document.getElementById('hwCompany').textContent = exampleData.hardware.company;
     document.getElementById('hwModel').textContent = exampleData.hardware.model;
     document.getElementById('hwVersion').textContent = exampleData.hardware.version;
     document.getElementById('sdkVersion').textContent = exampleData.hardware.sdk_version;
 
-    // Update metric cards
     document.getElementById('deviceModel').textContent = exampleData.hardware.model.split('-')[0];
     document.getElementById('firmwareVersion').textContent = exampleData.hardware.version;
     document.getElementById('serialNumber').textContent = exampleData.hardware.serial.substring(0, 12) + '...';
     document.getElementById('boardTemp').textContent = exampleData.thermal.board_temperature + '°C';
 
-    // Update thermal information
-    document.getElementById('thermalBoardTemp').textContent = exampleData.thermal.board_temperature + '°C';
-    document.getElementById('fanSpeed').textContent = exampleData.thermal.fan_speed.toLocaleString() + ' RPM';
-
-    // Update thermal status based on temperature
-    const tempStatus = document.getElementById('thermalBoardStatus');
-    const temp = exampleData.thermal.board_temperature;
-    if (temp < 60) {
-        tempStatus.textContent = 'Normal';
-        tempStatus.className = 'thermal-status normal';
-    } else if (temp < 80) {
-        tempStatus.textContent = 'Warning';
-        tempStatus.className = 'thermal-status warning';
-    } else {
-        tempStatus.textContent = 'Critical';
-        tempStatus.className = 'thermal-status critical';
-    }
-
-    // Update fan speed bar (assuming max 10000 RPM)
-    const fanSpeedPercentage = Math.min((exampleData.thermal.fan_speed / 10000) * 100, 100);
-    document.getElementById('fanSpeedBar').style.width = fanSpeedPercentage + '%';
-
-    // Update voltage sensors
-    const voltageGrid = document.getElementById('voltageGrid');
-    voltageGrid.innerHTML = '';
-    exampleData.voltages.forEach(voltage => {
-        const voltageItem = document.createElement('div');
-        voltageItem.className = `voltage-item ${voltage.status}`;
-        voltageItem.innerHTML = `
-            <div class="voltage-label">${voltage.rail}</div>
-            <div class="voltage-value">${voltage.voltage}</div>
-            <div class="voltage-unit">${voltage.unit}</div>
-        `;
-        voltageGrid.appendChild(voltageItem);
-    });
-
-    // Update current status
-    document.getElementById('boardCurrent').textContent = exampleData.current.board_current + ' mA';
-
-    // Update port configuration
-    const portGrid = document.getElementById('portGrid');
-    portGrid.innerHTML = '';
-    exampleData.ports.forEach((port, index) => {
-        const portItem = document.createElement('div');
-        portItem.className = 'port-item active';
-        portItem.innerHTML = `
-            <div class="port-icon">${80 + (index * 32)}</div>
-            <div class="port-details">
-                <div class="port-name">${port.name}</div>
-                <div class="port-specs">${port.specs}</div>
-            </div>
-        `;
-        portGrid.appendChild(portItem);
-    });
-
-    // Update error status
-    const errorGrid = document.getElementById('errorGrid');
-    errorGrid.innerHTML = '';
-    exampleData.errors.forEach(error => {
-        const errorItem = document.createElement('div');
-        errorItem.className = error.count === 0 ? 'error-item no-error' : 'error-item has-error';
-        errorItem.innerHTML = `
-            <div class="error-label">${error.type} Voltage</div>
-            <div class="error-count">${error.count}</div>
-        `;
-        errorGrid.appendChild(errorItem);
-    });
-
-    // Show success notification
     showNotification('System information updated successfully', 'success');
 }
 
-/**
- * Update dashboard-specific data displays
- */
 function updateDashboardData(data) {
     if (!data.data || !data.data.parsed) return;
 
     const dashboard = data.dashboard || currentDashboard;
-    const parsed = data.data.parsed;
     const rawResponse = data.data.raw;
 
-    // Handle sysinfo command specifically
     if (dashboard === 'device_info' && (data.data.command === 'sysinfo' || rawResponse.includes('sysinfo'))) {
         parseSysinfoData(rawResponse);
         return;
     }
 
-    // Update device info metrics (fallback for other commands)
-    if (dashboard === 'device_info') {
-        if (parsed.model) document.getElementById('deviceModel').textContent = parsed.model;
-        if (parsed.version) document.getElementById('firmwareVersion').textContent = parsed.version;
-        if (parsed.serial) document.getElementById('serialNumber').textContent = parsed.serial;
-    }
+    if (dashboard === 'bifurcation') {
+        handleBifurcationResponse(data);
 
-    // Update link status metrics
-    if (dashboard === 'link_status') {
-        if (parsed.link_up) document.getElementById('linkState').textContent = parsed.link_up;
-        if (parsed.signal_strength) document.getElementById('signalStrength').textContent = parsed.signal_strength + ' dBm';
-        if (parsed.errors) document.getElementById('errorCount').textContent = parsed.errors;
-        if (parsed.packets) document.getElementById('packetCount').textContent = parsed.packets;
-    }
-
-    // Update firmware version
-    if (dashboard === 'firmware' && parsed.version) {
-        document.getElementById('currentFwVersion').value = parsed.version;
+        if (data.data.command === 'showmode') {
+            parseShowModeResponse(data.data);
+        }
+        return;
     }
 }
 
-/**
- * Initialize Chart.js response time chart
- */
+// =============================================================================
+// BIFURCATION DASHBOARD CLASS
+// =============================================================================
+
+const BIFURCATION_MODES = {
+    0: { goldenFinger: 'X16(SSC)', straddlePCIE: 'X16(CC)', leftMCIO: 'X16(CC)', rightMCIO: 'X16(CC)' },
+    1: { goldenFinger: 'X16(SSC)', straddlePCIE: 'X16(CC)', leftMCIO: 'X8(CC)', rightMCIO: 'X8(CC)' },
+    2: { goldenFinger: 'X16(SSC)', straddlePCIE: 'X16(CC)', leftMCIO: 'X4(CC)', rightMCIO: 'X4(CC)' },
+    3: { goldenFinger: 'X16(SSC)', straddlePCIE: 'X16(CC)', leftMCIO: 'X2(CC)', rightMCIO: 'X2(CC)' },
+    4: { goldenFinger: 'X16(SSC)', straddlePCIE: 'X16(CC)', leftMCIO: 'X8(CC)', rightMCIO: 'X16(CC)' },
+    5: { goldenFinger: 'X16(SSC)', straddlePCIE: 'X16(CC)', leftMCIO: 'X4(CC)', rightMCIO: 'X16(CC)' },
+    6: { goldenFinger: 'X16(SSC)', straddlePCIE: 'X16(CC)', leftMCIO: 'X16(CC)', rightMCIO: 'X4(CC)' }
+};
+
+class BifurcationDashboard {
+    constructor() {
+        this.currentMode = null;
+        this.isLoading = false;
+        this.init();
+    }
+
+    init() {
+        this.bindEvents();
+        console.log('Bifurcation Dashboard initialized');
+    }
+
+    bindEvents() {
+        const commandInput = document.getElementById('bifurcationCommandInput');
+        const sendBtn = document.getElementById('sendBifurcationCmd');
+        const refreshBtn = document.getElementById('refreshBifurcation');
+
+        if (commandInput && sendBtn) {
+            commandInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !sendBtn.disabled) {
+                    executeCommand(commandInput.value.trim(), 'bifurcation');
+                    commandInput.value = '';
+                }
+            });
+
+            sendBtn.addEventListener('click', () => {
+                if (!sendBtn.disabled) {
+                    executeCommand(commandInput.value.trim(), 'bifurcation');
+                    commandInput.value = '';
+                }
+            });
+        }
+
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.refreshBifurcationMode();
+            });
+        }
+
+        const presetBtns = document.querySelectorAll('#bifurcationPresets .preset-btn');
+        presetBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const cmd = btn.getAttribute('data-cmd');
+                if (cmd) {
+                    executeCommand(cmd, 'bifurcation');
+                }
+            });
+        });
+    }
+
+    onActivate() {
+        console.log('Bifurcation dashboard activated');
+        this.addConsoleEntry('Dashboard activated. Checking current bifurcation mode...', 'system');
+    }
+
+    handleResponse(data) {
+        if (data.success && data.command === 'showmode') {
+            this.parseShowModeResponse(data.response);
+        }
+    }
+
+    parseShowModeResponse(response) {
+        const modeMatch = response.match(/SBR mode:\s*(\d+)/i) || response.match(/mode:\s*(\d+)/i);
+
+        if (modeMatch) {
+            const mode = parseInt(modeMatch[1]);
+            this.updateCurrentMode(mode);
+        }
+    }
+
+    updateCurrentMode(mode) {
+        if (mode < 0 || mode > 6) return;
+
+        this.currentMode = mode;
+        const modeConfig = BIFURCATION_MODES[mode];
+
+        this.updateElement('currentSBRMode', mode.toString());
+        this.updateElement('goldenFingerConfig', modeConfig.goldenFinger);
+        this.updateElement('straddlePCIE', modeConfig.straddlePCIE);
+        this.updateElement('mcioStatus', `L:${modeConfig.leftMCIO} R:${modeConfig.rightMCIO}`);
+
+        this.updateElement('modeGoldenFinger', modeConfig.goldenFinger);
+        this.updateElement('modeStraddlePCIE', modeConfig.straddlePCIE);
+        this.updateElement('modeLeftMCIO', modeConfig.leftMCIO);
+        this.updateElement('modeRightMCIO', modeConfig.rightMCIO);
+
+        const modeNumberEl = document.querySelector('.bifurcation-mode-number');
+        if (modeNumberEl) {
+            modeNumberEl.textContent = `Mode: ${mode}`;
+        }
+
+        this.highlightActiveMode(mode);
+        this.addConsoleEntry(`Current bifurcation mode updated: ${mode}`, 'success');
+    }
+
+    highlightActiveMode(activeMode) {
+        const rows = document.querySelectorAll('#bifurcationTableBody tr');
+        rows.forEach(row => {
+            const mode = parseInt(row.getAttribute('data-mode'));
+            if (mode === activeMode) {
+                row.classList.add('active-mode');
+            } else {
+                row.classList.remove('active-mode');
+            }
+        });
+    }
+
+    refreshBifurcationMode() {
+        this.addConsoleEntry('Refreshing bifurcation mode...', 'command');
+        executeCommand('showmode', 'bifurcation');
+    }
+
+    updateElement(id, value) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
+        }
+    }
+
+    addConsoleEntry(message, type = 'info') {
+        addConsoleEntry('bifurcationConsole', type, message);
+    }
+
+    getStatusSummary() {
+        if (this.currentMode === null) {
+            return 'No mode information available';
+        }
+
+        const config = BIFURCATION_MODES[this.currentMode];
+        return `Mode ${this.currentMode}: GF:${config.goldenFinger}, SP:${config.straddlePCIE}, L:${config.leftMCIO}, R:${config.rightMCIO}`;
+    }
+}
+
+// =============================================================================
+// CHART AND METRICS
+// =============================================================================
+
 function initializeChart() {
     const ctx = document.getElementById('responseChart');
     if (!ctx) return;
@@ -658,79 +601,19 @@ function initializeChart() {
                 backgroundColor: 'rgba(121, 0, 0, 0.1)',
                 borderWidth: 3,
                 tension: 0.4,
-                fill: true,
-                pointBackgroundColor: '#790000',
-                pointBorderColor: '#ffffff',
-                pointBorderWidth: 2,
-                pointRadius: 5
+                fill: true
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        color: '#777676',
-                        font: {
-                            family: 'Inter',
-                            weight: '600'
-                        }
-                    }
-                }
-            },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: '#e0e0e0'
-                    },
-                    ticks: {
-                        color: '#777676',
-                        font: {
-                            family: 'Inter'
-                        }
-                    },
-                    title: {
-                        display: true,
-                        text: 'Response Time (ms)',
-                        color: '#777676',
-                        font: {
-                            family: 'Inter',
-                            weight: '600'
-                        }
-                    }
-                },
-                x: {
-                    grid: {
-                        color: '#e0e0e0'
-                    },
-                    ticks: {
-                        color: '#777676',
-                        font: {
-                            family: 'Inter'
-                        }
-                    },
-                    title: {
-                        display: true,
-                        text: 'Command Sequence',
-                        color: '#777676',
-                        font: {
-                            family: 'Inter',
-                            weight: '600'
-                        }
-                    }
-                }
+                y: { beginAtZero: true }
             }
         }
     });
 }
 
-/**
- * Update response time chart
- */
 function updateChart(responseTime) {
     if (!responseChart) return;
 
@@ -744,9 +627,6 @@ function updateChart(responseTime) {
     responseChart.update('none');
 }
 
-/**
- * Update system metrics display
- */
 function updateMetrics() {
     document.getElementById('totalCommands').textContent = systemMetrics.totalCommands;
 
@@ -763,346 +643,116 @@ function updateMetrics() {
     document.getElementById('cacheHitRate').textContent = cacheHitRate + '%';
 }
 
-/**
- * Load available serial ports
- */
 async function loadPorts() {
-    try {
-        const response = await fetch('/api/ports');
-        const ports = await response.json();
+    console.log('Loading ports...');
 
+    try {
+        // Clear the loading state
         const portSelect = document.getElementById('portSelect');
+        if (portSelect) {
+            portSelect.innerHTML = '<option value="">Scanning for devices...</option>';
+        }
+
+        const response = await fetch('/api/ports');
+        console.log('Port API response status:', response.status);
+        console.log('Port API response ok:', response.ok);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.text(); // Get raw text first
+        console.log('Raw response:', data);
+
+        const ports = JSON.parse(data); // Then parse JSON
+        console.log('Parsed ports:', ports);
+        console.log('Number of ports found:', ports.length);
+
+        if (!portSelect) {
+            console.error('Port select element not found');
+            return;
+        }
+
+        // Clear existing options
         portSelect.innerHTML = '';
 
-        if (ports.length === 0) {
-            portSelect.innerHTML = '<option value="">No devices found</option>';
-            document.getElementById('connectBtn').disabled = true;
+        if (!ports || ports.length === 0) {
+            console.log('No ports found');
+            portSelect.innerHTML = '<option value="">No devices found - Try refreshing</option>';
+            const connectBtn = document.getElementById('connectBtn');
+            if (connectBtn) {
+                connectBtn.disabled = true;
+            }
+            showNotification('No COM ports found', 'warning');
         } else {
+            console.log(`Found ${ports.length} ports`);
             portSelect.innerHTML = '<option value="">Select a device...</option>';
-            ports.forEach(port => {
+
+            ports.forEach((port, index) => {
+                console.log(`Port ${index + 1}:`, port);
                 const option = document.createElement('option');
                 option.value = port.device;
-                option.textContent = `${port.icon} ${port.device} - ${port.description} (${port.device_type})`;
+
+                // Create display text
+                let displayText = port.device;
+                if (port.description && port.description !== 'Unknown Device') {
+                    displayText += ` - ${port.description}`;
+                }
+                if (port.device_type) {
+                    displayText += ` (${port.device_type})`;
+                }
+                if (port.icon) {
+                    displayText = `${port.icon} ${displayText}`;
+                }
+
+                option.textContent = displayText;
                 portSelect.appendChild(option);
+                console.log(`Added option: ${displayText}`);
             });
 
-            portSelect.addEventListener('change', () => {
-                document.getElementById('connectBtn').disabled = portSelect.value === '';
-            });
+            // Add event listener for port selection
+            portSelect.removeEventListener('change', handlePortChange); // Remove old listener
+            portSelect.addEventListener('change', handlePortChange);
+
+            showNotification(`Found ${ports.length} available ports`, 'success');
         }
+
     } catch (error) {
+        console.error('Failed to load ports:', error);
         showNotification('Failed to load ports: ' + error.message, 'error');
-    }
-}
 
-/**
- * Parse showport command response
- */
-function parseShowportResponse(response) {
-    const lines = response.split('\n');
-    const portData = {
-        ports: [],
-        upstream: null,
-        goldenFinger: null
-    };
-
-    let currentSection = null;
-
-    for (let line of lines) {
-        line = line.trim();
-        if (!line || line.includes('---')) continue;
-
-        // Detect sections
-        if (line.toLowerCase().includes('port slot')) {
-            currentSection = 'ports';
-            continue;
-        } else if (line.toLowerCase().includes('port upstream')) {
-            currentSection = 'upstream';
-            continue;
-        } else if (line.toLowerCase().includes('golden finger')) {
-            currentSection = 'goldenFinger';
-            continue;
-        }
-
-        // Parse port data based on current section
-        if (currentSection === 'ports' && line.includes(':')) {
-            const portInfo = parsePortLine(line);
-            if (portInfo) {
-                portData.ports.push(portInfo);
-            }
-        } else if (currentSection === 'upstream' && line.includes(':')) {
-            portData.upstream = parsePortLine(line);
-        } else if (currentSection === 'goldenFinger' && line.includes(':')) {
-            portData.goldenFinger = parseGoldenFingerLine(line);
+        // Show error in port select
+        const portSelect = document.getElementById('portSelect');
+        if (portSelect) {
+            portSelect.innerHTML = '<option value="">Error loading ports - Check server</option>';
         }
     }
-
-    return portData;
 }
 
-/**
- * Parse individual port line
- */
-function parsePortLine(line) {
-    // Example: "Port80: speed 06, width 08, max_speed06, max_width08"
-    const portMatch = line.match(/^(Port\d+|Port\s+Upstream):\s*(.+)$/i);
-    if (!portMatch) return null;
+// Separate function to handle port selection
+function handlePortChange() {
+    const portSelect = document.getElementById('portSelect');
+    const connectBtn = document.getElementById('connectBtn');
 
-    const portName = portMatch[1].trim();
-    const specs = portMatch[2];
+    if (connectBtn && portSelect) {
+        connectBtn.disabled = portSelect.value === '';
+        console.log('Port selected:', portSelect.value);
 
-    // Extract values using regex
-    const speedMatch = specs.match(/speed\s+(\d+)/i);
-    const widthMatch = specs.match(/width\s+(\d+)/i);
-    const maxSpeedMatch = specs.match(/max_speed\s*(\d+)/i);
-    const maxWidthMatch = specs.match(/max_width\s*(\d+)/i);
-
-    const speed = speedMatch ? parseInt(speedMatch[1]) : 0;
-    const width = widthMatch ? parseInt(widthMatch[1]) : 0;
-    const maxSpeed = maxSpeedMatch ? parseInt(maxSpeedMatch[1]) : 0;
-    const maxWidth = maxWidthMatch ? parseInt(maxWidthMatch[1]) : 0;
-
-    return {
-        name: portName,
-        speed: speed,
-        width: width,
-        maxSpeed: maxSpeed,
-        maxWidth: maxWidth,
-        connected: speed > 1, // Connected if speed > 1
-        generation: getGenerationFromSpeed(speed),
-        widthDisplay: getWidthDisplay(width),
-        maxWidthDisplay: getWidthDisplay(maxWidth)
-    };
-}
-
-/**
- * Parse golden finger line
- */
-function parseGoldenFingerLine(line) {
-    // Example: "Golden finger: speed 06, width 08, max_width = 16"
-    const specs = line.split(':')[1] || line;
-
-    const speedMatch = specs.match(/speed\s+(\d+)/i);
-    const widthMatch = specs.match(/width\s+(\d+)/i);
-    const maxWidthMatch = specs.match(/max_width\s*=?\s*(\d+)/i);
-
-    const speed = speedMatch ? parseInt(speedMatch[1]) : 0;
-    const width = widthMatch ? parseInt(widthMatch[1]) : 0;
-    const maxWidth = maxWidthMatch ? parseInt(maxWidthMatch[1]) : 0;
-
-    return {
-        speed: speed,
-        width: width,
-        maxWidth: maxWidth,
-        generation: getGenerationFromSpeed(speed),
-        widthDisplay: getWidthDisplay(width),
-        maxWidthDisplay: getWidthDisplay(maxWidth)
-    };
-}
-
-/**
- * Convert speed code to generation display
- */
-function getGenerationFromSpeed(speed) {
-    switch (speed) {
-        case 6: return { text: 'Gen6', class: 'gen6' };
-        case 5: return { text: 'Gen5', class: 'gen5' };
-        case 4: return { text: 'Gen4', class: 'gen4' };
-        case 1: return { text: 'No Connection', class: 'no-connection' };
-        default: return { text: 'Unknown', class: 'no-connection' };
+        if (portSelect.value) {
+            showNotification(`Selected port: ${portSelect.value}`, 'info');
+        }
     }
 }
-
-/**
- * Convert width code to display
- */
-function getWidthDisplay(width) {
-    switch (width) {
-        case 2: return 'x2';
-        case 4: return 'x4';
-        case 8: return 'x8';
-        case 16: return 'x16';
-        default: return width > 0 ? `x${width}` : '--';
-    }
-}
-
-/**
- * Update the Link Status Dashboard UI
- */
-function updateLinkStatusDashboard(portData) {
-    // Update metrics
-    const totalPorts = portData.ports.length;
-    const connectedPorts = portData.ports.filter(p => p.connected).length;
-    const generations = portData.ports.filter(p => p.connected).map(p => p.speed);
-    const highestGen = generations.length > 0 ? Math.max(...generations) : 0;
-
-    document.getElementById('totalPorts').textContent = totalPorts;
-    document.getElementById('connectedPorts').textContent = connectedPorts;
-    document.getElementById('highestGen').textContent = highestGen > 0 ? `Gen${highestGen}` : '--';
-
-    // Calculate total bandwidth (simplified)
-    const totalBandwidth = portData.ports
-        .filter(p => p.connected)
-        .reduce((sum, p) => sum + (p.speed * p.width), 0);
-    document.getElementById('totalBandwidth').textContent = totalBandwidth > 0 ? `${totalBandwidth} GT/s` : '--';
-
-    // Update port status grid
-    const portGrid = document.getElementById('portStatusGrid');
-    portGrid.innerHTML = '';
-
-    if (portData.ports.length === 0) {
-        portGrid.innerHTML = `
-            <div class="port-status-loading">
-                <p>No port data available</p>
-            </div>
-        `;
-        return;
-    }
-
-    // Create port status items
-    portData.ports.forEach(port => {
-        const portItem = createPortStatusItem(port);
-        portGrid.appendChild(portItem);
-    });
-
-    // Update upstream status
-    if (portData.upstream) {
-        updateUpstreamStatus(portData.upstream);
-    }
-
-    // Update golden finger status
-    if (portData.goldenFinger) {
-        updateGoldenFingerStatus(portData.goldenFinger);
-    }
-}
-
-/**
- * Create a port status item element
- */
-function createPortStatusItem(port) {
-    const item = document.createElement('div');
-    item.className = `port-status-item ${port.connected ? 'connected' : 'disconnected'}`;
-
-    const generation = port.generation;
-
-    item.innerHTML = `
-        <div class="port-header">
-            <div class="port-name">${port.name}</div>
-            <div class="port-led ${port.connected ? 'connected' : 'disconnected'}"></div>
-        </div>
-        
-        <div class="port-specs">
-            <div class="port-spec">
-                <span class="port-spec-label">Speed:</span>
-                <span class="port-spec-value">${port.speed.toString().padStart(2, '0')}</span>
-            </div>
-            <div class="port-spec">
-                <span class="port-spec-label">Width:</span>
-                <span class="port-spec-value">${port.widthDisplay}</span>
-            </div>
-            <div class="port-spec">
-                <span class="port-spec-label">Max Speed:</span>
-                <span class="port-spec-value">${port.maxSpeed.toString().padStart(2, '0')}</span>
-            </div>
-            <div class="port-spec">
-                <span class="port-spec-label">Max Width:</span>
-                <span class="port-spec-value">${port.maxWidthDisplay}</span>
-            </div>
-        </div>
-        
-        <div style="text-align: center;">
-            <span class="port-generation ${generation.class}">${generation.text}</span>
-        </div>
-    `;
-
-    return item;
-}
-
-/**
- * Update upstream status display
- */
-function updateUpstreamStatus(upstream) {
-    document.getElementById('upstreamConnectionStatus').textContent = upstream.connected ? 'Connected' : 'Disconnected';
-    document.getElementById('upstreamSpeed').textContent = upstream.generation.text;
-    document.getElementById('upstreamWidth').textContent = upstream.widthDisplay;
-    document.getElementById('upstreamMaxSpeed').textContent = `Gen${upstream.maxSpeed}`;
-    document.getElementById('upstreamMaxWidth').textContent = upstream.maxWidthDisplay;
-}
-
-/**
- * Update golden finger status display
- */
-function updateGoldenFingerStatus(goldenFinger) {
-    document.getElementById('goldenFingerSpeed').textContent = goldenFinger.generation.text;
-    document.getElementById('goldenFingerWidth').textContent = goldenFinger.widthDisplay;
-    document.getElementById('goldenFingerMaxWidth').textContent = goldenFinger.maxWidthDisplay;
-}
-
-/**
- * Execute showport command and update dashboard
- */
-function loadLinkStatus() {
-    if (!isConnected && !isDeveloperMode) {
-        return;
-    }
-
-    // Show loading state
-    const portGrid = document.getElementById('portStatusGrid');
-    portGrid.innerHTML = `
-        <div class="port-status-loading">
-            <div class="loading"></div>
-            <p>Loading port status...</p>
-        </div>
-    `;
-
-    if (isDeveloperMode && !isConnected) {
-        // Demo data for developer mode
-        setTimeout(() => {
-            const demoResponse = `
-Cmd>showport
-Port Slot-----------------------------------------------------------------
---------------------
-
-Port80: speed 06, width 08, max_speed06, max_width08
-Port112: speed 06, width 08, max_speed06, max_width16
-Port128: speed 06, width 08, max_speed06, max_width16
-Port Upstream-------------------------------------------------------------
---------------------
-
-Golden finger: speed 06, width 08, max_width = 16
-Cmd>[]
-            `;
-
-            addConsoleEntry('linkConsole', 'command', '> showport');
-            addConsoleEntry('linkConsole', 'response', demoResponse, formatTimestamp());
-
-            const portData = parseShowportResponse(demoResponse);
-            updateLinkStatusDashboard(portData);
-        }, 1000);
-    } else {
-        // Real command execution
-        executeCommand('showport', 'link_status');
-    }
-}
-
-/**
- * Refresh link status
- */
-function refreshLinkStatus() {
-    showNotification('Refreshing link status...', 'info');
-    loadLinkStatus();
-}
-
 
 // =============================================================================
 // EVENT HANDLERS
 // =============================================================================
 
-/**
- * Setup all event handlers for the application
- */
 function setupEventHandlers() {
-    // Navigation
+    document.getElementById('developerMode')?.addEventListener('change', (e) => {
+        toggleDeveloperMode(e.target.checked);
+    });
+
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', () => {
             const dashboard = item.dataset.dashboard;
@@ -1111,18 +761,15 @@ function setupEventHandlers() {
             }
         });
     });
-    document.getElementById('developerModeToggle')?.addEventListener('change', toggleDeveloperMode);
-    // Connection controls
+
     document.getElementById('connectBtn')?.addEventListener('click', () => {
         const port = document.getElementById('portSelect').value;
-
         if (!port) return;
 
         const btn = document.getElementById('connectBtn');
         btn.innerHTML = '<div class="loading"></div> Connecting...';
         btn.disabled = true;
 
-        // Use hardcoded serial settings
         socket.emit('connect_device', {
             port: port,
             baudrate: 115200,
@@ -1142,7 +789,54 @@ function setupEventHandlers() {
 
     document.getElementById('refreshBtn')?.addEventListener('click', loadPorts);
 
-    // Command inputs - Enter key support
+    // Test API button for debugging
+    document.getElementById('testApiBtn')?.addEventListener('click', async () => {
+        console.log('=== API TEST START ===');
+
+        try {
+            // Test 1: Basic connectivity
+            console.log('Test 1: Testing basic API connectivity...');
+            const response = await fetch('/api/status');
+            console.log('Status API response:', response.status, response.ok);
+            const statusData = await response.json();
+            console.log('Status data:', statusData);
+
+            // Test 2: Port API
+            console.log('Test 2: Testing port API directly...');
+            const portResponse = await fetch('/api/ports');
+            console.log('Port API response:', portResponse.status, portResponse.ok);
+            console.log('Port API headers:', [...portResponse.headers.entries()]);
+
+            const portText = await portResponse.text();
+            console.log('Port API raw response:', portText);
+
+            try {
+                const portData = JSON.parse(portText);
+                console.log('Port API parsed data:', portData);
+                console.log('Port count:', Array.isArray(portData) ? portData.length : 'Not an array');
+
+                if (Array.isArray(portData) && portData.length > 0) {
+                    console.log('Ports found:');
+                    portData.forEach((port, i) => {
+                        console.log(`  ${i + 1}. ${port.device} - ${port.description}`);
+                    });
+                } else {
+                    console.log('No ports in response');
+                }
+            } catch (e) {
+                console.error('Failed to parse port JSON:', e);
+            }
+
+            showNotification('API test complete - check console', 'info');
+
+        } catch (error) {
+            console.error('API test failed:', error);
+            showNotification('API test failed: ' + error.message, 'error');
+        }
+
+        console.log('=== API TEST END ===');
+    });
+
     document.querySelectorAll('input[id$="CommandInput"]').forEach(input => {
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
@@ -1156,7 +850,6 @@ function setupEventHandlers() {
         });
     });
 
-    // Command buttons
     document.getElementById('sendDeviceCmd')?.addEventListener('click', () => {
         const command = document.getElementById('deviceCommandInput').value.trim();
         if (command) {
@@ -1181,7 +874,16 @@ function setupEventHandlers() {
         }
     });
 
-    // Preset command buttons
+    document.getElementById('exportDeviceInfo')?.addEventListener('click', exportDeviceInfo);
+
+    document.getElementById('refreshDeviceInfo')?.addEventListener('click', () => {
+        if (!isConnected || !currentPort) {
+            showNotification('Please connect to a device first', 'error');
+            return;
+        }
+        executeCommand('sysinfo', 'device_info');
+    });
+
     document.querySelectorAll('.preset-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const command = btn.dataset.cmd;
@@ -1191,126 +893,12 @@ function setupEventHandlers() {
             }
         });
     });
-
-    // Export device info button
-    document.getElementById('exportDeviceInfo')?.addEventListener('click', () => {
-        exportDeviceInfo();
-    });
-
-    // Refresh device info button
-    document.getElementById('refreshDeviceInfo')?.addEventListener('click', () => {
-        if (!isConnected) {
-            showNotification('Please connect to a device first', 'error');
-            return;
-        }
-        executeCommand('sysinfo', 'device_info');
-    });
-
-    // Reset buttons
-    document.getElementById('softReset')?.addEventListener('click', () => {
-        if (confirm('Are you sure you want to perform a soft reset?')) {
-            executeCommand('AT+CFUN=1,1', 'resets');
-        }
-    });
-
-    document.getElementById('hardReset')?.addEventListener('click', () => {
-        if (confirm('Are you sure you want to perform a hard reset?')) {
-            executeCommand('RESET HARD', 'resets');
-        }
-    });
-
-    document.getElementById('factoryReset')?.addEventListener('click', () => {
-        if (confirm('WARNING: Factory reset will erase all configuration. Are you absolutely sure?')) {
-            executeCommand('FACTORY_RESET', 'resets');
-        }
-    });
-
-    document.getElementById('configReset')?.addEventListener('click', () => {
-        if (confirm('Reset device configuration to defaults?')) {
-            executeCommand('RESET_CONFIG', 'resets');
-        }
-    });
-
-    // I2C controls
-    document.getElementById('i2cScan')?.addEventListener('click', () => {
-        executeCommand('I2C_SCAN', 'i2c');
-    });
-
-    document.getElementById('i2cRead')?.addEventListener('click', () => {
-        const addr = document.getElementById('i2cAddress').value;
-        const bytes = document.getElementById('i2cReadBytes').value;
-        if (addr) {
-            executeCommand(`I2C_READ ${addr} ${bytes}`, 'i2c');
-        }
-    });
-
-    document.getElementById('i2cWrite')?.addEventListener('click', () => {
-        const addr = document.getElementById('i2cAddress').value;
-        const data = document.getElementById('i2cData').value;
-        if (addr && data) {
-            executeCommand(`I2C_WRITE ${addr} ${data}`, 'i2c');
-        }
-    });
-
-    // Firmware controls
-    document.getElementById('checkUpdate')?.addEventListener('click', () => {
-        executeCommand('FW_VERSION', 'firmware');
-    });
-
-    document.getElementById('uploadFirmware')?.addEventListener('click', () => {
-        const fileInput = document.getElementById('firmwareFile');
-        if (fileInput.files.length > 0) {
-            showNotification('Firmware upload simulation started', 'info');
-            // Simulate firmware update progress
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += 5;
-                document.getElementById('updateProgress').style.width = progress + '%';
-                document.getElementById('progressText').textContent = `Uploading... ${progress}%`;
-
-                if (progress >= 100) {
-                    clearInterval(interval);
-                    document.getElementById('progressText').textContent = 'Upload complete';
-                    showNotification('Firmware upload completed', 'success');
-                }
-            }, 200);
-        } else {
-            showNotification('Please select a firmware file', 'error');
-        }
-    });
-
-    // Port configuration apply button
-    document.getElementById('applyPortConfig')?.addEventListener('click', () => {
-        const dataBits = document.getElementById('dataBitsSelect').value;
-        const parity = document.getElementById('paritySelect').value;
-        const stopBits = document.getElementById('stopBitsSelect').value;
-        const flowControl = document.getElementById('flowControlSelect').value;
-
-        const configCmd = `CONFIG_SET ${dataBits} ${parity} ${stopBits} ${flowControl}`;
-        executeCommand(configCmd, 'port_config');
-        showNotification('Port configuration applied', 'success');
-    });
-
-    // File upload handling
-    document.getElementById('firmwareFile')?.addEventListener('change', (e) => {
-        const uploadBtn = document.getElementById('uploadFirmware');
-        if (e.target.files.length > 0) {
-            uploadBtn.disabled = false;
-            const fileName = e.target.files[0].name;
-            showNotification(`Firmware file selected: ${fileName}`, 'info');
-        } else {
-            uploadBtn.disabled = true;
-        }
-    });
 }
 
 // =============================================================================
 // SOCKET EVENT HANDLERS
 // =============================================================================
 
-/**
- * Setup Socket.IO event handlers
- */
 function setupSocketHandlers() {
     socket.on('connect', () => {
         console.log('Connected to CalypsoPy+ server');
@@ -1332,11 +920,10 @@ function setupSocketHandlers() {
             updateConnectionStatus(true, data.connection_info.port);
             showNotification(`Connected to ${data.connection_info.port}`, 'success');
 
-            // Auto-switch to Device Information dashboard after successful connection
             setTimeout(() => {
                 switchDashboard('device_info');
                 showNotification('Switched to Device Information - Loading system data...', 'info');
-            }, 1000);  // Small delay to let user see the success message
+            }, 1000);
 
         } else {
             showNotification(data.message, 'error');
@@ -1353,7 +940,6 @@ function setupSocketHandlers() {
         if (data.success) {
             showNotification(data.message, 'success');
 
-            // Auto-switch back to Connection dashboard after disconnection
             setTimeout(() => {
                 switchDashboard('connection');
                 showNotification('Disconnected - Please connect to a device to continue', 'info');
@@ -1385,7 +971,6 @@ function setupSocketHandlers() {
                 parsedData.timestamp,
                 parsedData);
 
-            // Update dashboard-specific metrics
             updateDashboardData(data);
 
         } else {
@@ -1397,7 +982,6 @@ function setupSocketHandlers() {
     });
 
     socket.on('system_status', (data) => {
-        // Update connection status based on server state
         const connectedPorts = Object.keys(data.connected_ports || {}).filter(port =>
             data.connected_ports[port].connected
         );
@@ -1408,36 +992,22 @@ function setupSocketHandlers() {
             updateConnectionStatus(false);
         }
     });
-
-    socket.on('dashboard_data', (data) => {
-        if (data.success) {
-            // Handle dashboard-specific data updates
-            console.log('Dashboard data received:', data);
-        }
-    });
 }
 
 // =============================================================================
 // MOBILE & RESPONSIVE FEATURES
 // =============================================================================
 
-/**
- * Mobile menu toggle for responsive design
- */
 function toggleMobileMenu() {
     const sidebar = document.querySelector('.sidebar');
     sidebar.classList.toggle('open');
 }
 
-/**
- * Handle window resize events
- */
 function handleWindowResize() {
     if (responseChart) {
         responseChart.resize();
     }
 
-    // Auto-hide mobile menu on desktop
     if (window.innerWidth > 768) {
         const sidebar = document.querySelector('.sidebar');
         sidebar.classList.remove('open');
@@ -1448,22 +1018,17 @@ function handleWindowResize() {
 // KEYBOARD SHORTCUTS
 // =============================================================================
 
-/**
- * Handle keyboard shortcuts
- */
 function setupKeyboardShortcuts() {
     document.addEventListener('keydown', (e) => {
-        // Ctrl/Cmd + Number keys for dashboard switching
         if ((e.ctrlKey || e.metaKey) && e.key >= '1' && e.key <= '9') {
             e.preventDefault();
-            const dashboards = ['connection', 'device_info', 'link_status', 'port_config', 'i2c', 'advanced', 'resets', 'firmware', 'analytics'];
+            const dashboards = ['connection', 'device_info', 'link_status', 'bifurcation', 'i2c', 'advanced', 'resets', 'firmware', 'analytics'];
             const index = parseInt(e.key) - 1;
             if (dashboards[index]) {
                 switchDashboard(dashboards[index]);
             }
         }
 
-        // Escape key to clear current command input
         if (e.key === 'Escape') {
             document.querySelectorAll('input[id$="CommandInput"]').forEach(input => {
                 input.value = '';
@@ -1471,7 +1036,6 @@ function setupKeyboardShortcuts() {
             });
         }
 
-        // Ctrl/Cmd + R to refresh ports (prevent browser refresh)
         if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
             e.preventDefault();
             loadPorts();
@@ -1481,47 +1045,42 @@ function setupKeyboardShortcuts() {
 }
 
 // =============================================================================
-// DEVELOPMENT HELPERS
-// =============================================================================
-
-/**
- * Auto-connect feature for development/testing
- */
-function autoConnectIfAvailable() {
-    setTimeout(() => {
-        const portSelect = document.getElementById('portSelect');
-        if (portSelect && portSelect.options.length > 1 && !isConnected) {
-            // Auto-select first available port for testing
-            portSelect.selectedIndex = 1;
-            console.log('Auto-selecting port for testing:', portSelect.value);
-
-            // Enable connect button
-            document.getElementById('connectBtn').disabled = false;
-        }
-    }, 2000);
-}
-
-// =============================================================================
 // APPLICATION INITIALIZATION
 // =============================================================================
 
-/**
- * Initialize the CalypsoPy+ application
- */
 function initializeApplication() {
     console.log('🚀 CalypsoPy+ by Serial Cables - Initializing...');
 
-    // Setup event handlers
     setupEventHandlers();
     setupSocketHandlers();
     setupKeyboardShortcuts();
 
-    // Initialize components
+    // Load ports immediately and set up refresh
     loadPorts();
     initializeChart();
     updateMetrics();
 
-    // Add mobile menu button for small screens
+    // Restore developer mode preference with debugging
+    const savedDeveloperMode = localStorage.getItem('calypso_developer_mode');
+    console.log('Saved developer mode preference:', savedDeveloperMode);
+
+    if (savedDeveloperMode === 'true') {
+        const devModeCheckbox = document.getElementById('developerMode');
+        console.log('Developer mode checkbox found:', !!devModeCheckbox);
+
+        if (devModeCheckbox) {
+            devModeCheckbox.checked = true;
+            toggleDeveloperMode(true);
+            console.log('Developer mode restored and enabled');
+        }
+    }
+
+    // Initial dashboard access update
+    setTimeout(() => {
+        updateDashboardAccess();
+        console.log('Initial dashboard access updated');
+    }, 500);
+
     if (window.innerWidth <= 768) {
         const headerControls = document.querySelector('.header-controls');
         const menuBtn = document.createElement('button');
@@ -1531,21 +1090,22 @@ function initializeApplication() {
         headerControls.insertBefore(menuBtn, headerControls.firstChild);
     }
 
-    // Handle window resize
     window.addEventListener('resize', handleWindowResize);
 
-    // Auto-refresh ports every 30 seconds
-    setInterval(loadPorts, 30000);
+    // More frequent port refresh for development
+    setInterval(loadPorts, 10000); // Every 10 seconds instead of 30
 
-    // Auto-connect for development (remove in production)
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        autoConnectIfAvailable();
-    }
-
-    // Add version info to console
     console.log('%cCalypsoPy+ v1.0.0', 'color: #790000; font-size: 16px; font-weight: bold;');
     console.log('%cby Serial Cables', 'color: #777676; font-size: 12px;');
     console.log('%cProfessional Hardware Interface Ready', 'color: #22c55e; font-size: 12px;');
+    console.log('%cBifurcation Dashboard: Enabled', 'color: #e63946; font-size: 12px;');
+    console.log('%cDeveloper Mode: Dashboard viewing only', 'color: #fbbf24; font-size: 12px;');
+
+    console.log('Application State:', {
+        isConnected: isConnected,
+        isDeveloperMode: isDeveloperMode,
+        currentDashboard: currentDashboard
+    });
 
     console.log('✅ CalypsoPy+ initialization complete');
 }
@@ -1554,10 +1114,8 @@ function initializeApplication() {
 // START APPLICATION
 // =============================================================================
 
-// Initialize application when DOM is fully loaded
 document.addEventListener('DOMContentLoaded', initializeApplication);
 
-// Expose useful functions to global scope for debugging
 window.CalypsoPy = {
     executeCommand,
     switchDashboard,
@@ -1565,8 +1123,13 @@ window.CalypsoPy = {
     loadPorts,
     toggleMobileMenu,
     parseSysinfoData,
+    toggleDeveloperMode,
     systemMetrics,
     isConnected: () => isConnected,
+    isDeveloperMode: () => isDeveloperMode,
     currentPort: () => currentPort,
-    currentDashboard: () => currentDashboard
+    currentDashboard: () => currentDashboard,
+    bifurcationDashboard: () => bifurcationDashboard,
+    BifurcationDashboard: BifurcationDashboard,
+    BIFURCATION_MODES: BIFURCATION_MODES
 };
