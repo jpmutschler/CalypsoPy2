@@ -19,6 +19,7 @@ import re
 from collections import deque
 import hashlib
 import os
+from FWUpdate import FirmwareUpdater
 
 # Configure logging
 logging.basicConfig(
@@ -452,6 +453,71 @@ def handle_get_dashboard_data(data):
         'history': dashboard_history[-20:],
         'port': port
     })
+
+@socketio.on('firmware_update')
+def handle_firmware_update(data):
+    port = data.get('port')
+    target = data.get('target')  # 'mcu' or 'sbr'
+    file_data = data.get('file_data')  # Base64 encoded
+
+    if not all([port, target, file_data]):
+        emit('firmware_update_result', {
+            'success': False,
+            'message': 'Missing required parameters'
+        })
+        return
+
+    # Decode file data
+    import base64
+    try:
+        file_bytes = base64.b64decode(file_data)
+    except Exception as e:
+        emit('firmware_update_result', {
+            'success': False,
+            'message': f'Invalid file data: {str(e)}'
+        })
+        return
+
+    # Create updater if not exists
+    if not hasattr(calypso_manager, 'firmware_updater'):
+        calypso_manager.firmware_updater = FirmwareUpdater(calypso_manager)
+
+    # Progress callback
+    def progress_callback(info):
+        socketio.emit('firmware_progress', {
+            'port': port,
+            'target': target,
+            **info
+        })
+
+    # Perform update in background thread
+    def do_update():
+        if target == 'mcu':
+            result = calypso_manager.firmware_updater.update_firmware(
+                port, 'mcu', file_bytes, progress_callback
+            )
+        elif target == 'sbr':
+            result = calypso_manager.firmware_updater.update_sbr_both(
+                port, file_bytes, progress_callback
+            )
+        else:
+            result = {'success': False, 'message': 'Invalid target'}
+
+        socketio.emit('firmware_update_result', result)
+
+    threading.Thread(target=do_update).start()
+
+
+@socketio.on('cancel_firmware_update')
+def handle_cancel_firmware_update(data):
+    port = data.get('port')
+
+    if hasattr(calypso_manager, 'firmware_updater'):
+        success = calypso_manager.firmware_updater.cancel_transfer(port)
+        emit('firmware_cancel_result', {
+            'success': success,
+            'port': port
+        })
 
 
 @socketio.on('clear_cache')

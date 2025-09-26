@@ -4,3 +4,4 @@ pyserial==3.5
 python-socketio==5.9.0
 eventlet==0.33.3
 flask-compress==1.13
+xmodem==0.4.6

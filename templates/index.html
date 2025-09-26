@@ -744,41 +744,230 @@
             <!-- Firmware Dashboard -->
             <div id="firmware-dashboard" class="dashboard-content">
                 <div class="dashboard-header">
-                    <h2 class="dashboard-title">Firmware Updates</h2>
-                    <p class="dashboard-subtitle">Firmware version management and update controls</p>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div>
+                            <h2 class="dashboard-title">Firmware Updates</h2>
+                            <p class="dashboard-subtitle">Update device firmware via XMODEM protocol</p>
+                        </div>
+                        <div style="display: flex; gap: 15px;">
+                            <button class="btn btn-outline" id="checkFirmwareVersion">
+                                <span>📋</span> Check Version
+                            </button>
+                            <button class="btn btn-outline" id="clearFirmwareLog">
+                                <span>🗑️</span> Clear Log
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Firmware Status Cards -->
+                <div class="metrics-row">
+                    <div class="metric-card">
+                        <div class="metric-value" id="currentFwVersion">--</div>
+                        <div class="metric-label">Current Version</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="mcuStatus">--</div>
+                        <div class="metric-label">MCU Status</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="sbr0Status">--</div>
+                        <div class="metric-label">SBR0 Status</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="sbr1Status">--</div>
+                        <div class="metric-label">SBR1 Status</div>
+                    </div>
                 </div>
 
                 <div class="dashboard-grid">
+                    <!-- MCU Firmware Update Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">💾</div>
+                                mCPU Firmware Update
+                            </div>
+                            <div class="mcu-update-status" id="mcuUpdateStatus">
+                                <span class="status-indicator" id="mcuStatusIndicator">Ready</span>
+                            </div>
+                        </div>
+
+                        <div class="firmware-update-section">
+                            <div class="firmware-info-box">
+                                <div class="info-row">
+                                    <span class="info-label">Target:</span>
+                                    <span class="info-value">mCPU (MCU)</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Command:</span>
+                                    <span class="info-value mono">fdl mcu</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Protocol:</span>
+                                    <span class="info-value">XMODEM-1K</span>
+                                </div>
+                            </div>
+
+                            <div class="file-upload-zone" id="mcuDropZone">
+                                <input type="file" id="mcuFileInput" accept=".bin,.hex,.fw" style="display: none;">
+                                <div class="upload-icon">📁</div>
+                                <div class="upload-text">
+                                    <strong>Drop MCU firmware file here</strong><br>
+                                    <span class="upload-subtext">or click to browse</span>
+                                </div>
+                                <div class="supported-formats">Supported: .bin</div>
+                            </div>
+
+                            <div class="selected-file" id="mcuSelectedFile" style="display: none;">
+                                <div class="file-icon">📄</div>
+                                <div class="file-details">
+                                    <div class="file-name" id="mcuFileName">--</div>
+                                    <div class="file-size" id="mcuFileSize">--</div>
+                                </div>
+                                <button class="btn btn-sm btn-outline" id="mcuRemoveFile">
+                                    <span>✕</span>
+                                </button>
+                            </div>
+
+                            <div class="update-controls">
+                                <button class="btn btn-primary" id="startMcuUpdate" disabled>
+                                    <span>⬆️</span> Start MCU Update
+                                </button>
+                                <button class="btn btn-secondary" id="cancelMcuUpdate" style="display: none;">
+                                    <span>✕</span> Cancel
+                                </button>
+                            </div>
+
+                            <div class="progress-container" id="mcuProgress" style="display: none;">
+                                <div class="progress-label">
+                                    <span>Uploading MCU Firmware</span>
+                                    <span id="mcuProgressPercent">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="mcuProgressBar" style="width: 0%"></div>
+                                </div>
+                                <div class="progress-stats">
+                                    <span id="mcuBytesTransferred">0 B / 0 B</span>
+                                    <span id="mcuTimeRemaining">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Switch (SBR) Firmware Update Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">🔀</div>
+                                Atlas3 Switch Update
+                            </div>
+                            <div class="sbr-update-status" id="sbrUpdateStatus">
+                                <span class="status-indicator" id="sbrStatusIndicator">Ready</span>
+                            </div>
+                        </div>
+
+                        <div class="firmware-update-section">
+                            <div class="firmware-info-box">
+                                <div class="info-row">
+                                    <span class="info-label">Target:</span>
+                                    <span class="info-value">Atlas 3 Switch</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Commands:</span>
+                                    <span class="info-value mono">fdl sbr0 + fdl sbr1</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Protocol:</span>
+                                    <span class="info-value">XMODEM-1K (Dual Transfer)</span>
+                                </div>
+                            </div>
+
+                            <div class="file-upload-zone" id="sbrDropZone">
+                                <input type="file" id="sbrFileInput" accept=".bin,.hex,.fw" style="display: none;">
+                                <div class="upload-icon">📁</div>
+                                <div class="upload-text">
+                                    <strong>Drop SBR firmware file here</strong><br>
+                                    <span class="upload-subtext">or click to browse</span>
+                                </div>
+                                <div class="supported-formats">Supported: .bin, .fw</div>
+                            </div>
+
+                            <div class="selected-file" id="sbrSelectedFile" style="display: none;">
+                                <div class="file-icon">📄</div>
+                                <div class="file-details">
+                                    <div class="file-name" id="sbrFileName">--</div>
+                                    <div class="file-size" id="sbrFileSize">--</div>
+                                </div>
+                                <button class="btn btn-sm btn-outline" id="sbrRemoveFile">
+                                    <span>✕</span>
+                                </button>
+                            </div>
+
+                            <div class="update-controls">
+                                <button class="btn btn-primary" id="startSbrUpdate" disabled>
+                                    <span>⬆️</span> Start SBR Update (Both Halves)
+                                </button>
+                                <button class="btn btn-secondary" id="cancelSbrUpdate" style="display: none;">
+                                    <span>✕</span> Cancel
+                                </button>
+                            </div>
+
+                            <div class="progress-container" id="sbrProgress" style="display: none;">
+                                <div class="progress-label">
+                                    <span id="sbrProgressLabel">Uploading SBR0 Firmware</span>
+                                    <span id="sbrProgressPercent">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="sbrProgressBar" style="width: 0%"></div>
+                                </div>
+                                <div class="progress-stats">
+                                    <span id="sbrBytesTransferred">0 B / 0 B</span>
+                                    <span id="sbrTimeRemaining">--</span>
+                                </div>
+                                <div class="sbr-dual-status">
+                                    <div class="sbr-half-status">
+                                        <span class="sbr-half-label">SBR0:</span>
+                                        <span class="sbr-half-indicator" id="sbr0Indicator">Pending</span>
+                                    </div>
+                                    <div class="sbr-half-status">
+                                        <span class="sbr-half-label">SBR1:</span>
+                                        <span class="sbr-half-indicator" id="sbr1Indicator">Pending</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Firmware Update Log -->
                     <div class="card command-interface">
                         <div class="card-header">
                             <div class="card-title">
-                                <div class="card-icon">⬆️</div>
-                                Firmware Commands
+                                <div class="card-icon">📜</div>
+                                Firmware Update Log
+                            </div>
+                            <div class="card-actions">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--secondary-gray);">
+                                    <input type="checkbox" id="autoScrollLog" checked> Auto-scroll
+                                </label>
                             </div>
                         </div>
 
-                        <div class="command-input-group">
-                            <input type="text" id="firmwareCommandInput" class="form-control" placeholder="Enter firmware command..." disabled>
-                            <button id="sendFirmwareCmd" class="btn btn-primary" disabled>
-                                <span>📤</span> Send
-                            </button>
-                        </div>
-
-                        <div class="command-presets" id="firmwarePresets">
-                            <div class="preset-btn" data-cmd="FW_VERSION" data-desc="Firmware version">
-                                <div class="preset-title">FW Version</div>
-                                <div class="preset-command">FW_VERSION</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="FW_CHECK" data-desc="Check for updates">
-                                <div class="preset-title">Check Updates</div>
-                                <div class="preset-command">FW_CHECK</div>
-                            </div>
-                        </div>
-
-                        <div class="console-container" id="firmwareConsole">
-                            <div class="console-entry command">
+                        <div class="console-container" id="firmwareConsole" style="height: 500px;">
+                            <div class="console-entry system">
                                 <div class="console-timestamp">System Ready</div>
-                                <div class="console-content">Firmware management ready.</div>
+                                <div class="console-content">Firmware update system initialized. Select a firmware file to begin update process.</div>
+                            </div>
+                        </div>
+
+                        <div class="firmware-warnings">
+                            <div class="warning-box">
+                                <div class="warning-icon">⚠️</div>
+                                <div class="warning-content">
+                                    <strong>Important:</strong> Do not disconnect the device or interrupt power during firmware updates.
+                                    Ensure you have the correct firmware file for your device model.
+                                    SBR updates will automatically update both halves sequentially.
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -849,6 +1038,8 @@
 
     <!-- CalypsoPy+ Scripts -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <!-- Firmware Updater Module -->
+    <script src="{{ url_for('static', filename='js/FWUpdater.js') }}"></script>
 
 </body>
 </html>
