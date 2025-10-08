@@ -594,7 +594,7 @@ if __name__ == '__main__':
     os.makedirs('logs', exist_ok=True)
 
     print("🚀 CalypsoPy+ by Serial Cables")
-    print("Professional Hardware Development Interface")
+    print("Serial Cables Gen6 PCIe Atlas 3 Host Card Development Interface")
     print("=" * 50)
     print("🌐 Web Interface: http://localhost:5000")
     print("📊 Dashboards: Device Info, Link Status, Bifurcation, I2C/I3C, Advanced, Resets, Firmware")
