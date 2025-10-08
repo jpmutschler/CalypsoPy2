@@ -26,6 +26,7 @@ let responseChart;
 // Dashboard instances
 let bifurcationDashboard = null;
 let linkStatusDashboard = null;
+let resetsDashboard = null;
 
 // =============================================================================
 // UTILITY FUNCTIONS
@@ -200,12 +201,19 @@ function toggleDeveloperMode(enabled) {
     localStorage.setItem('calypso_developer_mode', enabled.toString());
 }
 
+/**
+ * Complete and corrected switchDashboard function for app.js
+ * Replace your entire switchDashboard function with this version
+ */
+
 function switchDashboard(dashboardId) {
+    // Check if dashboard access is allowed (connected OR developer mode for viewing)
     if (!isConnected && !isDeveloperMode && dashboardId !== 'connection' && dashboardId !== 'analytics') {
         showNotification('Please connect to a device first or enable Developer Mode', 'warning');
         return;
     }
 
+    // Update navigation active state
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
         if (item.dataset.dashboard === dashboardId) {
@@ -213,15 +221,18 @@ function switchDashboard(dashboardId) {
         }
     });
 
+    // Hide all dashboards
     document.querySelectorAll('.dashboard-content').forEach(dashboard => {
         dashboard.classList.remove('active');
     });
 
+    // Show target dashboard
     const targetDashboard = document.getElementById(`${dashboardId}-dashboard`);
     if (targetDashboard) {
         targetDashboard.classList.add('active');
         currentDashboard = dashboardId;
 
+        // Only auto-execute commands if actually connected
         if (isConnected && currentPort) {
             if (dashboardId === 'device_info') {
                 setTimeout(() => {
@@ -232,19 +243,23 @@ function switchDashboard(dashboardId) {
                 setTimeout(() => {
                     executeCommand('showmode', 'bifurcation');
                 }, 500);
-            } else if (dashboardId === 'link_status') {
-                initializeLinkStatusDashboard();
-                setTimeout(() => {
-                    executeCommand('showport', 'link_status');
-                }, 500);
+            } else if (dashboardId === 'resets') {
+                // Activate Resets Dashboard
+                if (window.resetsDashboard && window.resetsDashboard.onActivate) {
+                    setTimeout(() => {
+                        window.resetsDashboard.onActivate();
+                    }, 100);
+                }
             }
 
+            // Request dashboard data from server
             socket.emit('get_dashboard_data', {
                 dashboard: dashboardId,
                 port: currentPort
             });
         }
 
+        // Show info message when using developer mode
         if (!isConnected && isDeveloperMode && dashboardId !== 'connection' && dashboardId !== 'analytics') {
             showNotification(`🔓 Developer Mode: Viewing ${dashboardId} dashboard (commands disabled)`, 'info');
         }
@@ -1154,6 +1169,7 @@ function initializeApplication() {
     updateMetrics();
 
     const savedDeveloperMode = localStorage.getItem('calypso_developer_mode');
+    console.log('Saved developer mode preference:', savedDeveloperMode);
 
     if (savedDeveloperMode === 'true') {
         const devModeCheckbox = document.getElementById('developerMode');
@@ -1167,6 +1183,23 @@ function initializeApplication() {
     setTimeout(() => {
         updateDashboardAccess();
     }, 500);
+
+    // Initialize Resets Dashboard - ADD THIS BLOCK
+    if (window.initializeResetsDashboard) {
+        resetsDashboard = window.initializeResetsDashboard();
+        console.log('✅ Resets Dashboard initialized from external file');
+    } else {
+        console.warn('⚠️ Resets Dashboard script not loaded yet, will retry...');
+        // Retry after a short delay if script hasn't loaded
+        setTimeout(() => {
+            if (window.initializeResetsDashboard) {
+                resetsDashboard = window.initializeResetsDashboard();
+                console.log('✅ Resets Dashboard initialized (retry successful)');
+            } else {
+                console.error('❌ Failed to initialize Resets Dashboard');
+            }
+        }, 1000);
+    }
 
     if (window.innerWidth <= 768) {
         const headerControls = document.querySelector('.header-controls');
@@ -1184,7 +1217,15 @@ function initializeApplication() {
     console.log('%cCalypsoPy+ v1.0.0', 'color: #790000; font-size: 16px; font-weight: bold;');
     console.log('%cby Serial Cables', 'color: #777676; font-size: 12px;');
     console.log('%cProfessional Hardware Interface Ready', 'color: #22c55e; font-size: 12px;');
-    console.log('%cLink Status Dashboard: PCIe Port Monitoring', 'color: #3b82f6; font-size: 12px;');
+    console.log('%cBifurcation Dashboard: Enabled', 'color: #e63946; font-size: 12px;');
+    console.log('%cResets Dashboard: Enabled', 'color: #ef4444; font-size: 12px;');
+    console.log('%cDeveloper Mode: Dashboard viewing only', 'color: #fbbf24; font-size: 12px;');
+
+    console.log('Application State:', {
+        isConnected: isConnected,
+        isDeveloperMode: isDeveloperMode,
+        currentDashboard: currentDashboard
+    });
 
     console.log('✅ CalypsoPy+ initialization complete');
 }
@@ -1209,8 +1250,7 @@ window.CalypsoPy = {
     currentPort: () => currentPort,
     currentDashboard: () => currentDashboard,
     bifurcationDashboard: () => bifurcationDashboard,
-    linkStatusDashboard: () => linkStatusDashboard,
+    resetsDashboard: () => window.resetsDashboard,  // ADD THIS LINE
     BifurcationDashboard: BifurcationDashboard,
-    LinkStatusDashboard: LinkStatusDashboard,
     BIFURCATION_MODES: BIFURCATION_MODES
 };

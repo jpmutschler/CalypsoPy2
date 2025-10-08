@@ -731,45 +731,182 @@
             </div>
 
             <!-- Resets Dashboard -->
+            <!-- Resets Dashboard - Replace the existing resets dashboard section -->
             <div id="resets-dashboard" class="dashboard-content">
                 <div class="dashboard-header">
-                    <h2 class="dashboard-title">System Resets</h2>
-                    <p class="dashboard-subtitle">Hardware reset controls and recovery options</p>
+                    <div>
+                        <h2 class="dashboard-title">System Resets</h2>
+                        <p class="dashboard-subtitle">Hardware reset controls and recovery operations</p>
+                    </div>
                 </div>
 
-                <div class="dashboard-grid">
-                    <div class="card command-interface">
-                        <div class="card-header">
-                            <div class="card-title">
-                                <div class="card-icon">🔄</div>
-                                Reset Commands
+                <!-- Warning Banner -->
+                <div class="reset-warning-banner">
+                    <div class="warning-icon">⚠️</div>
+                    <div class="warning-content">
+                        <div class="warning-title">Caution: System Reset Operations</div>
+                        <div class="warning-text">
+                            Reset operations will interrupt device operation and may cause temporary disconnection.
+                            Please ensure no critical operations are in progress before proceeding.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reset Control Grid -->
+                <div class="reset-control-grid">
+                    <!-- PCIe Straddle Mount Reset -->
+                    <div class="reset-control-card">
+                        <div class="reset-card-header">
+                            <div class="reset-icon pcie">🔌</div>
+                            <div class="reset-card-title">
+                                <h3>PCIe Straddle Mount Reset</h3>
+                                <p>Reset the PCIe Straddle Mount Connector</p>
                             </div>
                         </div>
-
-                        <div class="command-input-group">
-                            <input type="text" id="resetCommandInput" class="form-control" placeholder="Enter reset command..." disabled>
-                            <button id="sendResetCmd" class="btn btn-primary" disabled>
-                                <span>📤</span> Send
+                        <div class="reset-card-body">
+                            <ul class="reset-description">
+                                <li>Resets the PCIe straddle mount connector</li>
+                                <li>Reinitializes the connection interface</li>
+                                <li>Does not affect other system components</li>
+                            </ul>
+                            <div class="reset-command-display">
+                                <span class="command-label">Command:</span>
+                                <code>mrst</code>
+                            </div>
+                        </div>
+                        <div class="reset-card-footer">
+                            <button class="btn btn-reset btn-pcie" data-reset-cmd="mrst" data-reset-type="PCIe Straddle Mount">
+                                <span class="btn-icon">🔄</span>
+                                <span class="btn-text">Execute PCIe Reset</span>
                             </button>
                         </div>
+                    </div>
 
-                        <div class="command-presets" id="resetPresets">
-                            <div class="preset-btn" data-cmd="SOFT_RESET" data-desc="Soft reset">
-                                <div class="preset-title">Soft Reset</div>
-                                <div class="preset-command">SOFT_RESET</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="HARD_RESET" data-desc="Hard reset">
-                                <div class="preset-title">Hard Reset</div>
-                                <div class="preset-command">HARD_RESET</div>
+                    <!-- Atlas 3 Switch Reset -->
+                    <div class="reset-control-card">
+                        <div class="reset-card-header">
+                            <div class="reset-icon switch">🔀</div>
+                            <div class="reset-card-title">
+                                <h3>Atlas 3 Switch Reset</h3>
+                                <p>Reset the Atlas 3 PCIe Switch</p>
                             </div>
                         </div>
-
-                        <div class="console-container" id="resetConsole">
-                            <div class="console-entry command">
-                                <div class="console-timestamp">System Ready</div>
-                                <div class="console-content">Reset controls ready. Use caution with reset commands.</div>
+                        <div class="reset-card-body">
+                            <ul class="reset-description">
+                                <li>Performs a software reset of the Atlas 3 switch</li>
+                                <li>Clears switch state and error conditions</li>
+                                <li>Reinitializes PCIe routing configuration</li>
+                            </ul>
+                            <div class="reset-command-display">
+                                <span class="command-label">Command:</span>
+                                <code>swreset</code>
                             </div>
                         </div>
+                        <div class="reset-card-footer">
+                            <button class="btn btn-reset btn-switch" data-reset-cmd="swreset" data-reset-type="Atlas 3 Switch">
+                                <span class="btn-icon">🔄</span>
+                                <span class="btn-text">Execute Switch Reset</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Full System Reset -->
+                    <div class="reset-control-card critical">
+                        <div class="reset-card-header">
+                            <div class="reset-icon system">⚡</div>
+                            <div class="reset-card-title">
+                                <h3>Full System Reset</h3>
+                                <p>Complete hardware system reset</p>
+                            </div>
+                        </div>
+                        <div class="reset-card-body">
+                            <ul class="reset-description">
+                                <li>Performs a complete hardware system reset</li>
+                                <li>Resets all components and subsystems</li>
+                                <li>Requires CalypsoPy+ reconnection</li>
+                            </ul>
+                            <div class="reset-command-display critical">
+                                <span class="command-label">Command:</span>
+                                <code>reset</code>
+                            </div>
+                        </div>
+                        <div class="reset-card-footer">
+                            <button class="btn btn-reset btn-critical" data-reset-cmd="reset" data-reset-type="Full System">
+                                <span class="btn-icon">⚡</span>
+                                <span class="btn-text">Execute System Reset</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reset History Log -->
+                <div class="card reset-history-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon">📋</div>
+                            Reset History
+                        </div>
+                        <button class="btn btn-sm btn-outline" id="clearResetHistory">
+                            <span>🗑️</span> Clear History
+                        </button>
+                    </div>
+                    <div class="reset-history-container" id="resetHistoryContainer">
+                        <div class="reset-history-entry system">
+                            <div class="reset-history-timestamp">System Ready</div>
+                            <div class="reset-history-content">Reset controls initialized. Ready to execute reset operations.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confirmation Modal -->
+            <div id="resetConfirmationModal" class="modal-overlay">
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <div class="modal-icon">⚠️</div>
+                        <h3 class="modal-title">Confirm Reset Operation</h3>
+                    </div>
+                    <div class="modal-body">
+                        <p class="modal-message" id="resetConfirmMessage">
+                            Are you sure you want to execute this reset operation?
+                        </p>
+                        <div class="modal-warning">
+                            <strong>Warning:</strong> This action cannot be undone and may temporarily interrupt device operation.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" id="cancelResetBtn">
+                            <span>✕</span> Cancel
+                        </button>
+                        <button class="btn btn-primary" id="confirmResetBtn">
+                            <span>✓</span> Confirm Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Restart Required Modal -->
+            <div id="restartRequiredModal" class="modal-overlay">
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <div class="modal-icon restart">🔄</div>
+                        <h3 class="modal-title">Restart Required</h3>
+                    </div>
+                    <div class="modal-body">
+                        <p class="modal-message">
+                            The reset operation has been completed successfully. CalypsoPy+ needs to restart to re-establish the connection with your device.
+                        </p>
+                        <div class="modal-info">
+                            <strong>Note:</strong> You will need to reconnect to your device after the restart.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" id="restartLaterBtn">
+                            <span>⏸️</span> Restart Later
+                        </button>
+                        <button class="btn btn-primary" id="restartNowBtn">
+                            <span>🔄</span> Restart Now
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1071,6 +1208,9 @@
 
     <!-- CalypsoPy+ Scripts -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/resets.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboards.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
     <!-- Firmware Updater Module -->
     <script src="{{ url_for('static', filename='js/FWUpdater.js') }}"></script>
 

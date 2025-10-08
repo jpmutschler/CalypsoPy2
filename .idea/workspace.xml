@@ -4,9 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fc3e30f9-c418-4920-a510-76a20644706b" name="Changes" comment="Firmware Update Dashboard Implementation">
+    <list default="true" id="fc3e30f9-c418-4920-a510-76a20644706b" name="Changes" comment="Link Status dashboard">
+      <change afterPath="$PROJECT_DIR$/static/js/resets.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/static/css/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/static/css/styles.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/static/js/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/js/app.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
@@ -95,6 +95,7 @@
       <workItem from="1758647907657" duration="2350000" />
       <workItem from="1758652798873" duration="25339000" />
       <workItem from="1759406691446" duration="4839000" />
+      <workItem from="1759922690302" duration="4300000" />
     </task>
     <task id="LOCAL-00001" summary="Initial Push of CalypsoPy+">
       <option name="closed" value="true" />
@@ -184,7 +185,15 @@
       <option name="project" value="LOCAL" />
       <updated>1758891950043</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="Link Status dashboard">
+      <option name="closed" value="true" />
+      <created>1759922730040</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1759922730040</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -206,10 +215,11 @@
     <MESSAGE value="Link Status Added" />
     <MESSAGE value="Debug" />
     <MESSAGE value="Firmware Update Dashboard Implementation" />
-    <option name="LAST_COMMIT_MESSAGE" value="Firmware Update Dashboard Implementation" />
+    <MESSAGE value="Link Status dashboard" />
+    <option name="LAST_COMMIT_MESSAGE" value="Link Status dashboard" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/CalypsoPy_$start.coverage" NAME="start Coverage Results" MODIFIED="1759432074703" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/CalypsoPy_$start.coverage" NAME="start Coverage Results" MODIFIED="1759926294585" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/CalypsoPy_$COMportTest.coverage" NAME="COMportTest Coverage Results" MODIFIED="1758721173617" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
