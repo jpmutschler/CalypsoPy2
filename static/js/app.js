@@ -29,6 +29,7 @@ let linkStatusDashboard = null;
 let resetsDashboard = null;
 let errorsDashboard = null;
 let terminalDashboard = null;
+let advancedDashboard = null;
 
 // =============================================================================
 // UTILITY FUNCTIONS
@@ -264,6 +265,12 @@ function switchDashboard(dashboardId) {
                 window.terminalDashboard.onActivate();
             }, 100);
         }
+    } else if (dashboardId === 'advanced') {
+    if (window.advancedDashboard && window.advancedDashboard.onActivate) {
+        setTimeout(() => {
+            window.advancedDashboard.onActivate();
+        }, 100);
+    }
     }
 
     // Update navigation active state
@@ -1165,6 +1172,12 @@ socket.on('disconnection_result', (data) => {
         window.errorsDashboard.handleCommandResult(data);
     }
 
+    socket.on('command_result', (data) => {
+    // Handle advanced dashboard responses
+    if (data.dashboard === 'advanced' && window.advancedDashboard) {
+        window.advancedDashboard.handleCommandResult(data);
+    }
+
     const consoleId = `${data.dashboard || currentDashboard}Console`;
 
     if (data.success) {
@@ -1206,7 +1219,7 @@ socket.on('disconnection_result', (data) => {
             updateConnectionStatus(false);
         }
     });
-}
+});
 
 // =============================================================================
 // MOBILE & RESPONSIVE FEATURES
@@ -1304,6 +1317,14 @@ function initializeApplication() {
         console.warn('⚠️ Errors Dashboard not available');
     }
 
+    // Initialize Advanced Dashboard (from external file)
+    if (window.initializeAdvancedDashboard) {
+        advancedDashboard = window.initializeAdvancedDashboard();
+        console.log('✅ Advanced Dashboard initialized');
+        } else {
+        console.warn('⚠️ Advanced Dashboard not available');
+        }
+
     // Initialize Terminal Dashboard (from external file)
     if (window.initializeTerminalDashboard) {
         terminalDashboard = window.initializeTerminalDashboard();
@@ -1371,7 +1392,8 @@ window.CalypsoPy = {
     bifurcationDashboard: () => bifurcationDashboard,
     resetsDashboard: () => window.resetsDashboard,
     errorsDashboard: () => window.errorsDashboard,
+    advancedDashboard: () => window.advancedDashboard,
     terminalDashboard: () => window.terminalDashboard,
     BifurcationDashboard: BifurcationDashboard,
     BIFURCATION_MODES: BIFURCATION_MODES
-};
+};}

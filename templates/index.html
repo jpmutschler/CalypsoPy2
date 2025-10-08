@@ -695,44 +695,413 @@
             </div>
 
             <!-- Advanced Dashboard -->
-            <div id="advanced-dashboard" class="dashboard-content">
+            			<div id="advanced-dashboard" class="dashboard-content">
                 <div class="dashboard-header">
-                    <h2 class="dashboard-title">Advanced Diagnostics</h2>
-                    <p class="dashboard-subtitle">Advanced hardware diagnostics and testing tools</p>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div>
+                            <h2 class="dashboard-title">Advanced Diagnostics</h2>
+                            <p class="dashboard-subtitle">PCIe clock modes (SRIS/SRNS) and flit mode configuration</p>
+                        </div>
+                        <div style="display: flex; gap: 15px;">
+                            <button class="btn btn-outline" id="refreshAdvanced">
+                                <span>🔄</span> Refresh Status
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="dashboard-grid">
-                    <div class="card command-interface">
-                        <div class="card-header">
-                            <div class="card-title">
-                                <div class="card-icon">🔬</div>
-                                Advanced Commands
+                <!-- Current SSC Mode Display -->
+                <div class="current-mode-display">
+                    <div class="current-mode-label">Current SSC Mode</div>
+                    <div class="current-mode-value" id="currentSSCMode">--</div>
+                </div>
+
+                <!-- Clock Control Section -->
+                <div class="card" style="margin-bottom: 30px;">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon">🔌</div>
+                            Clock Output Control (REFCLK)
+                        </div>
+                    </div>
+
+                    <div class="advanced-info-box">
+                        <div class="advanced-info-title">
+                            <span>ℹ️</span>
+                            <span>REFCLK Configuration</span>
+                        </div>
+                        <div class="advanced-info-content">
+                            Control the reference clock outputs for each PCIe interface. Enable clock output for active connections
+                            or disable to reduce EMI and power consumption on unused ports.
+                            <ul>
+                                <li><strong>MCIO Left:</strong> Upper/Lower Left MCIO connectors (Ports 112-127)</li>
+                                <li><strong>MCIO Right:</strong> Upper/Lower Right MCIO connectors (Ports 128-143)</li>
+                                <li><strong>Straddle Mount:</strong> PCIe straddle mount connector (Ports 80-95)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="clock-control-grid">
+                        <!-- MCIO Left Clock Control -->
+                        <div class="clock-control-card" id="clockLeftCard">
+                            <div class="clock-card-header">
+                                <div class="clock-card-title">
+                                    <div class="clock-icon">📍</div>
+                                    <div>
+                                        <div class="clock-title-text">MCIO Left</div>
+                                        <div style="font-size: 11px; color: var(--secondary-gray); font-weight: 500;">Ports 112-127</div>
+                                    </div>
+                                </div>
+                                <div class="clock-status-dot"></div>
+                            </div>
+                            <div class="clock-card-body">
+                                <div class="clock-current-status">
+                                    <span class="clock-status-label">Status</span>
+                                    <span class="clock-status-text">--</span>
+                                </div>
+                                <div class="clock-control-buttons">
+                                    <button class="clock-control-btn enable-btn" data-location="left" data-state="enable">
+                                        <span>✓</span> Enable
+                                    </button>
+                                    <button class="clock-control-btn disable-btn" data-location="left" data-state="disable">
+                                        <span>✕</span> Disable
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="command-input-group">
-                            <input type="text" id="advancedCommandInput" class="form-control" placeholder="Enter advanced command..." disabled>
-                            <button id="sendAdvancedCmd" class="btn btn-primary" disabled>
-                                <span>📤</span> Send
+                        <!-- MCIO Right Clock Control -->
+                        <div class="clock-control-card" id="clockRightCard">
+                            <div class="clock-card-header">
+                                <div class="clock-card-title">
+                                    <div class="clock-icon">📍</div>
+                                    <div>
+                                        <div class="clock-title-text">MCIO Right</div>
+                                        <div style="font-size: 11px; color: var(--secondary-gray); font-weight: 500;">Ports 128-143</div>
+                                    </div>
+                                </div>
+                                <div class="clock-status-dot"></div>
+                            </div>
+                            <div class="clock-card-body">
+                                <div class="clock-current-status">
+                                    <span class="clock-status-label">Status</span>
+                                    <span class="clock-status-text">--</span>
+                                </div>
+                                <div class="clock-control-buttons">
+                                    <button class="clock-control-btn enable-btn" data-location="right" data-state="enable">
+                                        <span>✓</span> Enable
+                                    </button>
+                                    <button class="clock-control-btn disable-btn" data-location="right" data-state="disable">
+                                        <span>✕</span> Disable
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Straddle Clock Control -->
+                        <div class="clock-control-card" id="clockStraddleCard">
+                            <div class="clock-card-header">
+                                <div class="clock-card-title">
+                                    <div class="clock-icon">🔀</div>
+                                    <div>
+                                        <div class="clock-title-text">Straddle Mount</div>
+                                        <div style="font-size: 11px; color: var(--secondary-gray); font-weight: 500;">Ports 80-95</div>
+                                    </div>
+                                </div>
+                                <div class="clock-status-dot"></div>
+                            </div>
+                            <div class="clock-card-body">
+                                <div class="clock-current-status">
+                                    <span class="clock-status-label">Status</span>
+                                    <span class="clock-status-text">--</span>
+                                </div>
+                                <div class="clock-control-buttons">
+                                    <button class="clock-control-btn enable-btn" data-location="straddle" data-state="enable">
+                                        <span>✓</span> Enable
+                                    </button>
+                                    <button class="clock-control-btn disable-btn" data-location="straddle" data-state="disable">
+                                        <span>✕</span> Disable
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SSC Mode Section -->
+                <div class="card" style="margin-bottom: 30px;">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon">📡</div>
+                            SSC (Spread Spectrum Clocking) Mode
+                        </div>
+                    </div>
+
+                    <div class="advanced-info-box">
+                        <div class="advanced-info-title">
+                            <span>ℹ️</span>
+                            <span>PCIe SRIS/SRNS Configuration</span>
+                        </div>
+                        <div class="advanced-info-content">
+                            Configure Spread Spectrum Clocking for PCIe Gen6 operation. Select the appropriate mode based on your system requirements:
+                            <ul>
+                                <li><strong>SRISE5 (0.5%):</strong> Standard spread for Gen5/Gen6 with SRIS (Separate Reference Independent SSC)</li>
+                                <li><strong>SRISE2 (0.25%):</strong> Reduced spread for compatibility mode or Gen4 and below</li>
+                                <li><strong>SRISD (Disabled):</strong> No spreading - SRNS (Separate Reference with No SSC) mode</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="ssc-mode-grid">
+                        <!-- SRISE5 Mode Card -->
+                        <div class="ssc-mode-card" id="srise5Card">
+                            <div class="ssc-mode-header">
+                                <div>
+                                    <div class="ssc-mode-name">SRISE5</div>
+                                    <div class="ssc-mode-value">0.5% Spread</div>
+                                </div>
+                                <span class="ssc-mode-indicator inactive">Inactive</span>
+                            </div>
+                            <div class="ssc-mode-description">
+                                Standard spread spectrum mode for PCIe Gen5 and Gen6 operations with SRIS (Separate Reference Independent SSC).
+                            </div>
+                            <div class="ssc-mode-specs">
+                                <div class="ssc-spec-item">
+                                    <span class="ssc-spec-label">Spread:</span>
+                                    <span class="ssc-spec-value">±0.5%</span>
+                                </div>
+                                <div class="ssc-spec-item">
+                                    <span class="ssc-spec-label">Mode:</span>
+                                    <span class="ssc-spec-value">SRIS</span>
+                                </div>
+                                <div class="ssc-spec-item">
+                                    <span class="ssc-spec-label">Gen Support:</span>
+                                    <span class="ssc-spec-value">Gen5/Gen6</span>
+                                </div>
+                            </div>
+                            <button class="ssc-mode-btn" data-mode="srise5">
+                                <span>⚡</span> Activate SRISE5
                             </button>
                         </div>
 
-                        <div class="command-presets" id="advancedPresets">
-                            <div class="preset-btn" data-cmd="DIAG_FULL" data-desc="Full diagnostics">
-                                <div class="preset-title">Full Diagnostics</div>
-                                <div class="preset-command">DIAG_FULL</div>
+                        <!-- SRISE2 Mode Card -->
+                        <div class="ssc-mode-card" id="srise2Card">
+                            <div class="ssc-mode-header">
+                                <div>
+                                    <div class="ssc-mode-name">SRISE2</div>
+                                    <div class="ssc-mode-value">0.25% Spread</div>
+                                </div>
+                                <span class="ssc-mode-indicator inactive">Inactive</span>
                             </div>
-                            <div class="preset-btn" data-cmd="MEM_TEST" data-desc="Memory test">
-                                <div class="preset-title">Memory Test</div>
-                                <div class="preset-command">MEM_TEST</div>
+                            <div class="ssc-mode-description">
+                                Reduced spread spectrum mode for compatibility with Gen4 and below or systems requiring lower EMI spreading.
+                            </div>
+                            <div class="ssc-mode-specs">
+                                <div class="ssc-spec-item">
+                                    <span class="ssc-spec-label">Spread:</span>
+                                    <span class="ssc-spec-value">±0.25%</span>
+                                </div>
+                                <div class="ssc-spec-item">
+                                    <span class="ssc-spec-label">Mode:</span>
+                                    <span class="ssc-spec-value">SRIS</span>
+                                </div>
+                                <div class="ssc-spec-item">
+                                    <span class="ssc-spec-label">Gen Support:</span>
+                                    <span class="ssc-spec-value">Gen1-Gen4</span>
+                                </div>
+                            </div>
+                            <button class="ssc-mode-btn" data-mode="srise2">
+                                <span>⚡</span> Activate SRISE2
+                            </button>
+                        </div>
+
+                        <!-- SRISD Mode Card -->
+                        <div class="ssc-mode-card" id="srisdCard">
+                            <div class="ssc-mode-header">
+                                <div>
+                                    <div class="ssc-mode-name">SRISD</div>
+                                    <div class="ssc-mode-value">No Spread</div>
+                                </div>
+                                <span class="ssc-mode-indicator inactive">Inactive</span>
+                            </div>
+                            <div class="ssc-mode-description">
+                                SRNS (Separate Reference with No SSC) mode - disables spread spectrum clocking entirely.
+                            </div>
+                            <div class="ssc-mode-specs">
+                                <div class="ssc-spec-item">
+                                    <span class="ssc-spec-label">Spread:</span>
+                                    <span class="ssc-spec-value">0%</span>
+                                </div>
+                                <div class="ssc-spec-item">
+                                    <span class="ssc-spec-label">Mode:</span>
+                                    <span class="ssc-spec-value">SRNS</span>
+                                </div>
+                                <div class="ssc-spec-item">
+                                    <span class="ssc-spec-label">Gen Support:</span>
+                                    <span class="ssc-spec-value">All Gen</span>
+                                </div>
+                            </div>
+                            <button class="ssc-mode-btn" data-mode="srisd">
+                                <span>⚡</span> Activate SRISD
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flit Mode Section -->
+                <div class="card" style="margin-bottom: 30px;">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon">⚡</div>
+                            Flit Mode Configuration
+                        </div>
+                    </div>
+
+                    <div class="advanced-info-box">
+                        <div class="advanced-info-title">
+                            <span>ℹ️</span>
+                            <span>PCIe 6.1 Flit Mode</span>
+                        </div>
+                        <div class="advanced-info-content">
+                            Enable or disable Flit Mode per port group. Flit Mode is required for PCIe Gen6 operation (64 GT/s).
+                            <ul>
+                                <li><strong>Flit Mode Enabled:</strong> Uses 256-byte FLow control unITs for Gen6 operation</li>
+                                <li><strong>Flit Mode Disabled:</strong> Uses traditional TLP format for Gen5 and below</li>
+                                <li><strong>Note:</strong> Both link partners must agree on Flit Mode capability</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="flit-mode-grid">
+                        <!-- Gold Finger Ports -->
+                        <div class="flit-mode-card" id="flitPort32Card">
+                            <div class="flit-card-header">
+                                <div class="flit-card-title">
+                                    <div class="flit-icon">🎯</div>
+                                    <div>
+                                        <div class="flit-title-text">Gold Finger Ports</div>
+                                        <div class="flit-subtitle">Ports 1-32 (Host Connection)</div>
+                                    </div>
+                                </div>
+                                <div class="flit-status-dot"></div>
+                            </div>
+                            <div class="flit-card-body">
+                                <div class="flit-current-status">
+                                    <span class="clock-status-label">Flit Mode</span>
+                                    <span class="flit-mode-indicator">--</span>
+                                </div>
+                                <div class="flit-toggle-buttons">
+                                    <button class="flit-toggle-btn enable-btn" data-port-group="32" data-state="en">
+                                        <span>✓</span> Enable
+                                    </button>
+                                    <button class="flit-toggle-btn disable-btn" data-port-group="32" data-state="dis">
+                                        <span>✕</span> Disable
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="console-container" id="advancedConsole">
-                            <div class="console-entry command">
-                                <div class="console-timestamp">System Ready</div>
-                                <div class="console-content">Advanced diagnostics ready.</div>
+                        <!-- Straddle Mount Ports -->
+                        <div class="flit-mode-card" id="flitPort80Card">
+                            <div class="flit-card-header">
+                                <div class="flit-card-title">
+                                    <div class="flit-icon">🔀</div>
+                                    <div>
+                                        <div class="flit-title-text">Straddle Mount</div>
+                                        <div class="flit-subtitle">Ports 80-95</div>
+                                    </div>
+                                </div>
+                                <div class="flit-status-dot"></div>
                             </div>
+                            <div class="flit-card-body">
+                                <div class="flit-current-status">
+                                    <span class="clock-status-label">Flit Mode</span>
+                                    <span class="flit-mode-indicator">--</span>
+                                </div>
+                                <div class="flit-toggle-buttons">
+                                    <button class="flit-toggle-btn enable-btn" data-port-group="80" data-state="en">
+                                        <span>✓</span> Enable
+                                    </button>
+                                    <button class="flit-toggle-btn disable-btn" data-port-group="80" data-state="dis">
+                                        <span>✕</span> Disable
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Upper Left MCIO -->
+                        <div class="flit-mode-card" id="flitPort112Card">
+                            <div class="flit-card-header">
+                                <div class="flit-card-title">
+                                    <div class="flit-icon">📍</div>
+                                    <div>
+                                        <div class="flit-title-text">Upper Left MCIO</div>
+                                        <div class="flit-subtitle">Ports 112-119</div>
+                                    </div>
+                                </div>
+                                <div class="flit-status-dot"></div>
+                            </div>
+                            <div class="flit-card-body">
+                                <div class="flit-current-status">
+                                    <span class="clock-status-label">Flit Mode</span>
+                                    <span class="flit-mode-indicator">--</span>
+                                </div>
+                                <div class="flit-toggle-buttons">
+                                    <button class="flit-toggle-btn enable-btn" data-port-group="112" data-state="en">
+                                        <span>✓</span> Enable
+                                    </button>
+                                    <button class="flit-toggle-btn disable-btn" data-port-group="112" data-state="dis">
+                                        <span>✕</span> Disable
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Upper Right MCIO -->
+                        <div class="flit-mode-card" id="flitPort128Card">
+                            <div class="flit-card-header">
+                                <div class="flit-card-title">
+                                    <div class="flit-icon">📍</div>
+                                    <div>
+                                        <div class="flit-title-text">Upper Right MCIO</div>
+                                        <div class="flit-subtitle">Ports 128-135</div>
+                                    </div>
+                                </div>
+                                <div class="flit-status-dot"></div>
+                            </div>
+                            <div class="flit-card-body">
+                                <div class="flit-current-status">
+                                    <span class="clock-status-label">Flit Mode</span>
+                                    <span class="flit-mode-indicator">--</span>
+                                </div>
+                                <div class="flit-toggle-buttons">
+                                    <button class="flit-toggle-btn enable-btn" data-port-group="128" data-state="en">
+                                        <span>✓</span> Enable
+                                    </button>
+                                    <button class="flit-toggle-btn disable-btn" data-port-group="128" data-state="dis">
+                                        <span>✕</span> Disable
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Command History -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon">📋</div>
+                            Command History
+                        </div>
+                        <button class="btn btn-sm btn-outline" id="clearAdvancedHistory">
+                            <span>🗑️</span> Clear History
+                        </button>
+                    </div>
+                    <div class="advanced-history-container" id="advancedHistoryContainer">
+                        <div class="advanced-history-entry system">
+                            <div class="advanced-history-timestamp">System Ready</div>
+                            <div class="advanced-history-content">Advanced settings dashboard initialized.</div>
                         </div>
                     </div>
                 </div>
@@ -1564,6 +1933,8 @@
     <script src="{{ url_for('static', filename='js/errors.js') }}"></script>
     <!-- Terminal Module -->
     <script src="{{ url_for('static', filename='js/terminal.js') }}"></script>
+    <!-- Advanced Module -->
+    <script src="{{ url_for('static', filename='js/advanced.js') }}"></script>
     <!-- Firmware Updater Module -->
     <script src="{{ url_for('static', filename='js/FWUpdater.js') }}"></script>
 

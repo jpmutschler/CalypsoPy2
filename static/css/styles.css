@@ -3751,3 +3751,677 @@ body {
     color: #95e6cb;
     font-size: 13px;
 }
+
+/* Advanced Dashboard Styles */
+
+/* Clock Control Cards */
+.clock-control-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.clock-control-card {
+    background: var(--light-gray);
+    border-radius: 15px;
+    padding: 20px;
+    border: 2px solid var(--border-gray);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.clock-control-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--secondary-gray);
+    border-radius: 15px 0 0 15px;
+    transition: all 0.3s ease;
+}
+
+.clock-control-card.clock-enabled::before {
+    background: #22c55e;
+}
+
+.clock-control-card.clock-disabled::before {
+    background: #ef4444;
+}
+
+.clock-control-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px var(--shadow-medium);
+}
+
+.clock-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border-gray);
+}
+
+.clock-card-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.clock-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--primary-red), var(--accent-red));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: white;
+}
+
+.clock-title-text {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--dark-black);
+}
+
+.clock-status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--secondary-gray);
+    animation: pulse 2s infinite;
+}
+
+.clock-status-dot.enabled {
+    background: #22c55e;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+}
+
+.clock-status-dot.disabled {
+    background: #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+.clock-card-body {
+    padding: 10px 0;
+}
+
+.clock-current-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: white;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.clock-status-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--secondary-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.clock-status-text {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--dark-black);
+    font-family: 'Monaco', monospace;
+}
+
+.clock-control-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.clock-control-btn {
+    flex: 1;
+    padding: 10px 16px;
+    border: 2px solid var(--border-gray);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 13px;
+    font-weight: 600;
+    background: white;
+    color: var(--dark-black);
+}
+
+.clock-control-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-light);
+}
+
+.clock-control-btn.enable-btn {
+    border-color: #22c55e;
+    color: #22c55e;
+}
+
+.clock-control-btn.enable-btn:hover {
+    background: #22c55e;
+    color: white;
+}
+
+.clock-control-btn.disable-btn {
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+.clock-control-btn.disable-btn:hover {
+    background: #ef4444;
+    color: white;
+}
+
+/* SSC Mode Cards */
+.ssc-mode-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.ssc-mode-card {
+    background: var(--light-gray);
+    border-radius: 15px;
+    padding: 20px;
+    border: 2px solid var(--border-gray);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.ssc-mode-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--secondary-gray);
+    border-radius: 15px 15px 0 0;
+    transition: all 0.3s ease;
+}
+
+.ssc-mode-card.ssc-mode-active {
+    border-color: var(--primary-red);
+    background: linear-gradient(135deg, rgba(121, 0, 0, 0.05) 0%, var(--light-gray) 100%);
+}
+
+.ssc-mode-card.ssc-mode-active::before {
+    background: linear-gradient(90deg, var(--primary-red), var(--accent-red));
+}
+
+.ssc-mode-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px var(--shadow-medium);
+    border-color: var(--primary-red);
+}
+
+.ssc-mode-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.ssc-mode-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--dark-black);
+    margin-bottom: 4px;
+}
+
+.ssc-mode-value {
+    font-size: 13px;
+    color: var(--secondary-gray);
+    font-weight: 600;
+    font-family: 'Monaco', monospace;
+}
+
+.ssc-mode-indicator {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ssc-mode-indicator.active {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.ssc-mode-indicator.inactive {
+    background: rgba(107, 114, 128, 0.2);
+    color: var(--secondary-gray);
+}
+
+.ssc-mode-description {
+    font-size: 13px;
+    color: var(--secondary-gray);
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.ssc-mode-specs {
+    display: grid;
+    gap: 8px;
+}
+
+.ssc-spec-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: white;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+.ssc-spec-label {
+    color: var(--secondary-gray);
+    font-weight: 600;
+}
+
+.ssc-spec-value {
+    color: var(--dark-black);
+    font-weight: 700;
+    font-family: 'Monaco', monospace;
+}
+
+.ssc-mode-btn {
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px 16px;
+    border: 2px solid var(--primary-red);
+    border-radius: 10px;
+    background: white;
+    color: var(--primary-red);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.ssc-mode-btn:hover {
+    background: var(--primary-red);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.ssc-mode-card.ssc-mode-active .ssc-mode-btn {
+    background: var(--primary-red);
+    color: white;
+    cursor: default;
+}
+
+/* Flit Mode Cards */
+.flit-mode-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.flit-mode-card {
+    background: var(--light-gray);
+    border-radius: 15px;
+    padding: 20px;
+    border: 2px solid var(--border-gray);
+    transition: all 0.3s ease;
+}
+
+.flit-mode-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--secondary-gray);
+    border-radius: 15px 0 0 15px;
+    transition: all 0.3s ease;
+}
+
+.flit-mode-card.flit-enabled::before {
+    background: #3b82f6;
+}
+
+.flit-mode-card.flit-disabled::before {
+    background: #6b7280;
+}
+
+.flit-mode-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px var(--shadow-medium);
+}
+
+.flit-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border-gray);
+}
+
+.flit-card-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.flit-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: white;
+}
+
+.flit-title-text {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--dark-black);
+}
+
+.flit-subtitle {
+    font-size: 12px;
+    color: var(--secondary-gray);
+    font-weight: 500;
+}
+
+.flit-status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--secondary-gray);
+    animation: pulse 2s infinite;
+}
+
+.flit-status-dot.enabled {
+    background: #3b82f6;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+.flit-status-dot.disabled {
+    background: #6b7280;
+    box-shadow: 0 0 8px rgba(107, 114, 128, 0.3);
+}
+
+.flit-card-body {
+    padding: 10px 0;
+}
+
+.flit-current-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: white;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.flit-mode-indicator {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.flit-mode-indicator.enabled {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+}
+
+.flit-mode-indicator.disabled {
+    background: rgba(107, 114, 128, 0.2);
+    color: var(--secondary-gray);
+}
+
+.flit-toggle-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.flit-toggle-btn {
+    flex: 1;
+    padding: 10px 16px;
+    border: 2px solid var(--border-gray);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 13px;
+    font-weight: 600;
+    background: white;
+    color: var(--dark-black);
+}
+
+.flit-toggle-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-light);
+}
+
+.flit-toggle-btn.enable-btn {
+    border-color: #3b82f6;
+    color: #3b82f6;
+}
+
+.flit-toggle-btn.enable-btn:hover {
+    background: #3b82f6;
+    color: white;
+}
+
+.flit-toggle-btn.disable-btn {
+    border-color: #6b7280;
+    color: #6b7280;
+}
+
+.flit-toggle-btn.disable-btn:hover {
+    background: #6b7280;
+    color: white;
+}
+
+/* Advanced History */
+.advanced-history-container {
+    max-height: 300px;
+    overflow-y: auto;
+    background: var(--dark-black);
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.advanced-history-entry {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    border-left: 3px solid;
+    animation: fadeInUp 0.3s ease;
+    font-size: 13px;
+}
+
+.advanced-history-entry.system {
+    background: rgba(100, 116, 139, 0.1);
+    border-left-color: #64748b;
+    color: #94a3b8;
+}
+
+.advanced-history-entry.info {
+    background: rgba(59, 130, 246, 0.1);
+    border-left-color: #3b82f6;
+    color: #60a5fa;
+}
+
+.advanced-history-entry.command {
+    background: rgba(121, 0, 0, 0.1);
+    border-left-color: var(--primary-red);
+    color: #ff6b6b;
+}
+
+.advanced-history-entry.success {
+    background: rgba(34, 197, 94, 0.1);
+    border-left-color: #22c55e;
+    color: #4ade80;
+}
+
+.advanced-history-entry.warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-left-color: #f59e0b;
+    color: #fbbf24;
+}
+
+.advanced-history-entry.error {
+    background: rgba(239, 68, 68, 0.1);
+    border-left-color: #ef4444;
+    color: #f87171;
+}
+
+.advanced-history-timestamp {
+    color: #9ca3af;
+    font-size: 11px;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.advanced-history-content {
+    color: inherit;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+/* Info Boxes */
+.advanced-info-box {
+    background: rgba(59, 130, 246, 0.1);
+    border: 2px solid rgba(59, 130, 246, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.advanced-info-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #2563eb;
+    margin-bottom: 12px;
+}
+
+.advanced-info-content {
+    font-size: 14px;
+    color: var(--secondary-gray);
+    line-height: 1.6;
+}
+
+.advanced-info-content ul {
+    margin: 10px 0 0 20px;
+    line-height: 1.8;
+}
+
+.advanced-info-content strong {
+    color: var(--dark-black);
+}
+
+/* Clock Status Indicator */
+.clock-status-indicator {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.clock-status-indicator.active {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.clock-status-indicator.inactive {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+/* Current Mode Display */
+.current-mode-display {
+    background: linear-gradient(135deg, var(--primary-red) 0%, #e63946 100%);
+    border-radius: 12px;
+    padding: 20px;
+    color: white;
+    margin-bottom: 20px;
+}
+
+.current-mode-label {
+    font-size: 12px;
+    opacity: 0.9;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.current-mode-value {
+    font-size: 24px;
+    font-weight: 800;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .clock-control-grid,
+    .ssc-mode-grid,
+    .flit-mode-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .clock-control-grid,
+    .ssc-mode-grid,
+    .flit-mode-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .clock-control-buttons,
+    .flit-toggle-buttons {
+        flex-direction: column;
+    }
+
+    .clock-control-btn,
+    .flit-toggle-btn {
+        width: 100%;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .clock-control-btn,
+    .flit-toggle-btn,
+    .ssc-mode-btn {
+        display: none;
+    }
+
+    .advanced-history-container {
+        max-height: none;
+    }
+
+    .clock-control-card,
+    .ssc-mode-card,
+    .flit-mode-card {
+        break-inside: avoid;
+    }
+}
