@@ -27,6 +27,7 @@ let responseChart;
 let bifurcationDashboard = null;
 let linkStatusDashboard = null;
 let resetsDashboard = null;
+let errorsDashboard = null;
 
 // =============================================================================
 // UTILITY FUNCTIONS
@@ -211,6 +212,12 @@ function switchDashboard(dashboardId) {
     if (!isConnected && !isDeveloperMode && dashboardId !== 'connection' && dashboardId !== 'analytics') {
         showNotification('Please connect to a device first or enable Developer Mode', 'warning');
         return;
+    } else if (dashboardId === 'errors') {  // <-- ADD THIS ENTIRE BLOCK
+    if (window.errorsDashboard && window.errorsDashboard.onActivate) {
+        setTimeout(() => {
+            window.errorsDashboard.onActivate();
+        }, 100);
+    }
     }
 
     // Update navigation active state
@@ -347,6 +354,10 @@ function updateDashboardData(data) {
     if (dashboard === 'device_info' && (data.data.command === 'sysinfo' || data.data.raw.includes('sysinfo'))) {
         parseSysinfoData(data.data.raw);
         return;
+    }
+
+    if (data.dashboard === 'errors' && window.errorsDashboard) {
+    window.errorsDashboard.handleCommandResult(data);
     }
 }
 
@@ -1184,7 +1195,7 @@ function initializeApplication() {
         updateDashboardAccess();
     }, 500);
 
-    // Initialize Resets Dashboard - ADD THIS BLOCK
+    // Initialize Resets Dashboard
     if (window.initializeResetsDashboard) {
         resetsDashboard = window.initializeResetsDashboard();
         console.log('✅ Resets Dashboard initialized from external file');
@@ -1197,6 +1208,22 @@ function initializeApplication() {
                 console.log('✅ Resets Dashboard initialized (retry successful)');
             } else {
                 console.error('❌ Failed to initialize Resets Dashboard');
+            }
+        }, 1000);
+    }
+
+    // Initialize Errors Dashboard
+    if (window.initializeErrorsDashboard) {
+        errorsDashboard = window.initializeErrorsDashboard();
+        console.log('✅ Errors Dashboard initialized from external file');
+    } else {
+        console.warn('⚠️ Errors Dashboard script not loaded yet, will retry...');
+        setTimeout(() => {
+            if (window.initializeErrorsDashboard) {
+                errorsDashboard = window.initializeErrorsDashboard();
+                console.log('✅ Errors Dashboard initialized (retry successful)');
+            } else {
+                console.error('❌ Failed to initialize Errors Dashboard');
             }
         }, 1000);
     }
@@ -1250,7 +1277,8 @@ window.CalypsoPy = {
     currentPort: () => currentPort,
     currentDashboard: () => currentDashboard,
     bifurcationDashboard: () => bifurcationDashboard,
-    resetsDashboard: () => window.resetsDashboard,  // ADD THIS LINE
+    resetsDashboard: () => window.resetsDashboard,
+    errorsDashboard: () => window.errorsDashboard,
     BifurcationDashboard: BifurcationDashboard,
     BIFURCATION_MODES: BIFURCATION_MODES
 };

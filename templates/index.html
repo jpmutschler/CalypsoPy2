@@ -73,6 +73,10 @@
                     <div class="nav-icon">🔬</div>
                     <div class="nav-text">Advanced</div>
                 </div>
+                <div class="nav-item" data-dashboard="errors">
+                    <div class="nav-icon">⚠️</div>
+                    <div class="nav-text">Errors</div>
+                </div>
                 <div class="nav-item" data-dashboard="resets">
                     <div class="nav-icon">🔄</div>
                     <div class="nav-text">Resets</div>
@@ -730,8 +734,153 @@
                 </div>
             </div>
 
+            <!-- Errors Dashboard -->
+            <div id="errors-dashboard" class="dashboard-content">
+                <div class="dashboard-header">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div>
+                            <h2 class="dashboard-title">PCIe Error Counters</h2>
+                            <p class="dashboard-subtitle">Real-time PCIe link training and flit bit rate error monitoring</p>
+                        </div>
+                        <div style="display: flex; gap: 15px;">
+                            <button class="btn btn-outline" id="refreshErrors">
+                                <span>🔄</span> Refresh Counters
+                            </button>
+                            <button class="btn btn-outline" id="resetErrorCounters">
+                                <span>↺</span> Reset Counters
+                            </button>
+                            <button class="btn btn-outline" id="exportErrors">
+                                <span>📄</span> Export Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid errors-dashboard-grid">
+                    <!-- Link Training Error Counters -->
+                    <div class="card errors-section-card link-errors-card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">🔗</div>
+                                Link Training Error Counters
+                            </div>
+                            <div class="error-legend">
+                                <span class="legend-item">Last Updated: <span id="linkErrorsLastUpdate">Never</span></span>
+                            </div>
+                        </div>
+
+                        <div class="errors-counter-grid" id="linkErrorsCounterGrid">
+                            <div class="loading-state">
+                                <div class="loading"></div>
+                                <span>Loading error counters...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Flit Bit Rate Error Counters -->
+                    <div class="card errors-section-card flit-errors-card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">📊</div>
+                                Flit Bit Rate Error Counters
+                            </div>
+                            <div class="error-legend">
+                                <span class="legend-item">Last Updated: <span id="flitErrorsLastUpdate">Never</span></span>
+                            </div>
+                        </div>
+
+                        <div class="errors-counter-grid" id="flitErrorsCounterGrid">
+                            <div class="loading-state">
+                                <div class="loading"></div>
+                                <span>Loading flit error counters...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PCIe 6.1 Specification Reference -->
+                    <div class="card spec-reference-card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">📖</div>
+                                PCIe 6.1 Error Types & Common Causes
+                            </div>
+                        </div>
+                        <div class="spec-reference-content">
+                            <div class="spec-item">
+                                <strong>PortRx (Port Receive Errors)</strong>
+                                <div class="spec-description">Physical layer errors during data reception (PCIe 6.1 Spec §4.2.6)</div>
+                                <div class="spec-causes">
+                                    <strong>Common Causes:</strong>
+                                    <ul>
+                                        <li>Poor signal integrity or excessive noise</li>
+                                        <li>Cable quality issues or improper termination</li>
+                                        <li>Clock skew or jitter problems</li>
+                                        <li>Electromagnetic interference (EMI)</li>
+                                        <li>Marginal voltage levels or power supply issues</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="spec-item">
+                                <strong>BadTLP (Bad Transaction Layer Packet)</strong>
+                                <div class="spec-description">Malformed or corrupted TLPs (PCIe 6.1 Spec §2.5.1)</div>
+                                <div class="spec-causes">
+                                    <strong>Common Causes:</strong>
+                                    <ul>
+                                        <li>ECRC (End-to-End CRC) validation failures</li>
+                                        <li>LCRC (Link CRC) errors not caught at lower layers</li>
+                                        <li>Malformed packet headers or invalid formatting</li>
+                                        <li>Buffer overflow or underflow in transaction layer</li>
+                                        <li>Firmware bugs in TLP generation logic</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="spec-item">
+                                <strong>BadDLLP (Bad Data Link Layer Packet)</strong>
+                                <div class="spec-description">Invalid DLLPs or CRC errors (PCIe 6.1 Spec §3.4.1)</div>
+                                <div class="spec-causes">
+                                    <strong>Common Causes:</strong>
+                                    <ul>
+                                        <li>CRC check failures on DLLPs (ACK/NAK packets)</li>
+                                        <li>Invalid DLLP type or format errors</li>
+                                        <li>Sequence number mismatches</li>
+                                        <li>Link training state machine errors</li>
+                                        <li>Physical layer bit errors propagating to DLLP</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="spec-item">
+                                <strong>RecDiag (Receiver Diagnostic Errors)</strong>
+                                <div class="spec-description">Link training and equalization failures (PCIe 6.1 Spec §4.2.3)</div>
+                                <div class="spec-causes">
+                                    <strong>Common Causes:</strong>
+                                    <ul>
+                                        <li>Equalization failures during link training</li>
+                                        <li>Preset or coefficient optimization failures</li>
+                                        <li>Receiver detection timeouts</li>
+                                        <li>Eye diagram margin violations</li>
+                                        <li>Lane-to-lane skew beyond tolerance</li>
+                                        <li>Speed negotiation failures (Gen 1/2/3/4/5/6)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Tooltip Template (Hidden, used by JavaScript) -->
+            <div id="errorTooltipTemplate" style="display: none;">
+                <div class="error-tooltip">
+                    <div class="tooltip-title"></div>
+                    <div class="tooltip-spec"></div>
+                    <div class="tooltip-causes"></div>
+                </div>
+            </div>
+
             <!-- Resets Dashboard -->
-            <!-- Resets Dashboard - Replace the existing resets dashboard section -->
             <div id="resets-dashboard" class="dashboard-content">
                 <div class="dashboard-header">
                     <div>
@@ -1211,6 +1360,7 @@
     <script src="{{ url_for('static', filename='js/resets.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dashboards.js') }}"></script>
     <script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/errors.js') }}"></script>
     <!-- Firmware Updater Module -->
     <script src="{{ url_for('static', filename='js/FWUpdater.js') }}"></script>
 
