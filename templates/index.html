@@ -390,35 +390,68 @@
             <!-- Link Status Dashboard -->
             <div id="link_status-dashboard" class="dashboard-content">
                 <div class="dashboard-header">
-                    <h2 class="dashboard-title">Link Status</h2>
-                    <p class="dashboard-subtitle">Monitor communication link quality and connection statistics</p>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div>
+                            <h2 class="dashboard-title">Link Status</h2>
+                            <p class="dashboard-subtitle">Monitor PCIe port connections and lane configurations</p>
+                        </div>
+                        <div style="display: flex; gap: 15px;">
+                            <button class="btn btn-outline" id="refreshLinkStatus">
+                                <span>🔄</span> Refresh Status
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
+                <!-- Metrics Overview -->
                 <div class="metrics-row">
                     <div class="metric-card">
-                        <div class="metric-value" id="linkState">Unknown</div>
-                        <div class="metric-label">Link State</div>
+                        <div class="metric-value" id="totalPorts">--</div>
+                        <div class="metric-label">Total Ports</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-value" id="signalStrength">-</div>
-                        <div class="metric-label">Signal Strength</div>
+                        <div class="metric-value" id="activePorts">--</div>
+                        <div class="metric-label">Active Connections</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-value" id="errorCount">0</div>
-                        <div class="metric-label">Error Count</div>
+                        <div class="metric-value" id="goldenFingerStatus">--</div>
+                        <div class="metric-label">Golden Finger</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-value" id="packetCount">0</div>
-                        <div class="metric-label">Packet Count</div>
+                        <div class="metric-value" id="maxSpeed">--</div>
+                        <div class="metric-label">Maximum Speed</div>
                     </div>
                 </div>
 
                 <div class="dashboard-grid">
-                    <div class="card command-interface">
+                    <!-- Port Status Grid -->
+                    <div class="card" style="grid-column: span 2;">
                         <div class="card-header">
                             <div class="card-title">
                                 <div class="card-icon">📡</div>
+                                PCIe Port Status
+                            </div>
+                        </div>
+
+                        <div class="port-status-grid" id="portStatusGrid">
+                            <div class="port-status-loading">
+                                <div class="loading"></div>
+                                <p>Connect to a device and run 'showport' to view port status</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Command Interface -->
+                    <div class="card command-interface" style="grid-column: span 2;">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">💬</div>
                                 Link Status Commands
+                            </div>
+                            <div class="card-actions">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--secondary-gray);">
+                                    <input type="checkbox" id="useCacheLinkStatus" checked> Use cache
+                                </label>
                             </div>
                         </div>
 
@@ -430,28 +463,28 @@
                         </div>
 
                         <div class="command-presets" id="linkPresets">
-                            <div class="preset-btn" data-cmd="AT+CSQ" data-desc="Signal quality">
-                                <div class="preset-title">Signal Quality</div>
-                                <div class="preset-command">AT+CSQ</div>
+                            <div class="preset-btn" data-cmd="showport" data-desc="Display port status and lane configurations">
+                                <div class="preset-title">Show Ports</div>
+                                <div class="preset-command">showport</div>
                             </div>
-                            <div class="preset-btn" data-cmd="AT+COPS?" data-desc="Network status">
-                                <div class="preset-title">Network Status</div>
-                                <div class="preset-command">AT+COPS?</div>
+                            <div class="preset-btn" data-cmd="linkinfo" data-desc="Link information details">
+                                <div class="preset-title">Link Info</div>
+                                <div class="preset-command">linkinfo</div>
                             </div>
-                            <div class="preset-btn" data-cmd="AT+CREG?" data-desc="Registration status">
-                                <div class="preset-title">Registration</div>
-                                <div class="preset-command">AT+CREG?</div>
+                            <div class="preset-btn" data-cmd="portstatus" data-desc="Detailed port status">
+                                <div class="preset-title">Port Status</div>
+                                <div class="preset-command">portstatus</div>
                             </div>
-                            <div class="preset-btn" data-cmd="LINK_STATUS" data-desc="Link diagnostics">
-                                <div class="preset-title">Link Diag</div>
-                                <div class="preset-command">LINK_STATUS</div>
+                            <div class="preset-btn" data-cmd="bandwidth" data-desc="Bandwidth utilization">
+                                <div class="preset-title">Bandwidth</div>
+                                <div class="preset-command">bandwidth</div>
                             </div>
                         </div>
 
                         <div class="console-container" id="linkConsole">
                             <div class="console-entry command">
                                 <div class="console-timestamp">System Ready</div>
-                                <div class="console-content">Link Status monitoring ready. Execute commands to check connection quality.</div>
+                                <div class="console-content">Link Status monitoring ready. Execute 'showport' to view PCIe port connections.</div>
                             </div>
                         </div>
                     </div>

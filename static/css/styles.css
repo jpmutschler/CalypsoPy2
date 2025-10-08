@@ -1897,3 +1897,440 @@ body {
         width: 100%;
     }
 }
+
+/* Link Status Dashboard Specific Styles */
+
+.port-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+    min-height: 300px;
+}
+
+.port-status-loading {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 40px;
+    color: var(--secondary-gray);
+    font-style: italic;
+    text-align: center;
+    gap: 15px;
+}
+
+.port-status-item {
+    background: var(--light-gray);
+    border-radius: 16px;
+    padding: 24px;
+    border-left: 5px solid;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.port-status-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 80px;
+    height: 80px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    transform: translate(30%, -30%);
+}
+
+.port-status-item.connected {
+    border-left-color: #22c55e;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, var(--light-gray) 100%);
+}
+
+.port-status-item.disconnected {
+    border-left-color: #ef4444;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, var(--light-gray) 100%);
+}
+
+.port-status-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px var(--shadow-medium);
+}
+
+.port-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.port-name-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.port-name {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--dark-black);
+    letter-spacing: -0.3px;
+}
+
+.port-type-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(121, 0, 0, 0.1);
+    color: var(--primary-red);
+    width: fit-content;
+}
+
+.port-led {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    position: relative;
+}
+
+.port-led::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    animation: pulse-led 2s infinite;
+}
+
+.port-led.connected {
+    background: #22c55e;
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.6);
+}
+
+.port-led.connected::after {
+    background: #22c55e;
+}
+
+.port-led.disconnected {
+    background: #ef4444;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+}
+
+.port-led.disconnected::after {
+    background: #ef4444;
+}
+
+@keyframes pulse-led {
+    0%, 100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(2);
+    }
+}
+
+.port-specs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.port-spec {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.port-spec-label {
+    color: var(--secondary-gray);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.port-spec-value {
+    color: var(--dark-black);
+    font-weight: 700;
+    font-size: 15px;
+    font-family: 'Monaco', 'Consolas', monospace;
+}
+
+.port-generation {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: 'Inter', sans-serif;
+}
+
+.port-generation.gen6 {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+}
+
+.port-generation.gen5 {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.port-generation.gen4 {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.port-generation.gen3 {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+.port-generation.gen2 {
+    background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(236, 72, 153, 0.3);
+}
+
+.port-generation.gen1 {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(107, 114, 128, 0.3);
+}
+
+.port-generation.no-connection {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    box-shadow: none;
+}
+
+.connection-details {
+    display: grid;
+    gap: 10px;
+    padding-top: 16px;
+    border-top: 2px solid rgba(0, 0, 0, 0.05);
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.detail-label {
+    font-size: 12px;
+    color: var(--secondary-gray);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-value {
+    font-size: 13px;
+    color: var(--dark-black);
+    font-weight: 700;
+    font-family: 'Monaco', 'Consolas', monospace;
+}
+
+/* Responsive adjustments for Link Status */
+@media (max-width: 1200px) {
+    .port-status-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .port-status-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .port-specs {
+        grid-template-columns: 1fr;
+    }
+
+    .port-header {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+}
+
+/* Enhanced metric cards for Link Status */
+.metrics-row .metric-card {
+    transition: all 0.3s ease;
+}
+
+.metrics-row .metric-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px var(--shadow-medium);
+}
+
+/* Port info tooltip styles */
+.port-status-item[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--dark-black);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Status indicator animations */
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.port-status-item {
+    animation: fadeInScale 0.4s ease-out;
+}
+
+.port-status-item:nth-child(1) { animation-delay: 0s; }
+.port-status-item:nth-child(2) { animation-delay: 0.05s; }
+.port-status-item:nth-child(3) { animation-delay: 0.1s; }
+.port-status-item:nth-child(4) { animation-delay: 0.15s; }
+.port-status-item:nth-child(5) { animation-delay: 0.2s; }
+.port-status-item:nth-child(6) { animation-delay: 0.25s; }
+
+/* Empty state styling */
+.port-status-grid:empty::before {
+    content: 'No port data available. Run "showport" command to load port status.';
+    display: block;
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--secondary-gray);
+    font-style: italic;
+    grid-column: 1 / -1;
+}
+
+/* Cache indicator for Link Status */
+.console-entry.response::after {
+    font-size: 10px;
+    color: #fbbf24;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+/* Link Status specific console styling */
+#linkConsole .console-entry.response {
+    border-left-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+#linkConsole .console-entry.response .console-content {
+    color: #3b82f6;
+}
+
+/* Port card highlight on hover */
+.port-status-item:hover .port-name {
+    color: var(--primary-red);
+}
+
+.port-status-item:hover .port-type-badge {
+    background: var(--primary-red);
+    color: white;
+}
+
+/* Bandwidth indicator (for future use) */
+.bandwidth-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--light-gray);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.bandwidth-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #22c55e 0%, #fbbf24 50%, #ef4444 100%);
+    transition: width 0.5s ease;
+}
+
+/* Link quality indicator */
+.link-quality {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.link-quality-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--light-gray);
+    transition: background 0.3s ease;
+}
+
+.link-quality-dot.active {
+    background: #22c55e;
+}
+
+.link-quality-dot.warning {
+    background: #fbbf24;
+}
+
+.link-quality-dot.error {
+    background: #ef4444;
+}
+
+/* Print styles for Link Status reports */
+@media print {
+    .port-status-grid {
+        display: block;
+    }
+
+    .port-status-item {
+        page-break-inside: avoid;
+        margin-bottom: 20px;
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+
+    .port-led {
+        display: none;
+    }
+
+    .command-interface {
+        display: none;
+    }
+}

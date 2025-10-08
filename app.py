@@ -2,7 +2,7 @@
 """
 CalypsoPy+ by Serial Cables
 Professional Serial Communication Interface for Hardware Development
-Clean version with working port detection
+Updated with Showport Command Parser
 """
 
 import json
@@ -19,7 +19,6 @@ import re
 from collections import deque
 import hashlib
 import os
-from FWUpdate import FirmwareUpdater
 
 # Configure logging
 logging.basicConfig(
@@ -35,6 +34,7 @@ logger = logging.getLogger(__name__)
 
 class CalypsoPyCache:
     """Simple caching system"""
+
     def __init__(self, max_size: int = 1000, ttl_seconds: int = 600):
         self.cache = {}
         self.access_times = {}
@@ -80,9 +80,108 @@ class CalypsoPyCache:
 
 
 class HardwareResponseParser:
-    """Simple response parser"""
+    """Enhanced response parser with showport support"""
+
+    @staticmethod
+    def parse_showport_response(raw_response: str) -> Dict[str, Any]:
+        """Parse the showport command output"""
+        parsed_data = {
+            'ports': [],
+            'golden_finger': None,
+            'upstream_ports': []
+        }
+
+        lines = raw_response.strip().split('\n')
+        current_section = None
+
+        for line in lines:
+            line = line.strip()
+
+            # Detect section headers
+            if 'Port Slot' in line or '----' in line:
+                continue
+            elif 'Port Upstream' in line:
+                current_section = 'upstream'
+                continue
+            elif line.startswith('Golden finger:'):
+                current_section = 'golden_finger'
+                # Parse golden finger
+                match = re.search(r'speed\s+(\d+),\s+width\s+(\d+),\s+max_width\s*=\s*(\d+)', line)
+                if match:
+                    speed_code = match.group(1)
+                    width_code = match.group(2)
+                    max_width = match.group(3)
+
+                    parsed_data['golden_finger'] = {
+                        'speed': HardwareResponseParser._parse_speed(speed_code),
+                        'speed_code': speed_code,
+                        'width': HardwareResponseParser._parse_width(width_code),
+                        'width_code': width_code,
+                        'max_width': HardwareResponseParser._parse_width(max_width),
+                        'max_width_code': max_width
+                    }
+                continue
+
+            # Parse port entries
+            port_match = re.match(r'Port(\d+):\s+speed\s+(\d+),\s+width\s+(\d+),\s+max_speed(\d+),\s+max_width(\d+)',
+                                  line)
+            if port_match:
+                port_num = port_match.group(1)
+                speed_code = port_match.group(2)
+                width_code = port_match.group(3)
+                max_speed_code = port_match.group(4)
+                max_width_code = port_match.group(5)
+
+                port_data = {
+                    'port_number': port_num,
+                    'speed': HardwareResponseParser._parse_speed(speed_code),
+                    'speed_code': speed_code,
+                    'width': HardwareResponseParser._parse_width(width_code),
+                    'width_code': width_code,
+                    'max_speed': HardwareResponseParser._parse_speed(max_speed_code),
+                    'max_speed_code': max_speed_code,
+                    'max_width': HardwareResponseParser._parse_width(max_width_code),
+                    'max_width_code': max_width_code,
+                    'is_connected': speed_code != '00' and width_code != '00'
+                }
+
+                if current_section == 'upstream':
+                    parsed_data['upstream_ports'].append(port_data)
+                else:
+                    parsed_data['ports'].append(port_data)
+
+        return parsed_data
+
+    @staticmethod
+    def _parse_speed(speed_code: str) -> str:
+        """Convert speed code to generation string"""
+        speed_map = {
+            '06': 'Gen6',
+            '05': 'Gen5',
+            '04': 'Gen4',
+            '03': 'Gen3',
+            '02': 'Gen2',
+            '01': 'Gen1',
+            '00': 'No Link'
+        }
+        return speed_map.get(speed_code, f'Unknown ({speed_code})')
+
+    @staticmethod
+    def _parse_width(width_code: str) -> str:
+        """Convert width code to lane configuration string"""
+        width_map = {
+            '16': 'x16',
+            '08': 'x8',
+            '04': 'x4',
+            '02': 'x2',
+            '01': 'x1',
+            '00': 'No Link'
+        }
+        return width_map.get(width_code, f'Unknown ({width_code})')
+
     @staticmethod
     def parse_response(raw_response: str, command: str = "", dashboard: str = "general") -> Dict[str, Any]:
+        """Main response parser with enhanced handling"""
         parsed_data = {
             'raw': raw_response.strip(),
             'timestamp': datetime.now().isoformat(),
@@ -93,6 +192,14 @@ class HardwareResponseParser:
             'status': 'success'
         }
 
+        # Handle showport command
+        if command.lower() == 'showport' or dashboard == 'link_status':
+            showport_data = HardwareResponseParser.parse_showport_response(raw_response)
+            parsed_data['parsed'] = showport_data
+            parsed_data['type'] = 'showport_response'
+            return parsed_data
+
+        # Handle bifurcation showmode command
         if dashboard == 'bifurcation' and 'showmode' in command.lower():
             mode_match = re.search(r'SBR\s+mode:\s*(\d+)', raw_response, re.IGNORECASE)
             if mode_match:
@@ -105,6 +212,7 @@ class HardwareResponseParser:
 
 class CalypsoPyManager:
     """Main manager for CalypsoPy+ hardware interface"""
+
     def __init__(self):
         self.connections: Dict[str, serial.Serial] = {}
         self.connection_lock = threading.RLock()
@@ -123,18 +231,15 @@ class CalypsoPyManager:
             }
 
     def list_ports(self) -> List[Dict[str, str]]:
-        """List available serial ports using working method from debug tool"""
+        """List available serial ports"""
         ports = []
-
-        logger.info("Starting port scan using working method...")
+        logger.info("Starting port scan...")
 
         try:
             detected_ports = serial.tools.list_ports.comports()
             logger.info(f"Raw port scan found {len(detected_ports)} ports")
 
             for port in detected_ports:
-                logger.info(f"Processing port: {port.device}")
-
                 port_info = {
                     'device': port.device,
                     'description': port.description or 'Unknown Device',
@@ -210,7 +315,8 @@ class CalypsoPyManager:
                 logger.error(f"Failed to connect to {port}: {str(e)}")
                 return {'success': False, 'message': f'Connection failed: {str(e)}'}
 
-    def execute_command(self, port: str, command: str, dashboard: str = "general", use_cache: bool = True) -> Dict[str, Any]:
+    def execute_command(self, port: str, command: str, dashboard: str = "general", use_cache: bool = True) -> Dict[
+        str, Any]:
         """Execute hardware command"""
         if use_cache:
             cached_response = self.cache.get(command, port, dashboard)
@@ -226,9 +332,11 @@ class CalypsoPyManager:
                 ser = self.connections[port]
                 start_time = time.time()
 
-                # Handle special bifurcation commands (simulation for development)
+                # Handle special commands (simulation for development without hardware)
                 if dashboard == 'bifurcation' or command.lower() in ['showmode', 'getconfig', 'checkstatus']:
                     raw_response = self._simulate_bifurcation_response(command)
+                elif command.lower() == 'showport':
+                    raw_response = self._simulate_showport_response()
                 else:
                     ser.reset_input_buffer()
                     ser.reset_output_buffer()
@@ -247,7 +355,7 @@ class CalypsoPyManager:
                             last_activity = time.time()
 
                             full_response = ''.join(response_parts)
-                            if any(term in full_response.lower() for term in ['ok\r', 'error\r', 'done\r']):
+                            if any(term in full_response.lower() for term in ['ok\r', 'error\r', 'done\r', 'cmd>']):
                                 break
                         else:
                             if time.time() - last_activity > 0.5:
@@ -294,6 +402,21 @@ class CalypsoPyManager:
                 error_msg = f"Command execution error: {str(e)}"
                 logger.error(f"Error executing '{command}' on {port}: {error_msg}")
                 return {'success': False, 'message': error_msg}
+
+    def _simulate_showport_response(self) -> str:
+        """Simulate showport command response for development"""
+        return """Cmd>showport
+Port Slot----------------------------------------------------------------------
+--------------------
+
+Port80 : speed 06, width 08, max_speed06, max_width08
+Port112: speed 06, width 08, max_speed06, max_width16
+Port128: speed 06, width 08, max_speed06, max_width16
+Port Upstream------------------------------------------------------------------
+----------------------------
+
+Golden finger: speed 06, width 08, max_width = 16
+Cmd>"""
 
     def _simulate_bifurcation_response(self, command: str) -> str:
         """Simulate bifurcation command responses"""
@@ -421,8 +544,7 @@ def handle_execute_command(data):
         })
         return
 
-    if dashboard == 'bifurcation':
-        logger.info(f"Bifurcation command: '{command}'")
+    logger.info(f"Executing command '{command}' on dashboard '{dashboard}'")
 
     result = calypso_manager.execute_command(port, command, dashboard, use_cache)
     result['dashboard'] = dashboard
@@ -454,71 +576,6 @@ def handle_get_dashboard_data(data):
         'port': port
     })
 
-@socketio.on('firmware_update')
-def handle_firmware_update(data):
-    port = data.get('port')
-    target = data.get('target')  # 'mcu' or 'sbr'
-    file_data = data.get('file_data')  # Base64 encoded
-
-    if not all([port, target, file_data]):
-        emit('firmware_update_result', {
-            'success': False,
-            'message': 'Missing required parameters'
-        })
-        return
-
-    # Decode file data
-    import base64
-    try:
-        file_bytes = base64.b64decode(file_data)
-    except Exception as e:
-        emit('firmware_update_result', {
-            'success': False,
-            'message': f'Invalid file data: {str(e)}'
-        })
-        return
-
-    # Create updater if not exists
-    if not hasattr(calypso_manager, 'firmware_updater'):
-        calypso_manager.firmware_updater = FirmwareUpdater(calypso_manager)
-
-    # Progress callback
-    def progress_callback(info):
-        socketio.emit('firmware_progress', {
-            'port': port,
-            'target': target,
-            **info
-        })
-
-    # Perform update in background thread
-    def do_update():
-        if target == 'mcu':
-            result = calypso_manager.firmware_updater.update_firmware(
-                port, 'mcu', file_bytes, progress_callback
-            )
-        elif target == 'sbr':
-            result = calypso_manager.firmware_updater.update_sbr_both(
-                port, file_bytes, progress_callback
-            )
-        else:
-            result = {'success': False, 'message': 'Invalid target'}
-
-        socketio.emit('firmware_update_result', result)
-
-    threading.Thread(target=do_update).start()
-
-
-@socketio.on('cancel_firmware_update')
-def handle_cancel_firmware_update(data):
-    port = data.get('port')
-
-    if hasattr(calypso_manager, 'firmware_updater'):
-        success = calypso_manager.firmware_updater.cancel_transfer(port)
-        emit('firmware_cancel_result', {
-            'success': success,
-            'port': port
-        })
-
 
 @socketio.on('clear_cache')
 def handle_clear_cache(data):
@@ -541,7 +598,7 @@ if __name__ == '__main__':
     print("=" * 50)
     print("🌐 Web Interface: http://localhost:5000")
     print("📊 Dashboards: Device Info, Link Status, Bifurcation, I2C/I3C, Advanced, Resets, Firmware")
-    print("🔀 Bifurcation: PCIe lane configuration monitoring and control")
+    print("📡 Link Status: PCIe port monitoring with showport command")
     print("=" * 50)
 
     socketio.run(
