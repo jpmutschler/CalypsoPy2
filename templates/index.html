@@ -85,6 +85,10 @@
                     <div class="nav-icon">⬆️</div>
                     <div class="nav-text">Firmware Updates</div>
                 </div>
+                <div class="nav-item" data-dashboard="terminal">
+                    <div class="nav-icon">⌨️</div>
+                    <div class="nav-text">Terminal</div>
+                </div>
             </div>
 
             <div class="nav-section">
@@ -1352,15 +1356,214 @@
                     </div>
                 </div>
             </div>
+
+                        <!-- Terminal Dashboard -->
+            <div id="terminal-dashboard" class="dashboard-content">
+                <div class="dashboard-header">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div>
+                            <h2 class="dashboard-title">Terminal Emulator</h2>
+                            <p class="dashboard-subtitle">Direct CLI interface for device communication</p>
+                        </div>
+                        <div style="display: flex; gap: 15px; align-items: center;">
+                            <div class="terminal-connection-indicator" id="terminalConnectionStatus">
+                                <div class="terminal-connection-dot"></div>
+                                <span>Disconnected</span>
+                            </div>
+                            <button class="btn btn-outline" id="exportTerminal">
+                                <span>📄</span> Export Session
+                            </button>
+                            <button class="btn btn-outline" id="clearTerminal">
+                                <span>🗑️</span> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Terminal Statistics -->
+                <div class="metrics-row">
+                    <div class="metric-card">
+                        <div class="metric-value" id="terminalCommandsCount">0</div>
+                        <div class="metric-label">Commands Executed</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="terminalBufferSize">0</div>
+                        <div class="metric-label">Buffer Lines</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="terminalResponseTime">--ms</div>
+                        <div class="metric-label">Last Response Time</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="terminalConnectionPort">--</div>
+                        <div class="metric-label">Active Port</div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <!-- Terminal Emulator Card -->
+                    <div class="card" style="grid-column: span 2;">
+                        <div class="terminal-container">
+                            <!-- Terminal Header -->
+                            <div class="terminal-header">
+                                <div class="terminal-title">
+                                    <span>⌨️</span>
+                                    <span>CalypsoPy+ Terminal</span>
+                                </div>
+                                <div class="terminal-window-controls">
+                                    <div class="terminal-control-dot close"></div>
+                                    <div class="terminal-control-dot minimize"></div>
+                                    <div class="terminal-control-dot maximize"></div>
+                                </div>
+                            </div>
+
+                            <!-- Terminal Display Area -->
+                            <div class="terminal-display" id="terminalDisplay">
+                                <!-- Terminal lines will be dynamically added here -->
+                            </div>
+
+                            <!-- Terminal Input Area -->
+                            <div class="terminal-input-container">
+                                <span class="terminal-prompt-label" id="terminalPromptLabel">></span>
+                                <input
+                                    type="text"
+                                    id="terminalInput"
+                                    class="terminal-input"
+                                    placeholder="Enter command..."
+                                    autocomplete="off"
+                                    spellcheck="false"
+                                    disabled
+                                >
+                                <div class="terminal-controls">
+                                    <button class="terminal-btn primary" id="sendTerminalCmd" disabled>
+                                        <span>📤</span>
+                                        <span>Send</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Terminal Statistics Bar -->
+                            <div class="terminal-stats-bar">
+                                <div class="terminal-stat-item">
+                                    <span class="terminal-stat-label">Port:</span>
+                                    <span class="terminal-stat-value" id="terminalStatPort">--</span>
+                                </div>
+                                <div class="terminal-stat-item">
+                                    <span class="terminal-stat-label">Baud:</span>
+                                    <span class="terminal-stat-value">115200</span>
+                                </div>
+                                <div class="terminal-stat-item">
+                                    <span class="terminal-stat-label">History:</span>
+                                    <span class="terminal-stat-value" id="terminalStatHistory">0</span>
+                                </div>
+                                <div class="terminal-stat-item">
+                                    <span class="terminal-stat-label">Buffer:</span>
+                                    <span class="terminal-stat-value" id="terminalStatBuffer">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Keyboard Shortcuts Card -->
+                    <div class="card" style="grid-column: span 2;">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">⌨️</div>
+                                Keyboard Shortcuts
+                            </div>
+                        </div>
+
+                        <div class="terminal-shortcuts-help">
+                            <div class="shortcuts-title">Quick Reference Guide</div>
+                            <div class="shortcuts-list">
+                                <div class="shortcut-item">
+                                    <span class="shortcut-key">Enter</span>
+                                    <span class="shortcut-description">Execute command</span>
+                                </div>
+                                <div class="shortcut-item">
+                                    <span class="shortcut-key">↑ / ↓</span>
+                                    <span class="shortcut-description">Navigate command history</span>
+                                </div>
+                                <div class="shortcut-item">
+                                    <span class="shortcut-key">Ctrl + L</span>
+                                    <span class="shortcut-description">Clear terminal screen</span>
+                                </div>
+                                <div class="shortcut-item">
+                                    <span class="shortcut-key">Ctrl + C</span>
+                                    <span class="shortcut-description">Cancel current input</span>
+                                </div>
+                                <div class="shortcut-item">
+                                    <span class="shortcut-key">Esc</span>
+                                    <span class="shortcut-description">Clear input field</span>
+                                </div>
+                                <div class="shortcut-item">
+                                    <span class="shortcut-key">Tab</span>
+                                    <span class="shortcut-description">Auto-complete (future)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Terminal Usage Tips Card -->
+                    <div class="card" style="grid-column: span 2;">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">💡</div>
+                                Terminal Usage Tips
+                            </div>
+                        </div>
+
+                        <div style="padding: 10px 0;">
+                            <div style="background: var(--light-gray); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                                <h4 style="color: var(--primary-red); margin-bottom: 10px; font-size: 14px;">
+                                    🎯 Getting Started
+                                </h4>
+                                <ul style="color: var(--secondary-gray); font-size: 13px; line-height: 1.8; margin-left: 20px;">
+                                    <li>Connect to your device first before using the terminal</li>
+                                    <li>Type commands directly and press Enter to execute</li>
+                                    <li>All commands are sent in real-time to the connected device</li>
+                                    <li>Response times are displayed after each command execution</li>
+                                </ul>
+                            </div>
+
+                            <div style="background: var(--light-gray); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                                <h4 style="color: var(--primary-red); margin-bottom: 10px; font-size: 14px;">
+                                    ⚡ Power Features
+                                </h4>
+                                <ul style="color: var(--secondary-gray); font-size: 13px; line-height: 1.8; margin-left: 20px;">
+                                    <li><strong>Command History:</strong> Use up/down arrows to recall previous commands</li>
+                                    <li><strong>Auto-scroll:</strong> Terminal automatically scrolls to show latest output</li>
+                                    <li><strong>Export Session:</strong> Save complete terminal session to text file</li>
+                                    <li><strong>Buffer Management:</strong> Automatic buffer trimming keeps performance optimal</li>
+                                </ul>
+                            </div>
+
+                            <div style="background: rgba(251, 191, 36, 0.1); border: 2px solid rgba(251, 191, 36, 0.3); padding: 15px; border-radius: 10px;">
+                                <h4 style="color: #d97706; margin-bottom: 10px; font-size: 14px;">
+                                    ⚠️ Important Notes
+                                </h4>
+                                <ul style="color: var(--secondary-gray); font-size: 13px; line-height: 1.8; margin-left: 20px;">
+                                    <li>Commands are executed immediately - there is no undo function</li>
+                                    <li>Terminal operates in real-time mode with no caching</li>
+                                    <li>Long-running commands may take time to complete</li>
+                                    <li>Connection must remain active during command execution</li>
+                                    <li>Maximum buffer size: 1000 lines (auto-trimmed)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
     <!-- CalypsoPy+ Scripts -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     <script src="{{ url_for('static', filename='js/resets.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/dashboards.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
     <script src="{{ url_for('static', filename='js/errors.js') }}"></script>
+    <!-- Terminal Module -->
+    <script src="{{ url_for('static', filename='js/terminal.js') }}"></script>
     <!-- Firmware Updater Module -->
     <script src="{{ url_for('static', filename='js/FWUpdater.js') }}"></script>
 

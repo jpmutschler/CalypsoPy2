@@ -680,9 +680,6 @@ class ErrorsDashboard {
     }
 }
 
-// Initialize Errors Dashboard
-let errorsDashboard = null;
-
 function initializeErrorsDashboard() {
     if (!errorsDashboard) {
         errorsDashboard = new ErrorsDashboard();

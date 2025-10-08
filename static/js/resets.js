@@ -366,9 +366,6 @@ class ResetsDashboard {
     }
 }
 
-// Initialize Resets Dashboard
-let resetsDashboard = null;
-
 // Initialization function to be called from main app
 function initializeResetsDashboard() {
     if (!resetsDashboard) {

@@ -28,6 +28,7 @@ let bifurcationDashboard = null;
 let linkStatusDashboard = null;
 let resetsDashboard = null;
 let errorsDashboard = null;
+let terminalDashboard = null;
 
 // =============================================================================
 // UTILITY FUNCTIONS
@@ -162,6 +163,45 @@ function updateConnectionStatus(connected, port = null) {
 
         updateDashboardAccess();
     }
+        // Update terminal-specific UI elements
+        const terminalInput = document.getElementById('terminalInput');
+        const sendTerminalBtn = document.getElementById('sendTerminalCmd');
+        const terminalConnectionStatus = document.getElementById('terminalConnectionStatus');
+        const terminalPromptLabel = document.getElementById('terminalPromptLabel');
+        const terminalStatPort = document.getElementById('terminalStatPort');
+        const terminalConnectionPort = document.getElementById('terminalConnectionPort');
+
+        if (connected && port) {
+            if (terminalInput) terminalInput.disabled = false;
+            if (sendTerminalBtn) sendTerminalBtn.disabled = false;
+
+            if (terminalConnectionStatus) {
+                terminalConnectionStatus.className = 'terminal-connection-indicator connected';
+                terminalConnectionStatus.innerHTML = `
+                    <div class="terminal-connection-dot"></div>
+                    <span>Connected: ${port}</span>
+                `;
+            }
+
+            if (terminalPromptLabel) terminalPromptLabel.textContent = `${port}>`;
+            if (terminalStatPort) terminalStatPort.textContent = port;
+            if (terminalConnectionPort) terminalConnectionPort.textContent = port;
+        } else {
+            if (terminalInput) terminalInput.disabled = true;
+            if (sendTerminalBtn) sendTerminalBtn.disabled = true;
+
+            if (terminalConnectionStatus) {
+                terminalConnectionStatus.className = 'terminal-connection-indicator disconnected';
+                terminalConnectionStatus.innerHTML = `
+                    <div class="terminal-connection-dot"></div>
+                    <span>Disconnected</span>
+                `;
+            }
+
+            if (terminalPromptLabel) terminalPromptLabel.textContent = '>';
+            if (terminalStatPort) terminalStatPort.textContent = '--';
+            if (terminalConnectionPort) terminalConnectionPort.textContent = '--';
+        }
 }
 
 function updateDashboardAccess() {
@@ -202,22 +242,28 @@ function toggleDeveloperMode(enabled) {
     localStorage.setItem('calypso_developer_mode', enabled.toString());
 }
 
-/**
- * Complete and corrected switchDashboard function for app.js
- * Replace your entire switchDashboard function with this version
- */
+/** Complete and corrected switchDashboard function **/
 
 function switchDashboard(dashboardId) {
     // Check if dashboard access is allowed (connected OR developer mode for viewing)
     if (!isConnected && !isDeveloperMode && dashboardId !== 'connection' && dashboardId !== 'analytics') {
         showNotification('Please connect to a device first or enable Developer Mode', 'warning');
         return;
-    } else if (dashboardId === 'errors') {  // <-- ADD THIS ENTIRE BLOCK
-    if (window.errorsDashboard && window.errorsDashboard.onActivate) {
-        setTimeout(() => {
-            window.errorsDashboard.onActivate();
-        }, 100);
     }
+
+    // Handle specific dashboard activations
+    if (dashboardId === 'errors') {
+        if (window.errorsDashboard && window.errorsDashboard.onActivate) {
+            setTimeout(() => {
+                window.errorsDashboard.onActivate();
+            }, 100);
+        }
+    } else if (dashboardId === 'terminal') {
+        if (window.terminalDashboard && window.terminalDashboard.onActivate) {
+            setTimeout(() => {
+                window.terminalDashboard.onActivate();
+            }, 100);
+        }
     }
 
     // Update navigation active state
@@ -1032,23 +1078,53 @@ function setupSocketHandlers() {
     });
 
     socket.on('connection_result', (data) => {
-        const btn = document.getElementById('connectBtn');
-        btn.innerHTML = '<span>🔗</span> Connect Device';
-        btn.disabled = false;
+    const btn = document.getElementById('connectBtn');
+    btn.innerHTML = '<span>🔗</span> Connect Device';
+    btn.disabled = false;
 
-        if (data.success) {
-            updateConnectionStatus(true, data.connection_info.port);
-            showNotification(`Connected to ${data.connection_info.port}`, 'success');
+    if (data.success) {
+        updateConnectionStatus(true, data.connection_info.port);
+        showNotification(`Connected to ${data.connection_info.port}`, 'success');
 
-            setTimeout(() => {
-                switchDashboard('device_info');
-                showNotification('Switched to Device Information - Loading system data...', 'info');
-            }, 1000);
-
-        } else {
-            showNotification(data.message, 'error');
+        // Notify terminal dashboard
+        if (window.terminalDashboard) {
+            window.terminalDashboard.onConnectionChange(true, data.connection_info.port);
         }
-    });
+
+        setTimeout(() => {
+            switchDashboard('device_info');
+            showNotification('Switched to Device Information - Loading system data...', 'info');
+        }, 1000);
+
+    } else {
+        showNotification(data.message, 'error');
+    }
+});
+
+socket.on('disconnection_result', (data) => {
+    const btn = document.getElementById('disconnectBtn');
+    btn.innerHTML = '<span>🔌</span> Disconnect';
+    btn.disabled = false;
+
+    updateConnectionStatus(false);
+
+    // Notify terminal dashboard
+    if (window.terminalDashboard) {
+        window.terminalDashboard.onConnectionChange(false, null);
+    }
+
+    if (data.success) {
+        showNotification(data.message, 'success');
+
+        setTimeout(() => {
+            switchDashboard('connection');
+            showNotification('Disconnected - Please connect to a device to continue', 'info');
+        }, 1000);
+
+    } else {
+        showNotification(data.message, 'error');
+    }
+});
 
     socket.on('disconnection_result', (data) => {
         const btn = document.getElementById('disconnectBtn');
@@ -1068,38 +1144,56 @@ function setupSocketHandlers() {
         } else {
             showNotification(data.message, 'error');
         }
+
+        updateConnectionStatus(false);
+
+        // Notify terminal dashboard of disconnection
+        if (window.terminalDashboard) {
+            window.terminalDashboard.onConnectionChange(false, null);
+        }
     });
 
     socket.on('command_result', (data) => {
-        const consoleId = `${data.dashboard || currentDashboard}Console`;
+    // Handle terminal dashboard responses FIRST
+    if (data.dashboard === 'terminal' && window.terminalDashboard) {
+        window.terminalDashboard.handleCommandResult(data);
+        return;
+    }
 
-        if (data.success) {
-            systemMetrics.successfulCommands++;
-            if (data.response_time_ms) {
-                systemMetrics.totalResponseTime += data.response_time_ms;
-                updateChart(data.response_time_ms);
-            }
-            if (data.from_cache) {
-                systemMetrics.cacheHits++;
-            }
+    // Handle errors dashboard responses
+    if (data.dashboard === 'errors' && window.errorsDashboard) {
+        window.errorsDashboard.handleCommandResult(data);
+    }
 
-            const parsedData = data.data;
-            const cacheIndicator = data.from_cache ? ' [CACHED]' : '';
+    const consoleId = `${data.dashboard || currentDashboard}Console`;
 
-            addConsoleEntry(consoleId, 'response',
-                `${parsedData.raw}${cacheIndicator}`,
-                parsedData.timestamp,
-                parsedData);
-
-            updateDashboardData(data);
-
-        } else {
-            addConsoleEntry(consoleId, 'error', data.message);
-            showNotification(data.message, 'error');
+    if (data.success) {
+        systemMetrics.successfulCommands++;
+        if (data.response_time_ms) {
+            systemMetrics.totalResponseTime += data.response_time_ms;
+            updateChart(data.response_time_ms);
+        }
+        if (data.from_cache) {
+            systemMetrics.cacheHits++;
         }
 
-        updateMetrics();
-    });
+        const parsedData = data.data;
+        const cacheIndicator = data.from_cache ? ' [CACHED]' : '';
+
+        addConsoleEntry(consoleId, 'response',
+            `${parsedData.raw}${cacheIndicator}`,
+            parsedData.timestamp,
+            parsedData);
+
+        updateDashboardData(data);
+
+    } else {
+        addConsoleEntry(consoleId, 'error', data.message);
+        showNotification(data.message, 'error');
+    }
+
+    updateMetrics();
+});
 
     socket.on('system_status', (data) => {
         const connectedPorts = Object.keys(data.connected_ports || {}).filter(port =>
@@ -1184,7 +1278,6 @@ function initializeApplication() {
 
     if (savedDeveloperMode === 'true') {
         const devModeCheckbox = document.getElementById('developerMode');
-
         if (devModeCheckbox) {
             devModeCheckbox.checked = true;
             toggleDeveloperMode(true);
@@ -1195,35 +1288,32 @@ function initializeApplication() {
         updateDashboardAccess();
     }, 500);
 
-    // Initialize Resets Dashboard
+    // Initialize Resets Dashboard (from external file)
     if (window.initializeResetsDashboard) {
         resetsDashboard = window.initializeResetsDashboard();
-        console.log('✅ Resets Dashboard initialized from external file');
+        console.log('✅ Resets Dashboard initialized');
     } else {
-        console.warn('⚠️ Resets Dashboard script not loaded yet, will retry...');
-        // Retry after a short delay if script hasn't loaded
-        setTimeout(() => {
-            if (window.initializeResetsDashboard) {
-                resetsDashboard = window.initializeResetsDashboard();
-                console.log('✅ Resets Dashboard initialized (retry successful)');
-            } else {
-                console.error('❌ Failed to initialize Resets Dashboard');
-            }
-        }, 1000);
+        console.warn('⚠️ Resets Dashboard not available');
     }
 
-    // Initialize Errors Dashboard
+    // Initialize Errors Dashboard (from external file)
     if (window.initializeErrorsDashboard) {
         errorsDashboard = window.initializeErrorsDashboard();
-        console.log('✅ Errors Dashboard initialized from external file');
+        console.log('✅ Errors Dashboard initialized');
     } else {
-        console.warn('⚠️ Errors Dashboard script not loaded yet, will retry...');
+        console.warn('⚠️ Errors Dashboard not available');
+    }
+
+    // Initialize Terminal Dashboard (from external file)
+    if (window.initializeTerminalDashboard) {
+        terminalDashboard = window.initializeTerminalDashboard();
+        console.log('✅ Terminal Dashboard initialized');
+    } else {
+        console.warn('⚠️ Terminal Dashboard not available - will retry');
         setTimeout(() => {
-            if (window.initializeErrorsDashboard) {
-                errorsDashboard = window.initializeErrorsDashboard();
-                console.log('✅ Errors Dashboard initialized (retry successful)');
-            } else {
-                console.error('❌ Failed to initialize Errors Dashboard');
+            if (window.initializeTerminalDashboard) {
+                terminalDashboard = window.initializeTerminalDashboard();
+                console.log('✅ Terminal Dashboard initialized (retry)');
             }
         }, 1000);
     }
@@ -1246,6 +1336,8 @@ function initializeApplication() {
     console.log('%cProfessional Hardware Interface Ready', 'color: #22c55e; font-size: 12px;');
     console.log('%cBifurcation Dashboard: Enabled', 'color: #e63946; font-size: 12px;');
     console.log('%cResets Dashboard: Enabled', 'color: #ef4444; font-size: 12px;');
+    console.log('%cErrors Dashboard: Enabled', 'color: #f59e0b; font-size: 12px;');
+    console.log('%cTerminal Dashboard: Enabled', 'color: #73d0ff; font-size: 12px;');
     console.log('%cDeveloper Mode: Dashboard viewing only', 'color: #fbbf24; font-size: 12px;');
 
     console.log('Application State:', {
@@ -1279,6 +1371,7 @@ window.CalypsoPy = {
     bifurcationDashboard: () => bifurcationDashboard,
     resetsDashboard: () => window.resetsDashboard,
     errorsDashboard: () => window.errorsDashboard,
+    terminalDashboard: () => window.terminalDashboard,
     BifurcationDashboard: BifurcationDashboard,
     BIFURCATION_MODES: BIFURCATION_MODES
 };
