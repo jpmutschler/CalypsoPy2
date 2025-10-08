@@ -1172,7 +1172,6 @@ socket.on('disconnection_result', (data) => {
         window.errorsDashboard.handleCommandResult(data);
     }
 
-    socket.on('command_result', (data) => {
     // Handle advanced dashboard responses
     if (data.dashboard === 'advanced' && window.advancedDashboard) {
         window.advancedDashboard.handleCommandResult(data);
@@ -1219,7 +1218,7 @@ socket.on('disconnection_result', (data) => {
             updateConnectionStatus(false);
         }
     });
-});
+}
 
 // =============================================================================
 // MOBILE & RESPONSIVE FEATURES
@@ -1396,4 +1395,4 @@ window.CalypsoPy = {
     terminalDashboard: () => window.terminalDashboard,
     BifurcationDashboard: BifurcationDashboard,
     BIFURCATION_MODES: BIFURCATION_MODES
-};}
+};
