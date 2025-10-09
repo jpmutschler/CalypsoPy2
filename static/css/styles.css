@@ -5934,3 +5934,70 @@ Testing Dashboard Styles
         -webkit-print-color-adjust: exact;
     }
 }
+
+.test-config-section {
+    background: var(--light-gray);
+    border: 2px solid var(--border-gray);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.test-config-section h5 {
+    color: var(--dark-black);
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0 0 15px 0;
+    text-transform: uppercase;
+}
+
+.config-item {
+    margin-bottom: 15px;
+}
+
+.config-item:last-child {
+    margin-bottom: 0;
+}
+
+.config-item label {
+    display: block;
+    font-weight: 600;
+    color: var(--secondary-gray);
+    font-size: 13px;
+    margin-bottom: 5px;
+}
+
+.config-item .form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid var(--border-gray);
+    border-radius: 6px;
+    font-size: 13px;
+    background: var(--pure-white);
+    color: var(--dark-black);
+    transition: border-color 0.2s ease;
+}
+
+.config-item .form-control:focus {
+    outline: none;
+    border-color: var(--primary-red);
+}
+
+.config-item input[type="checkbox"] {
+    margin-right: 8px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.config-item label input[type="checkbox"] {
+    display: inline-block;
+}
+
+.config-help {
+    display: block;
+    font-size: 12px;
+    color: var(--secondary-gray);
+    margin-top: 5px;
+    font-style: italic;
+}

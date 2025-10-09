@@ -1723,6 +1723,34 @@
 			                    downstream ports, and connected devices. Verifies Gen6 link speeds and widths.
 			                </p>
 
+                            	<div class="test-config-section" id="linkTrainingConfig" style="display: none;">
+							    <h5>Test Configuration</h5>
+
+							    <div class="config-item">
+							        <label for="linkTrainingDeviceSelect">Target Device:</label>
+							        <select id="linkTrainingDeviceSelect" class="form-control">
+							            <option value="">All Devices</option>
+							        </select>
+							        <small class="config-help">Select a specific device or test all devices</small>
+							    </div>
+
+							    <div class="config-item">
+							        <label>
+							            <input type="checkbox" id="linkTrainingTriggerReset">
+							            Trigger Device Reset
+							        </label>
+							        <small class="config-help">Requires root/sudo permissions</small>
+							    </div>
+
+							    <div class="config-item">
+							        <label>
+							            <input type="checkbox" id="linkTrainingTriggerHotplug">
+							            Trigger Hot-Plug Event
+							        </label>
+							        <small class="config-help">Requires root/sudo permissions</small>
+							    </div>
+							</div>
+
 			                <div class="test-requirements">
 			                    <h5>Test Validates:</h5>
 			                    <ul>

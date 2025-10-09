@@ -213,52 +213,60 @@ class TestingDashboard {
         });
     }
 
-    async runTest(testId) {
-        if (this.isRunning) {
-            showNotification('Test already running', 'warning');
-            return;
-        }
+    runTest(testId) {
+    const status = document.getElementById(`${testId}Status`);
+    const testCard = document.querySelector(`[data-test-id="${testId}"]`);
 
-        if (!currentPort) {
-            showNotification('Please connect to Atlas 3 device first', 'error');
-            return;
-        }
-
-        this.isRunning = true;
-        this.currentTest = testId;
-        this.updateTestStatus(testId, 'running');
-
-        try {
-            const response = await fetch('/api/tests/run', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    test_id: testId,
-                    port: currentPort
-                })
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                this.handleTestResult(testId, result);
-
-                if (testId === 'nvme_discovery') {
-                    this.updateTestAvailability();
-                }
-
-            } else {
-                throw new Error(`HTTP ${response.status}`);
-            }
-        } catch (error) {
-            console.error(`Test ${testId} failed:`, error);
-            this.handleTestError(testId, error.message);
-        } finally {
-            this.isRunning = false;
-            this.currentTest = null;
-        }
+    if (status) {
+        status.className = 'test-status running';
+        status.textContent = '🔄 Running...';
     }
+
+    this.addConsoleEntry('info', `Starting ${testId} test...`);
+
+    // Prepare test options
+    let options = {};
+
+    // Check if this is link training test and gather config
+    if (testId === 'link_training_time') {
+        const deviceSelect = document.getElementById('linkTrainingDeviceSelect');
+        const triggerReset = document.getElementById('linkTrainingTriggerReset');
+        const triggerHotplug = document.getElementById('linkTrainingTriggerHotplug');
+
+        options = {
+            selected_device: deviceSelect?.value || null,
+            trigger_reset: triggerReset?.checked || false,
+            trigger_hotplug: triggerHotplug?.checked || false,
+            wait_time: 3
+        };
+
+        console.log('Link Training options:', options);
+    }
+
+    // Send test request with options
+    fetch('/api/tests/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            test_id: testId,
+            port: globalSerialPort,
+            options: options
+        })
+    })
+        .then(response => response.json())
+        .then(result => {
+            this.handleTestComplete(testId, result);
+        })
+        .catch(error => {
+            console.error(`Test ${testId} error:`, error);
+            this.addConsoleEntry('error', `Test failed: ${error.message}`);
+
+            if (status) {
+                status.className = 'test-status error';
+                status.textContent = '❌ Error';
+            }
+        });
+}
 
     async runAllTests() {
         if (this.isRunning) {
@@ -788,7 +796,7 @@ class TestingDashboard {
         }
     }
 
-    			updateTestAvailability() {
+    updateTestAvailability() {
 		    fetch('/api/tests/available')
 		        .then(response => response.json())
 		        .then(tests => {
@@ -827,7 +835,30 @@ class TestingDashboard {
 		            console.error('Error updating test availability:', error);
 		        });
 		}
+populateLinkTrainingDevices() {
+    fetch('/api/tests/link_training/devices')
+        .then(response => response.json())
+        .then(devices => {
+            const select = document.getElementById('linkTrainingDeviceSelect');
+            if (!select) return;
 
+            // Clear existing options except "All Devices"
+            select.innerHTML = '<option value="">All Devices</option>';
+
+            // Add device options
+            devices.forEach(device => {
+                const option = document.createElement('option');
+                option.value = device.pci_address;
+                option.textContent = `${device.device} (${device.pci_address}) - ${device.model}`;
+                select.appendChild(option);
+            });
+
+            console.log(`Populated ${devices.length} devices for link training`);
+        })
+        .catch(error => {
+            console.error('Error loading link training devices:', error);
+        });
+}
 	/**
 	 * Generate HTML for Link Training Time results
 	 */
