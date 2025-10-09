@@ -13,12 +13,16 @@ from datetime import datetime
 from typing import Dict, List, Optional, Any
 import serial
 import serial.tools.list_ports
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 from flask_socketio import SocketIO, emit
 import re
 from collections import deque
 import hashlib
 import os
+import sys
+
+# Add tests directory to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'tests'))
 
 # Configure logging
 logging.basicConfig(
@@ -30,6 +34,20 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+
+try:
+    from tests.test_runner import TestRunner
+    from tests.pcie_discovery import PCIeDiscovery
+    from tests.nvme_discovery import NVMeDiscovery
+    TESTING_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"Testing modules not available: {e}")
+    TESTING_AVAILABLE = False
+
+# Initialize test runner (add near other global instances)
+if TESTING_AVAILABLE:
+    test_runner = TestRunner()
+    logger.info("Test Runner initialized")
 
 
 class CalypsoPyCache:
@@ -78,6 +96,19 @@ class CalypsoPyCache:
                 'max_size': self.max_size
             }
 
+try:
+    from tests.test_runner import TestRunner
+    from tests.pcie_discovery import PCIeDiscovery
+    from tests.nvme_discovery import NVMeDiscovery
+    TESTING_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"Testing modules not available: {e}")
+    TESTING_AVAILABLE = False
+
+# Initialize test runner (add near other global instances)
+if TESTING_AVAILABLE:
+    test_runner = TestRunner()
+    logger.info("Test Runner initialized")
 
 class HardwareResponseParser:
     """Enhanced response parser with showport support"""
@@ -589,6 +620,177 @@ def handle_clear_cache(data):
         'dashboard': dashboard
     })
 
+
+# Testing API Routes
+@app.route('/api/tests/available')
+def list_available_tests():
+    """List available test suites with system capability checks"""
+    if not TESTING_AVAILABLE:
+        return jsonify({'error': 'Testing modules not available'}), 503
+
+    try:
+        tests = test_runner.list_available_tests()
+
+        # Add system capability checks
+        pcie_discovery = PCIeDiscovery()
+        nvme_discovery = NVMeDiscovery()
+
+        for test in tests:
+            if test['id'] == 'pcie_discovery':
+                test['has_permission'] = pcie_discovery.has_root or pcie_discovery.has_sudo
+                test['permission_level'] = pcie_discovery.permission_level
+            elif test['id'] == 'nvme_discovery':
+                test['has_permission'] = nvme_discovery.has_root or nvme_discovery.has_sudo
+                test['has_nvme_cli'] = nvme_discovery.has_nvme_cli
+                test[
+                    'permission_level'] = 'root' if nvme_discovery.has_root else 'sudo' if nvme_discovery.has_sudo else 'user'
+
+        return jsonify(tests)
+    except Exception as e:
+        logger.error(f"Error listing tests: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/tests/run', methods=['POST'])
+def run_single_test():
+    """Run a single test suite"""
+    if not TESTING_AVAILABLE:
+        return jsonify({'error': 'Testing modules not available'}), 503
+
+    try:
+        data = request.get_json()
+        test_id = data.get('test_id')
+        port = data.get('port')
+
+        if not test_id:
+            return jsonify({'error': 'test_id required'}), 400
+
+        logger.info(f"Running test: {test_id} (port: {port})")
+
+        # Run test
+        result = test_runner.run_test_suite(test_id)
+
+        return jsonify(result)
+
+    except Exception as e:
+        logger.error(f"Error running test: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/tests/run_all', methods=['POST'])
+def run_all_tests():
+    """Run all available test suites"""
+    if not TESTING_AVAILABLE:
+        return jsonify({'error': 'Testing modules not available'}), 503
+
+    try:
+        data = request.get_json()
+        port = data.get('port')
+
+        logger.info(f"Running all tests (port: {port})")
+
+        # Run all tests
+        run_result = test_runner.run_all_tests()
+
+        # Convert dataclass to dict for JSON serialization
+        result_dict = {
+            'run_id': run_result.run_id,
+            'start_time': run_result.start_time.isoformat(),
+            'end_time': run_result.end_time.isoformat() if run_result.end_time else None,
+            'total_duration_ms': run_result.total_duration_ms,
+            'overall_status': run_result.overall_status,
+            'summary': run_result.summary,
+            'results': run_result.results
+        }
+
+        return jsonify(result_dict)
+
+    except Exception as e:
+        logger.error(f"Error running all tests: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/tests/export/<run_id>')
+def export_test_results(run_id):
+    """Export test results as downloadable report"""
+    if not TESTING_AVAILABLE:
+        return jsonify({'error': 'Testing modules not available'}), 503
+
+    try:
+        # This would retrieve from a results cache/database
+        # For now, return error as we don't persist results
+        return jsonify({'error': 'Result export not yet implemented'}), 501
+
+    except Exception as e:
+        logger.error(f"Error exporting results: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# WebSocket handlers for real-time test progress
+@socketio.on('run_test')
+def handle_run_test(data):
+    """WebSocket handler for running tests with progress updates"""
+    if not TESTING_AVAILABLE:
+        emit('test_error', {'message': 'Testing modules not available'})
+        return
+
+    test_id = data.get('test_id')
+    port = data.get('port')
+
+    if not test_id:
+        emit('test_error', {'message': 'test_id required'})
+        return
+
+    logger.info(f"WebSocket: Running test {test_id}")
+
+    # Progress callback
+    def progress_callback(update):
+        emit('test_progress', update)
+
+    try:
+        # Run test with progress updates
+        result = test_runner.run_test_suite(test_id, progress_callback=progress_callback)
+        emit('test_complete', result)
+
+    except Exception as e:
+        logger.error(f"WebSocket test error: {e}")
+        emit('test_error', {'message': str(e)})
+
+
+@socketio.on('run_all_tests')
+def handle_run_all_tests(data):
+    """WebSocket handler for running all tests with progress updates"""
+    if not TESTING_AVAILABLE:
+        emit('test_error', {'message': 'Testing modules not available'})
+        return
+
+    port = data.get('port')
+    logger.info(f"WebSocket: Running all tests")
+
+    # Progress callback
+    def progress_callback(update):
+        emit('test_progress', update)
+
+    try:
+        # Run all tests with progress updates
+        run_result = test_runner.run_all_tests(progress_callback=progress_callback)
+
+        # Convert to dict
+        result_dict = {
+            'run_id': run_result.run_id,
+            'start_time': run_result.start_time.isoformat(),
+            'end_time': run_result.end_time.isoformat() if run_result.end_time else None,
+            'total_duration_ms': run_result.total_duration_ms,
+            'overall_status': run_result.overall_status,
+            'summary': run_result.summary,
+            'results': run_result.results
+        }
+
+        emit('all_tests_complete', result_dict)
+
+    except Exception as e:
+        logger.error(f"WebSocket all tests error: {e}")
+        emit('test_error', {'message': str(e)})
 
 if __name__ == '__main__':
     os.makedirs('logs', exist_ok=True)

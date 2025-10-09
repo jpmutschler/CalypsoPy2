@@ -19,7 +19,7 @@
     <!-- Header Bar -->
     <div class="header-bar">
         <div class="brand-logo">
-            <div class="brand-icon">CP</div>
+            <div class="brand-icon">CP+</div>
             <div class="brand-text">
                 <h1>CalypsoPy+</h1>
                 <div class="tagline">by Serial Cables</div>
@@ -76,6 +76,10 @@
                 <div class="nav-item" data-dashboard="errors">
                     <div class="nav-icon">⚠️</div>
                     <div class="nav-text">Errors</div>
+                </div>
+                <div class="nav-item" data-dashboard="testing">
+                    <div class="nav-icon">🧪</div>
+                    <div class="nav-text">PCIe/NVMe Testing</div>
                 </div>
                 <div class="nav-item" data-dashboard="resets">
                     <div class="nav-icon">🔄</div>
@@ -1665,6 +1669,157 @@
                     </div>
                 </div>
             </div>
+
+            			<!-- Testing Dashboard -->
+			<div id="testing-dashboard" class="dashboard-content">
+			    <div class="dashboard-header">
+			        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+			            <div>
+			                <h2 class="dashboard-title">PCIe/NVMe Testing</h2>
+			                <p class="dashboard-subtitle">Atlas 3 validation and NVMe device testing</p>
+			            </div>
+			            <div style="display: flex; gap: 15px;">
+			                <button class="btn btn-primary" id="runAllTests">
+			                    <span>▶️</span> Run All Tests
+			                </button>
+			                <button class="btn btn-outline" id="exportTestResults">
+			                    <span>📄</span> Export Results
+			                </button>
+			                <button class="btn btn-outline" id="clearTestHistory">
+			                    <span>🗑️</span> Clear History
+			                </button>
+			            </div>
+			        </div>
+			    </div>
+
+			    <!-- Permission Notice -->
+			    <div class="info-banner">
+			        <div class="info-icon">ℹ️</div>
+			        <div class="info-content">
+			            <strong>Testing Requirements:</strong>
+			            Some tests require sudo/root permissions for full functionality.
+			            Tests will run with available permissions and note any limitations.
+			            Install <code>nvme-cli</code> for comprehensive NVMe testing: <code>sudo apt install nvme-cli</code>
+			        </div>
+			    </div>
+
+			    <!-- Test Suite Cards -->
+			    <div class="test-grid">
+			        <!-- PCIe Discovery Test -->
+			        <div class="card test-card" data-test-id="pcie_discovery">
+			            <div class="card-header test-card-header">
+			                <div class="card-title">
+			                    <div class="card-icon">🔍</div>
+			                    PCIe Discovery
+			                </div>
+			                <span class="test-status idle" id="pcie_discoveryStatus">⏸️ Idle</span>
+			            </div>
+
+			            <div class="test-card-body">
+			                <p class="test-description">
+			                    Discovers and validates Atlas 3 PCIe switch topology, including root bridge,
+			                    downstream ports, and connected devices. Verifies Gen6 link speeds and widths.
+			                </p>
+
+			                <div class="test-requirements">
+			                    <h5>Test Validates:</h5>
+			                    <ul>
+			                        <li>Atlas 3 switch detection and identification</li>
+			                        <li>Root bridge link speed (Gen6 x16)</li>
+			                        <li>Downstream port enumeration</li>
+			                        <li>NVMe device discovery via PCIe</li>
+			                        <li>Link training status and capabilities</li>
+			                    </ul>
+			                </div>
+
+			                <div class="test-actions">
+			                    <button class="btn btn-primary btn-test-run" onclick="testingDashboard.runTest('pcie_discovery')">
+			                        <span>▶️</span> Run Test
+			                    </button>
+			                </div>
+			            </div>
+
+			            <div class="test-results-container">
+			                <h5>Test Results</h5>
+			                <div id="pcie_discoveryResults" class="test-results">
+			                    <p class="no-results">No test results yet. Run the test to see results here.</p>
+			                </div>
+			            </div>
+			        </div>
+
+			        <!-- NVMe Discovery Test -->
+			        <div class="card test-card" data-test-id="nvme_discovery">
+			            <div class="card-header test-card-header">
+			                <div class="card-title">
+			                    <div class="card-icon">💾</div>
+			                    NVMe Discovery
+			                </div>
+			                <span class="test-status idle" id="nvme_discoveryStatus">⏸️ Idle</span>
+			            </div>
+
+			            <div class="test-card-body">
+			                <p class="test-description">
+			                    Discovers and enumerates NVMe controllers and namespaces downstream of Atlas 3.
+			                    Collects SMART health data and validates device configuration.
+			                </p>
+
+			                <div class="test-requirements">
+			                    <h5>Test Validates:</h5>
+			                    <ul>
+			                        <li>NVMe controller detection and identification</li>
+			                        <li>Namespace enumeration and capacity</li>
+			                        <li>SMART health monitoring (temperature, spare, usage)</li>
+			                        <li>PCI address mapping to NVMe devices</li>
+			                        <li>Critical warning detection</li>
+			                    </ul>
+			                </div>
+
+			                <div class="test-requirement-note">
+			                    <strong>Note:</strong> Requires <code>nvme-cli</code> for full functionality
+			                </div>
+
+			                <div class="test-actions">
+			                    <button class="btn btn-primary btn-test-run" onclick="testingDashboard.runTest('nvme_discovery')">
+			                        <span>▶️</span> Run Test
+			                    </button>
+			                </div>
+			            </div>
+
+			            <div class="test-results-container">
+			                <h5>Test Results</h5>
+			                <div id="nvme_discoveryResults" class="test-results">
+			                    <p class="no-results">No test results yet. Run the test to see results here.</p>
+			                </div>
+			            </div>
+			        </div>
+			    </div>
+
+			    <!-- Overall Test Results -->
+			    <div class="card">
+			        <div class="card-header">
+			            <div class="card-title">
+			                <div class="card-icon">📊</div>
+			                Overall Test Results
+			            </div>
+			        </div>
+			        <div id="overallTestResults">
+			            <p class="no-results">No test runs completed yet.</p>
+			        </div>
+			    </div>
+
+			    <!-- Test History -->
+			    <div class="card">
+			        <div class="card-header">
+			            <div class="card-title">
+			                <div class="card-icon">📜</div>
+			                Test Execution History
+			            </div>
+			        </div>
+			        <div id="testHistoryContainer" class="test-history">
+			            <p class="no-results">No test history yet.</p>
+			        </div>
+			    </div>
+			</div>
 
             <!-- Analytics Dashboard -->
             <div id="analytics-dashboard" class="dashboard-content">
