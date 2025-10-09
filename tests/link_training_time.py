@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """
-CalypsoPy+ Link Training Time Measurement Test
+CalypsoPy+ Link Training Time Measurement Test - Enhanced Version
 Tracks LTSSM state transitions using kernel dmesg logs
+Supports device selection and event triggering
 """
 
 import logging
 import subprocess
 import re
+import time
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
@@ -27,8 +29,9 @@ class LTSSMTransition:
 
 class LinkTrainingTimeMeasurement:
     """
-    Link Training Time Measurement Test
+    Link Training Time Measurement Test - Enhanced Version
     Analyzes PCIe LTSSM state transitions from kernel logs
+    Supports device selection and event triggering
     """
 
     def __init__(self):
@@ -103,8 +106,193 @@ class LinkTrainingTimeMeasurement:
             logger.error(f"Command error: {e}")
             return None
 
-    def parse_dmesg_logs(self) -> List[Dict[str, Any]]:
-        """Parse dmesg logs for PCIe link training events"""
+    def get_available_devices(self) -> List[Dict[str, Any]]:
+        """
+        Get list of available NVMe devices for selection
+
+        Returns:
+            List of device info dictionaries
+        """
+        devices = []
+
+        # Get NVMe device list
+        nvme_output = self._run_command(['nvme', 'list'])
+
+        if nvme_output:
+            lines = nvme_output.strip().split('\n')
+            for line in lines[2:]:  # Skip header lines
+                if '/dev/nvme' in line:
+                    parts = line.split()
+                    if len(parts) >= 3:
+                        device = parts[0]  # /dev/nvme0n1
+
+                        # Get PCI address for this device
+                        pci_address = self._get_pci_address_for_nvme(device)
+
+                        devices.append({
+                            'device': device,
+                            'pci_address': pci_address,
+                            'model': ' '.join(parts[1:3]) if len(parts) >= 3 else 'Unknown',
+                            'available': True
+                        })
+
+        # Also list PCIe devices directly
+        lspci_output = self._run_command(['lspci', '-D'])
+        if lspci_output:
+            for line in lspci_output.split('\n'):
+                if 'Non-Volatile memory controller' in line or 'NVM Express' in line:
+                    pci_address = line.split()[0]
+
+                    # Check if already in list
+                    if not any(d['pci_address'] == pci_address for d in devices):
+                        devices.append({
+                            'device': f'PCI Device {pci_address}',
+                            'pci_address': pci_address,
+                            'model': 'NVMe Controller',
+                            'available': True
+                        })
+
+        return devices
+
+    def _get_pci_address_for_nvme(self, nvme_device: str) -> Optional[str]:
+        """Get PCI address for an NVMe device"""
+        try:
+            # Follow symlink to get actual device
+            # /dev/nvme0n1 -> /sys/block/nvme0n1/device -> PCI address
+            device_name = nvme_device.split('/')[-1].rstrip('0123456789')  # nvme0n1 -> nvme
+
+            result = self._run_command(['readlink', '-f', f'/sys/class/nvme/{device_name}/device'])
+
+            if result:
+                # Extract PCI address from path
+                # e.g., /sys/devices/pci0000:00/0000:00:1c.0/0000:01:00.0
+                match = re.search(r'(\d{4}:\d{2}:\d{2}\.\d)', result)
+                if match:
+                    return match.group(1)
+        except:
+            pass
+
+        return None
+
+    def trigger_device_reset(self, pci_address: str) -> Dict[str, Any]:
+        """
+        Trigger a PCIe device reset to force link retraining
+
+        Args:
+            pci_address: PCI address (e.g., 0000:01:00.0)
+
+        Returns:
+            Result dictionary with success status
+        """
+        result = {
+            'success': False,
+            'message': '',
+            'pci_address': pci_address
+        }
+
+        if not (self.has_root or self.has_sudo):
+            result['message'] = 'Root/sudo permissions required for device reset'
+            return result
+
+        try:
+            # Clear dmesg to get fresh logs
+            logger.info(f"Clearing dmesg logs before reset...")
+            self._run_command(['dmesg', '-C'])
+
+            # Trigger reset
+            reset_path = f'/sys/bus/pci/devices/{pci_address}/reset'
+            logger.info(f"Triggering reset for device {pci_address}")
+
+            if self.has_root:
+                subprocess.run(['sh', '-c', f'echo 1 > {reset_path}'], check=True, timeout=5)
+            else:
+                subprocess.run(['sudo', 'sh', '-c', f'echo 1 > {reset_path}'], check=True, timeout=5)
+
+            # Wait for device to come back
+            time.sleep(2)
+
+            result['success'] = True
+            result['message'] = f'Device {pci_address} reset successfully'
+            logger.info(result['message'])
+
+        except subprocess.TimeoutExpired:
+            result['message'] = f'Device reset timed out for {pci_address}'
+            logger.error(result['message'])
+        except Exception as e:
+            result['message'] = f'Device reset failed: {str(e)}'
+            logger.error(result['message'])
+
+        return result
+
+    def trigger_hotplug_event(self, pci_address: str) -> Dict[str, Any]:
+        """
+        Trigger a hot-plug event (remove and rescan) to force link retraining
+
+        Args:
+            pci_address: PCI address (e.g., 0000:01:00.0)
+
+        Returns:
+            Result dictionary with success status
+        """
+        result = {
+            'success': False,
+            'message': '',
+            'pci_address': pci_address
+        }
+
+        if not (self.has_root or self.has_sudo):
+            result['message'] = 'Root/sudo permissions required for hot-plug'
+            return result
+
+        try:
+            # Clear dmesg to get fresh logs
+            logger.info(f"Clearing dmesg logs before hot-plug...")
+            self._run_command(['dmesg', '-C'])
+
+            # Remove device
+            remove_path = f'/sys/bus/pci/devices/{pci_address}/remove'
+            logger.info(f"Removing device {pci_address}")
+
+            if self.has_root:
+                subprocess.run(['sh', '-c', f'echo 1 > {remove_path}'], check=True, timeout=5)
+            else:
+                subprocess.run(['sudo', 'sh', '-c', f'echo 1 > {remove_path}'], check=True, timeout=5)
+
+            # Wait a moment
+            time.sleep(1)
+
+            # Rescan to bring device back
+            logger.info(f"Rescanning PCI bus...")
+            rescan_path = '/sys/bus/pci/rescan'
+
+            if self.has_root:
+                subprocess.run(['sh', '-c', f'echo 1 > {rescan_path}'], check=True, timeout=10)
+            else:
+                subprocess.run(['sudo', 'sh', '-c', f'echo 1 > {rescan_path}'], check=True, timeout=10)
+
+            # Wait for device to stabilize
+            time.sleep(2)
+
+            result['success'] = True
+            result['message'] = f'Hot-plug completed successfully for {pci_address}'
+            logger.info(result['message'])
+
+        except subprocess.TimeoutExpired:
+            result['message'] = f'Hot-plug timed out for {pci_address}'
+            logger.error(result['message'])
+        except Exception as e:
+            result['message'] = f'Hot-plug failed: {str(e)}'
+            logger.error(result['message'])
+
+        return result
+
+    def parse_dmesg_logs(self, since_timestamp: Optional[float] = None) -> List[Dict[str, Any]]:
+        """
+        Parse dmesg logs for PCIe link training events
+
+        Args:
+            since_timestamp: Only return events after this timestamp (optional)
+        """
 
         dmesg_output = self._run_command(['dmesg', '-T'])
 
@@ -137,6 +325,11 @@ class LinkTrainingTimeMeasurement:
                 if match:
                     try:
                         timestamp = float(match.group(1))
+
+                        # Filter by timestamp if provided
+                        if since_timestamp and timestamp < since_timestamp:
+                            continue
+
                         device = match.group(2) if len(match.groups()) > 1 else 'unknown'
 
                         event = {
@@ -257,40 +450,93 @@ class LinkTrainingTimeMeasurement:
             }
         }
 
-    def run_measurement_test(self) -> Dict[str, Any]:
+    def run_measurement_test(self, options: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Run complete link training time measurement test
-        Returns comprehensive test results
+
+        Args:
+            options: Test options dictionary:
+                - selected_device: PCI address to test (optional)
+                - trigger_reset: Boolean, trigger device reset before test
+                - trigger_hotplug: Boolean, trigger hot-plug before test
+                - wait_time: Seconds to wait after trigger (default: 3)
+
+        Returns:
+            Comprehensive test results
         """
         start_time = datetime.now()
+        options = options or {}
+
+        selected_device = options.get('selected_device')
+        trigger_reset = options.get('trigger_reset', False)
+        trigger_hotplug = options.get('trigger_hotplug', False)
+        wait_time = options.get('wait_time', 3)
 
         result = {
             'test_name': 'Link Training Time Measurement',
             'status': 'pass',
             'timestamp': start_time.isoformat(),
             'permission_level': self.permission_level,
+            'test_options': options,
             'warnings': [],
             'errors': [],
             'events': [],
             'statistics': {},
-            'summary': {}
+            'summary': {},
+            'trigger_results': {}
         }
 
         try:
-            # Check permissions
-            if not self.has_root and not self.has_sudo:
+            # Check permissions for triggers
+            if (trigger_reset or trigger_hotplug) and not (self.has_root or self.has_sudo):
                 result['warnings'].append(
-                    "Limited permissions - some dmesg logs may not be accessible"
+                    "Root/sudo permissions required for device reset/hot-plug - triggers disabled"
                 )
+                trigger_reset = False
+                trigger_hotplug = False
 
-            # Parse dmesg logs
+            # Get timestamp before any triggers
+            before_timestamp = time.time()
+
+            # Trigger device reset if requested
+            if trigger_reset and selected_device:
+                logger.info(f"Triggering device reset for {selected_device}")
+                reset_result = self.trigger_device_reset(selected_device)
+                result['trigger_results']['reset'] = reset_result
+
+                if not reset_result['success']:
+                    result['warnings'].append(f"Device reset failed: {reset_result['message']}")
+                else:
+                    time.sleep(wait_time)
+
+            # Trigger hot-plug if requested
+            elif trigger_hotplug and selected_device:
+                logger.info(f"Triggering hot-plug for {selected_device}")
+                hotplug_result = self.trigger_hotplug_event(selected_device)
+                result['trigger_results']['hotplug'] = hotplug_result
+
+                if not hotplug_result['success']:
+                    result['warnings'].append(f"Hot-plug failed: {hotplug_result['message']}")
+                else:
+                    time.sleep(wait_time)
+
+            # Parse dmesg logs (only events after trigger if applicable)
             logger.info("Parsing dmesg logs for link training events...")
-            events = self.parse_dmesg_logs()
+            if trigger_reset or trigger_hotplug:
+                # Only get events after the trigger
+                events = self.parse_dmesg_logs(since_timestamp=before_timestamp)
+            else:
+                # Get all available events
+                events = self.parse_dmesg_logs()
+
+            # Filter by selected device if specified
+            if selected_device and events:
+                events = [e for e in events if e['device'] == selected_device]
 
             if not events:
                 result['status'] = 'warning'
                 result['warnings'].append(
-                    "No link training events found in kernel logs. This may be normal if no recent training occurred."
+                    "No link training events found. Try triggering a reset or hot-plug event."
                 )
                 result['summary'] = {
                     'total_events': 0,
@@ -317,7 +563,9 @@ class LinkTrainingTimeMeasurement:
                     'devices_monitored': len(statistics['devices']),
                     'training_sequences_detected': total_sequences,
                     'overall_avg_training_time_ms': round(overall_avg, 3) if overall_avg else None,
-                    'time_range_seconds': round(statistics['time_range']['duration_seconds'], 2)
+                    'time_range_seconds': round(statistics['time_range']['duration_seconds'], 2),
+                    'selected_device': selected_device,
+                    'trigger_used': 'reset' if trigger_reset else 'hotplug' if trigger_hotplug else 'none'
                 }
 
                 logger.info(f"Found {len(events)} link training events across {len(statistics['devices'])} devices")
@@ -338,17 +586,38 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
 
     measurement = LinkTrainingTimeMeasurement()
-    test_result = measurement.run_measurement_test()
 
+    # List available devices
+    print("\nAvailable Devices:")
+    print("=" * 60)
+    devices = measurement.get_available_devices()
+    for dev in devices:
+        print(f"  {dev['device']} ({dev['pci_address']}) - {dev['model']}")
+
+    # Run test
     print(f"\n{'=' * 60}")
     print(f"Link Training Time Measurement Test Results")
     print(f"{'=' * 60}")
+
+    test_options = {
+        'selected_device': None,  # Test all devices
+        'trigger_reset': False,
+        'trigger_hotplug': False
+    }
+
+    test_result = measurement.run_measurement_test(test_options)
+
     print(f"Status: {test_result['status'].upper()}")
     print(f"Duration: {test_result['duration_ms']}ms")
     print(f"Permission Level: {test_result['permission_level']}")
     print(f"\nSummary:")
     for key, value in test_result.get('summary', {}).items():
         print(f"  {key}: {value}")
+
+    if test_result.get('trigger_results'):
+        print(f"\nTrigger Results:")
+        for trigger, tres in test_result['trigger_results'].items():
+            print(f"  {trigger}: {tres['message']}")
 
     if test_result.get('statistics', {}).get('devices'):
         print(f"\nPer-Device Statistics:")
@@ -358,7 +627,6 @@ if __name__ == '__main__':
             print(f"    Training Sequences: {dev['training_sequences']}")
             if dev['avg_training_time_ms']:
                 print(f"    Avg Training Time: {dev['avg_training_time_ms']}ms")
-                print(f"    Min/Max: {dev['min_training_time_ms']}ms / {dev['max_training_time_ms']}ms")
 
     if test_result.get('warnings'):
         print(f"\nWarnings:")

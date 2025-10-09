@@ -657,22 +657,28 @@ def list_available_tests():
 
 @app.route('/api/tests/run', methods=['POST'])
 def run_single_test():
-    """Run a single test suite"""
+    """Run a single test suite with optional configuration"""
     if not TESTING_AVAILABLE:
         return jsonify({'error': 'Testing modules not available'}), 503
 
     try:
+        # Get JSON data from request
         data = request.get_json()
+
+        # Extract parameters
         test_id = data.get('test_id')
         port = data.get('port')
+        options = data.get('options', {})  # Extract options from request data
 
         if not test_id:
             return jsonify({'error': 'test_id required'}), 400
 
         logger.info(f"Running test: {test_id} (port: {port})")
+        if options:
+            logger.info(f"Test options: {options}")
 
-        # Run test
-        result = test_runner.run_test_suite(test_id)
+        # Run test with options passed through
+        result = test_runner.run_test_suite(test_id, options=options)
 
         return jsonify(result)
 
@@ -795,6 +801,26 @@ def handle_run_all_tests(data):
     except Exception as e:
         logger.error(f"WebSocket all tests error: {e}")
         emit('test_error', {'message': str(e)})
+
+
+@app.route('/api/tests/link_training/devices')
+def get_link_training_devices():
+    """Get list of available NVMe devices for link training test"""
+    if not TESTING_AVAILABLE:
+        return jsonify({'error': 'Testing modules not available'}), 503
+
+    try:
+        from tests.link_training_time import LinkTrainingTimeMeasurement
+
+        measurement = LinkTrainingTimeMeasurement()
+        devices = measurement.get_available_devices()
+
+        logger.info(f"Retrieved {len(devices)} devices for link training")
+        return jsonify(devices)
+
+    except Exception as e:
+        logger.error(f"Error getting link training devices: {e}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     os.makedirs('logs', exist_ok=True)

@@ -788,37 +788,45 @@ class TestingDashboard {
         }
     }
 
-    	updateTestAvailability() {
-	    fetch('/api/tests/available')
-	        .then(response => response.json())
-	        .then(tests => {
-	            tests.forEach(test => {
-	                const testCard = document.querySelector(`[data-test-id="${test.id}"]`);
-	                if (!testCard) return;
+    			updateTestAvailability() {
+		    fetch('/api/tests/available')
+		        .then(response => response.json())
+		        .then(tests => {
+		            tests.forEach(test => {
+		                const testCard = document.querySelector(`[data-test-id="${test.id}"]`);
+		                if (!testCard) return;
 
-	                const runBtn = testCard.querySelector('.btn-test-run');
-	                const requirementNote = testCard.querySelector('.test-requirement-note');
+		                const runBtn = testCard.querySelector('.btn-test-run');
+		                const requirementNote = testCard.querySelector('.test-requirement-note');
+		                const configSection = testCard.querySelector('.test-config-section');
 
-	                if (test.requires_nvme_devices) {
-	                    if (test.is_available) {
-	                        // Enable the test
-	                        if (runBtn) runBtn.disabled = false;
-	                        if (requirementNote) requirementNote.style.display = 'none';
-	                    } else {
-	                        // Disable the test
-	                        if (runBtn) runBtn.disabled = true;
-	                        if (requirementNote) {
-	                            requirementNote.style.display = 'block';
-	                            requirementNote.innerHTML = `<strong>⚠️ Requirement:</strong> ${test.unavailable_reason}`;
-	                        }
-	                    }
-	                }
-	            });
-	        })
-	        .catch(error => {
-	            console.error('Error updating test availability:', error);
-	        });
-	}
+		                if (test.requires_nvme_devices) {
+		                    if (test.is_available) {
+		                        // Enable the test
+		                        if (runBtn) runBtn.disabled = false;
+		                        if (requirementNote) requirementNote.style.display = 'none';
+		                        if (configSection) configSection.style.display = 'block';
+
+		                        // Populate device selection for link training
+		                        if (test.id === 'link_training_time') {
+		                            this.populateLinkTrainingDevices();
+		                        }
+		                    } else {
+		                        // Disable the test
+		                        if (runBtn) runBtn.disabled = true;
+		                        if (requirementNote) {
+		                            requirementNote.style.display = 'block';
+		                            requirementNote.innerHTML = `<strong>⚠️ Requirement:</strong> ${test.unavailable_reason}`;
+		                        }
+		                        if (configSection) configSection.style.display = 'none';
+		                    }
+		                }
+		            });
+		        })
+		        .catch(error => {
+		            console.error('Error updating test availability:', error);
+		        });
+		}
 
 	/**
 	 * Generate HTML for Link Training Time results

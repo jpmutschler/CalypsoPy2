@@ -136,13 +136,14 @@ class TestRunner:
             })
         return tests
 
-    def run_test_suite(self, suite_id: str, progress_callback=None) -> Dict[str, Any]:
+    def run_test_suite(self, suite_id: str, progress_callback=None, options=None) -> Dict[str, Any]:
         """
         Run a single test suite
 
         Args:
             suite_id: ID of the test suite to run
             progress_callback: Optional callback function for progress updates
+            options: Optional test configuration dictionary (for link training, etc.)
 
         Returns:
             Test results dictionary
@@ -166,6 +167,10 @@ class TestRunner:
         suite = self.test_suites[suite_id]
         logger.info(f"Running test suite: {suite.name}")
 
+        # Log options if provided
+        if options:
+            logger.info(f"Test options: {options}")
+
         try:
             # Instantiate test class
             test_instance = suite.test_class()
@@ -179,12 +184,15 @@ class TestRunner:
                 })
 
             # Execute the appropriate test method
-            if hasattr(test_instance, 'run_discovery_test'):
+            # Check which method the test class has and call accordingly
+            if hasattr(test_instance, 'run_measurement_test'):
+                # For tests that support options (like link_training_time)
+                result = test_instance.run_measurement_test(options=options)
+            elif hasattr(test_instance, 'run_discovery_test'):
+                # For discovery tests that don't use options
                 result = test_instance.run_discovery_test()
-            elif hasattr(test_instance, 'run_measurement_test'):
-                result = test_instance.run_measurement_test()
             else:
-                raise AttributeError(f"Test class has no run method")
+                raise AttributeError(f"Test class has no recognized run method")
 
             # Update NVMe detection status if this was NVMe discovery
             if suite_id == 'nvme_discovery':
@@ -207,12 +215,13 @@ class TestRunner:
                 'errors': [f"Exception during test execution: {str(e)}"]
             }
 
-    def run_all_tests(self, progress_callback=None) -> TestRunResult:
+    def run_all_tests(self, progress_callback=None, options=None) -> TestRunResult:
         """
         Run all available test suites
 
         Args:
             progress_callback: Optional callback for progress updates
+            options: Optional test options (will be passed to all tests)
 
         Returns:
             TestRunResult with all test results
@@ -221,6 +230,8 @@ class TestRunner:
         start_time = datetime.now()
 
         logger.info(f"Starting test run {run_id}")
+        if options:
+            logger.info(f"Test options: {options}")
 
         run_result = TestRunResult(
             run_id=run_id,
@@ -251,7 +262,8 @@ class TestRunner:
             logger.info(f"Running test suite: {suite_id}")
 
             try:
-                result = self.run_test_suite(suite_id, progress_callback)
+                # Pass options to test (will be used if supported)
+                result = self.run_test_suite(suite_id, progress_callback, options=options)
                 run_result.results[suite_id] = result
                 run_result.suites_run.append(suite_id)
 
