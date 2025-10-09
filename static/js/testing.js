@@ -1,9 +1,11 @@
 /**
- * CalypsoPy+ Testing Dashboard
+ * CalypsoPy+ Testing Dashboard - Enhanced Version
  * File: static/js/testing.js
- * 
- * PCIe/NVMe testing interface for Atlas 3 validation
- * Enhanced with popup results window and multi-format export
+ *
+ * Features:
+ * - Collapsible test tiles
+ * - Separate results window
+ * - Export and print functionality
  */
 
 class TestingDashboard {
@@ -12,31 +14,158 @@ class TestingDashboard {
         this.testResults = {};
         this.testHistory = [];
         this.isRunning = false;
-        this.resultsWindow = null;
+        this.resultsWindowElement = null;
+        this.collapsedStates = {}; // Track which tests are collapsed
         this.init();
     }
 
     init() {
+        this.createResultsWindow();
         this.bindEvents();
         this.loadAvailableTests();
+        this.initializeCollapsibleStates();
         console.log('✅ Testing Dashboard initialized');
+    }
+
+    initializeCollapsibleStates() {
+        // Initialize all test cards as expanded by default
+        const testCards = document.querySelectorAll('.test-card');
+        testCards.forEach(card => {
+            const testId = card.getAttribute('data-test-id');
+            if (testId) {
+                this.collapsedStates[testId] = false;
+                this.addCollapseToggle(card, testId);
+            }
+        });
+    }
+
+    addCollapseToggle(card, testId) {
+        const header = card.querySelector('.test-card-header');
+        if (!header) return;
+
+        // Add collapse toggle button
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'test-collapse-toggle';
+        toggleBtn.innerHTML = '▼';
+        toggleBtn.title = 'Collapse/Expand';
+        toggleBtn.onclick = (e) => {
+            e.stopPropagation();
+            this.toggleTestCard(testId);
+        };
+
+        // Make the entire header clickable for collapse/expand
+        header.style.cursor = 'pointer';
+        header.onclick = (e) => {
+            // Don't toggle if clicking on buttons
+            if (e.target.closest('button') && !e.target.closest('.test-collapse-toggle')) {
+                return;
+            }
+            this.toggleTestCard(testId);
+        };
+
+        // Insert toggle button at the end of header
+        const headerLeft = header.querySelector('.card-title') || header.firstElementChild;
+        if (headerLeft) {
+            headerLeft.parentNode.insertBefore(toggleBtn, headerLeft.nextSibling);
+        }
+
+        // Add short description for collapsed state
+        const description = card.querySelector('.test-description');
+        if (description && headerLeft) {
+            const shortDesc = document.createElement('span');
+            shortDesc.className = 'test-short-description';
+            shortDesc.textContent = description.textContent.substring(0, 80) + '...';
+            headerLeft.appendChild(shortDesc);
+        }
+
+        // Add compact run button to header for collapsed state
+        const runButton = card.querySelector('.btn-test-run');
+        if (runButton && header) {
+            const compactRunBtn = document.createElement('button');
+            compactRunBtn.className = 'btn btn-primary btn-test-run-compact test-run-btn-collapsed';
+            compactRunBtn.innerHTML = '<span>▶️</span> Run';
+            compactRunBtn.onclick = (e) => {
+                e.stopPropagation();
+                this.runTest(testId);
+            };
+            header.appendChild(compactRunBtn);
+        }
+    }
+
+    toggleTestCard(testId) {
+        const card = document.querySelector(`[data-test-id="${testId}"]`);
+        if (!card) return;
+
+        this.collapsedStates[testId] = !this.collapsedStates[testId];
+
+        if (this.collapsedStates[testId]) {
+            card.classList.add('collapsed');
+        } else {
+            card.classList.remove('collapsed');
+        }
+
+        console.log(`Test card ${testId} ${this.collapsedStates[testId] ? 'collapsed' : 'expanded'}`);
+    }
+
+    createResultsWindow() {
+        // Create modal window for test results
+        const modalHTML = `
+            <div id="testResultsWindow" class="test-results-window">
+                <div class="results-window-content">
+                    <div class="results-window-header">
+                        <div class="results-window-title">
+                            <div class="results-window-icon">📊</div>
+                            <div class="results-window-title-text">
+                                <h2 id="resultsWindowTestName">Test Results</h2>
+                                <p id="resultsWindowTestTime">-</p>
+                            </div>
+                        </div>
+                        <div class="results-window-actions">
+                            <button class="btn-export-results" onclick="testingDashboard.exportResultsAsJSON()">
+                                <span>💾</span> Export JSON
+                            </button>
+                            <button class="btn-print-results" onclick="testingDashboard.printResults()">
+                                <span>🖨️</span> Print
+                            </button>
+                            <button class="btn-close-results" onclick="testingDashboard.closeResultsWindow()">
+                                <span>✕</span> Close
+                            </button>
+                        </div>
+                    </div>
+                    <div class="results-window-body" id="resultsWindowBody">
+                        <!-- Results content will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Insert at end of body
+        const div = document.createElement('div');
+        div.innerHTML = modalHTML;
+        document.body.appendChild(div.firstElementChild);
+
+        this.resultsWindowElement = document.getElementById('testResultsWindow');
+
+        // Close on background click
+        this.resultsWindowElement.addEventListener('click', (e) => {
+            if (e.target === this.resultsWindowElement) {
+                this.closeResultsWindow();
+            }
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.resultsWindowElement.classList.contains('active')) {
+                this.closeResultsWindow();
+            }
+        });
     }
 
     bindEvents() {
         // Test execution buttons
-        const runPCIeBtn = document.getElementById('runPCIeDiscovery');
-        const runNVMeBtn = document.getElementById('runNVMeDiscovery');
         const runAllBtn = document.getElementById('runAllTests');
         const exportTestsBtn = document.getElementById('exportTestResults');
         const clearTestHistoryBtn = document.getElementById('clearTestHistory');
-
-        if (runPCIeBtn) {
-            runPCIeBtn.addEventListener('click', () => this.runTest('pcie_discovery'));
-        }
-
-        if (runNVMeBtn) {
-            runNVMeBtn.addEventListener('click', () => this.runTest('nvme_discovery'));
-        }
 
         if (runAllBtn) {
             runAllBtn.addEventListener('click', () => this.runAllTests());
@@ -167,21 +296,24 @@ class TestingDashboard {
 
     updateTestStatus(testId, status) {
         const statusIndicator = document.getElementById(`${testId}Status`);
-        const runButton = document.querySelector(`[data-test-id="${testId}"] .btn-test-run`);
+        const runButtons = document.querySelectorAll(`[data-test-id="${testId}"] .btn-test-run, [data-test-id="${testId}"] .btn-test-run-compact`);
 
         if (statusIndicator) {
             statusIndicator.className = `test-status ${status}`;
             statusIndicator.textContent = this.getStatusText(status);
         }
 
-        if (runButton) {
-            runButton.disabled = (status === 'running');
-            if (status === 'running') {
-                runButton.innerHTML = '<span class="loading"></span> Running...';
-            } else {
-                runButton.innerHTML = '<span>▶️</span> Run Test';
+        runButtons.forEach(btn => {
+            if (btn) {
+                btn.disabled = (status === 'running');
+                if (status === 'running') {
+                    btn.innerHTML = '<span class="loading"></span> Running...';
+                } else {
+                    btn.innerHTML = btn.classList.contains('btn-test-run-compact') ?
+                        '<span>▶️</span> Run' : '<span>▶️</span> Run Test';
+                }
             }
-        }
+        });
     }
 
     updateAllTestsStatus(status) {
@@ -217,14 +349,8 @@ class TestingDashboard {
         });
 
         this.updateTestStatus(testId, result.status);
-        this.displayTestResults(testId, result);
 
-        // Generate topology visualization for PCIe Discovery
-        if (testId === 'pcie_discovery' && result.topology && window.topologyVisualizer) {
-            topologyVisualizer.generate(result.topology, 'topologyVisualization');
-        }
-
-        // Open results in new window
+        // Open results in new window instead of inline display
         this.openResultsWindow(testId, result);
 
         const statusText = this.getStatusText(result.status);
@@ -244,7 +370,7 @@ class TestingDashboard {
 
         this.testResults[testId] = result;
         this.updateTestStatus(testId, 'error');
-        this.displayTestResults(testId, result);
+        this.openResultsWindow(testId, result);
         showNotification(`Test failed: ${errorMessage}`, 'error');
     }
 
@@ -254,7 +380,9 @@ class TestingDashboard {
         });
 
         this.updateAllTestsStatus('idle');
-        this.displayOverallResults(runResult);
+
+        // Show summary in results window
+        this.openAllTestsResultsWindow(runResult);
 
         showNotification(
             `All tests complete: ${runResult.overall_status.toUpperCase()}`,
@@ -264,437 +392,259 @@ class TestingDashboard {
     }
 
     openResultsWindow(testId, result) {
-        // Create or reuse results window
-        const windowName = 'CalypsoPyTestResults';
-        const windowFeatures = 'width=1000,height=800,scrollbars=yes,resizable=yes';
+        if (!this.resultsWindowElement) return;
 
-        this.resultsWindow = window.open('', windowName, windowFeatures);
+        // Set window title
+        document.getElementById('resultsWindowTestName').textContent = result.test_name || testId;
+        document.getElementById('resultsWindowTestTime').textContent =
+            `Duration: ${result.duration_ms}ms | Status: ${result.status.toUpperCase()}`;
 
-        if (this.resultsWindow) {
-            this.resultsWindow.document.write(this.generateResultsHTML(testId, result));
-            this.resultsWindow.document.close();
-            this.resultsWindow.focus();
+        // Generate results HTML
+        const resultsBody = document.getElementById('resultsWindowBody');
+        resultsBody.innerHTML = this.generateResultsHTML(testId, result);
+
+        // Show window
+        this.resultsWindowElement.classList.add('active');
+
+        // Generate topology visualization if PCIe test
+        if (testId === 'pcie_discovery' && result.topology && window.topologyVisualizer) {
+            setTimeout(() => {
+                const topoContainer = document.getElementById('resultsTopologyVisualization');
+                if (topoContainer) {
+                    topologyVisualizer.generate(result.topology, 'resultsTopologyVisualization');
+                }
+            }, 100);
         }
+    }
+
+    openAllTestsResultsWindow(runResult) {
+        if (!this.resultsWindowElement) return;
+
+        document.getElementById('resultsWindowTestName').textContent = 'All Tests Summary';
+        document.getElementById('resultsWindowTestTime').textContent =
+            `Total Duration: ${runResult.total_duration_ms}ms | Overall: ${runResult.overall_status.toUpperCase()}`;
+
+        const resultsBody = document.getElementById('resultsWindowBody');
+        resultsBody.innerHTML = this.generateAllTestsResultsHTML(runResult);
+
+        this.resultsWindowElement.classList.add('active');
     }
 
     generateResultsHTML(testId, result) {
-        const timestamp = new Date().toLocaleString();
+        let html = '<div class="test-results-content">';
 
-        return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CalypsoPy+ Test Results - ${result.test_name}</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        // Summary header
+        html += '<div class="results-summary-header">';
+        html += '<div class="results-summary-status">';
+        html += `<div class="results-status-badge ${result.status}">${result.status.toUpperCase()}</div>`;
+        html += '</div>';
+        html += '<div class="results-summary-stats">';
+        html += `<div class="results-stat-item">`;
+        html += `<span class="results-stat-value">${result.duration_ms}</span>`;
+        html += `<span class="results-stat-label">Duration (ms)</span>`;
+        html += `</div>`;
+        if (result.warnings) {
+            html += `<div class="results-stat-item">`;
+            html += `<span class="results-stat-value">${result.warnings.length}</span>`;
+            html += `<span class="results-stat-label">Warnings</span>`;
+            html += `</div>`;
         }
-        
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #f5f5f5;
-            padding: 20px;
-            line-height: 1.6;
+        if (result.errors) {
+            html += `<div class="results-stat-item">`;
+            html += `<span class="results-stat-value">${result.errors.length}</span>`;
+            html += `<span class="results-stat-label">Errors</span>`;
+            html += `</div>`;
         }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #790000 0%, #a10000 100%);
-            color: white;
-            padding: 30px;
-        }
-        
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
-        
-        .header .meta {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 14px;
-            margin-top: 15px;
-        }
-        
-        .status-badge.pass {
-            background: #22c55e;
-            color: white;
-        }
-        
-        .status-badge.warning {
-            background: #f59e0b;
-            color: white;
-        }
-        
-        .status-badge.fail, .status-badge.error {
-            background: #ef4444;
-            color: white;
-        }
-        
-        .content {
-            padding: 30px;
-        }
-        
-        .section {
-            margin-bottom: 30px;
-        }
-        
-        .section h2 {
-            font-size: 20px;
-            color: #790000;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e5e5e5;
-        }
-        
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .summary-item {
-            background: #f9f9f9;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid #790000;
-        }
-        
-        .summary-item .label {
-            font-size: 12px;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 5px;
-        }
-        
-        .summary-item .value {
-            font-size: 20px;
-            font-weight: 700;
-            color: #333;
-        }
-        
-        .topology-tree, .controllers-list {
-            background: #f9f9f9;
-            padding: 20px;
-            border-radius: 8px;
-            font-family: 'Monaco', 'Courier New', monospace;
-            font-size: 13px;
-        }
-        
-        .topology-tree .device {
-            margin: 8px 0;
-            padding: 8px;
-            background: white;
-            border-radius: 4px;
-            border-left: 3px solid #790000;
-        }
-        
-        .controller-card {
-            background: white;
-            border: 2px solid #e5e5e5;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .controller-card .controller-name {
-            font-size: 16px;
-            font-weight: 700;
-            color: #790000;
-            margin-bottom: 10px;
-        }
-        
-        .controller-card .detail {
-            display: flex;
-            justify-content: space-between;
-            padding: 5px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        
-        .controller-card .detail:last-child {
-            border-bottom: none;
-        }
-        
-        .warnings, .errors {
-            background: rgba(251, 191, 36, 0.1);
-            border-left: 4px solid #f59e0b;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-        
-        .errors {
-            background: rgba(239, 68, 68, 0.1);
-            border-left-color: #ef4444;
-        }
-        
-        .warnings h3, .errors h3 {
-            font-size: 16px;
-            margin-bottom: 10px;
-            color: #f59e0b;
-        }
-        
-        .errors h3 {
-            color: #ef4444;
-        }
-        
-        .warnings ul, .errors ul {
-            list-style: none;
-            padding-left: 0;
-        }
-        
-        .warnings li, .errors li {
-            padding: 5px 0;
-        }
-        
-        .warnings li:before {
-            content: "⚠️ ";
-            margin-right: 8px;
-        }
-        
-        .errors li:before {
-            content: "❌ ";
-            margin-right: 8px;
-        }
-        
-        .export-buttons {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            gap: 10px;
-        }
-        
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary {
-            background: #790000;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #a10000;
-        }
-        
-        .btn-secondary {
-            background: white;
-            color: #790000;
-            border: 2px solid #790000;
-        }
-        
-        .btn-secondary:hover {
-            background: #790000;
-            color: white;
-        }
-        
-        @media print {
-            .export-buttons {
-                display: none;
-            }
-            body {
-                background: white;
-                padding: 0;
-            }
-            .container {
-                box-shadow: none;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="export-buttons">
-        <button class="btn btn-secondary" onclick="window.print()">🖨️ Print/PDF</button>
-        <button class="btn btn-primary" onclick="exportToCSV()">📊 Export CSV</button>
-    </div>
+        html += '</div>'; // results-summary-stats
+        html += '</div>'; // results-summary-header
 
-    <div class="container">
-        <div class="header">
-            <h1>CalypsoPy+ Test Results</h1>
-            <div class="meta">
-                <strong>${result.test_name}</strong> | 
-                Generated: ${timestamp} | 
-                Duration: ${result.duration_ms}ms |
-                Port: ${currentPort || 'Unknown'}
-            </div>
-            <div class="status-badge ${result.status}">${result.status.toUpperCase()}</div>
-        </div>
-
-        <div class="content">
-            ${this.generateResultsSections(result)}
-        </div>
-    </div>
-
-    <script>
-        function exportToCSV() {
-            ${this.generateCSVExportScript(result)}
+        // Test-specific content
+        if (testId === 'pcie_discovery') {
+            html += this.generatePCIeResultsHTML(result);
+        } else if (testId === 'nvme_discovery') {
+            html += this.generateNVMeResultsHTML(result);
+        } else {
+            html += this.generateGenericResultsHTML(result);
         }
-    </script>
-</body>
-</html>
-        `;
+
+        // Warnings section
+        if (result.warnings && result.warnings.length > 0) {
+            html += '<div class="results-section">';
+            html += '<h3>⚠️ Warnings</h3>';
+            html += '<ul class="results-warnings-list">';
+            result.warnings.forEach(warning => {
+                html += `<li>${warning}</li>`;
+            });
+            html += '</ul>';
+            html += '</div>';
+        }
+
+        // Errors section
+        if (result.errors && result.errors.length > 0) {
+            html += '<div class="results-section">';
+            html += '<h3>❌ Errors</h3>';
+            html += '<ul class="results-errors-list">';
+            result.errors.forEach(error => {
+                html += `<li>${error}</li>`;
+            });
+            html += '</ul>';
+            html += '</div>';
+        }
+
+        html += '</div>'; // test-results-content
+        return html;
     }
 
-    generateResultsSections(result) {
+    generatePCIeResultsHTML(result) {
         let html = '';
 
-        // Summary Section
-        if (result.summary && Object.keys(result.summary).length > 0) {
-            html += '<div class="section">';
-            html += '<h2>Summary</h2>';
-            html += '<div class="summary-grid">';
-            for (const [key, value] of Object.entries(result.summary)) {
-                const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                html += `
-                    <div class="summary-item">
-                        <div class="label">${label}</div>
-                        <div class="value">${value}</div>
-                    </div>
-                `;
-            }
-            html += '</div>';
-            html += '</div>';
-        }
-
-        // Topology Section (PCIe Discovery)
         if (result.topology) {
-            html += '<div class="section">';
-            html += '<h2>PCIe Topology</h2>';
-            html += '<div class="topology-tree">';
+            const topo = result.topology;
 
-            if (result.topology.root_bridge) {
-                const rb = result.topology.root_bridge;
-                html += '<div class="device">';
-                html += `<strong>Root Bridge:</strong> ${rb.bdf}<br>`;
-                if (rb.link_speed) html += `Speed: ${rb.link_speed} `;
-                if (rb.link_width) html += `Width: ${rb.link_width}<br>`;
-                if (rb.driver) html += `Driver: ${rb.driver}`;
+            // Root Bridge section
+            if (topo.root_bridge) {
+                html += '<div class="results-section">';
+                html += '<h3>🔌 Root Bridge</h3>';
+                html += '<div class="results-detail-grid">';
+                html += `<div class="results-detail-item">`;
+                html += `<div class="results-detail-label">Device</div>`;
+                html += `<div class="results-detail-value">${topo.root_bridge.bdf || 'N/A'}</div>`;
+                html += `</div>`;
+                if (topo.root_bridge.link_speed) {
+                    html += `<div class="results-detail-item">`;
+                    html += `<div class="results-detail-label">Link Speed</div>`;
+                    html += `<div class="results-detail-value">${topo.root_bridge.link_speed}</div>`;
+                    html += `</div>`;
+                }
+                if (topo.root_bridge.link_width) {
+                    html += `<div class="results-detail-item">`;
+                    html += `<div class="results-detail-label">Link Width</div>`;
+                    html += `<div class="results-detail-value">${topo.root_bridge.link_width}</div>`;
+                    html += `</div>`;
+                }
+                html += '</div>';
                 html += '</div>';
             }
 
-            if (result.topology.downstream_ports && result.topology.downstream_ports.length > 0) {
-                html += `<br><strong>Downstream Ports (${result.topology.downstream_ports.length}):</strong><br>`;
-                result.topology.downstream_ports.forEach(port => {
-                    html += '<div class="device">';
-                    html += `${port.bdf}`;
+            // Downstream Ports section
+            if (topo.downstream_ports && topo.downstream_ports.length > 0) {
+                html += '<div class="results-section">';
+                html += `<h3>🔽 Downstream Ports (${topo.downstream_ports.length})</h3>`;
+                html += '<div class="results-detail-grid">';
+                topo.downstream_ports.forEach((port, index) => {
+                    html += `<div class="results-detail-item">`;
+                    html += `<div class="results-detail-label">Port ${index + 1}</div>`;
+                    html += `<div class="results-detail-value">${port.bdf}`;
                     if (port.link_speed) html += ` - ${port.link_speed}`;
                     if (port.link_width) html += ` ${port.link_width}`;
-                    html += '</div>';
+                    html += `</div>`;
+                    html += `</div>`;
                 });
+                html += '</div>';
+                html += '</div>';
             }
 
-            if (result.topology.nvme_devices && result.topology.nvme_devices.length > 0) {
-                html += `<br><strong>NVMe Devices (${result.topology.nvme_devices.length}):</strong><br>`;
-                result.topology.nvme_devices.forEach(dev => {
-                    html += '<div class="device">';
-                    html += `${dev.bdf} - ${dev.name}`;
+            // NVMe Devices section
+            if (topo.nvme_devices && topo.nvme_devices.length > 0) {
+                html += '<div class="results-section">';
+                html += `<h3>💾 NVMe Devices (${topo.nvme_devices.length})</h3>`;
+                html += '<div class="results-detail-grid">';
+                topo.nvme_devices.forEach(dev => {
+                    html += `<div class="results-detail-item">`;
+                    html += `<div class="results-detail-label">${dev.name || 'Device'}</div>`;
+                    html += `<div class="results-detail-value">${dev.bdf}`;
                     if (dev.driver) html += ` (${dev.driver})`;
-                    html += '</div>';
+                    html += `</div>`;
+                    html += `</div>`;
                 });
+                html += '</div>';
+                html += '</div>';
             }
 
-            html += '</div>';
+            // Topology Visualization
+            html += '<div class="results-section">';
+            html += '<h3>📊 Topology Diagram</h3>';
+            html += '<div id="resultsTopologyVisualization" style="background: #f8fafc; border-radius: 10px; padding: 20px; min-height: 400px;"></div>';
             html += '</div>';
         }
 
-        // Controllers Section (NVMe Discovery)
+        return html;
+    }
+
+    generateNVMeResultsHTML(result) {
+        let html = '';
+
         if (result.controllers && result.controllers.length > 0) {
-            html += '<div class="section">';
-            html += '<h2>NVMe Controllers</h2>';
-            html += '<div class="controllers-list">';
+            html += '<div class="results-section">';
+            html += `<h3>💾 NVMe Controllers (${result.controllers.length})</h3>`;
 
             result.controllers.forEach(ctrl => {
-                html += '<div class="controller-card">';
-                html += `<div class="controller-name">${ctrl.device}</div>`;
-                html += `<div class="detail"><span>Model:</span><span>${ctrl.model}</span></div>`;
-                html += `<div class="detail"><span>Serial:</span><span>${ctrl.serial}</span></div>`;
-                html += `<div class="detail"><span>Firmware:</span><span>${ctrl.firmware}</span></div>`;
-                html += `<div class="detail"><span>PCI Address:</span><span>${ctrl.pci_address}</span></div>`;
-                html += `<div class="detail"><span>Capacity:</span><span>${ctrl.total_capacity_gb.toFixed(2)} GB</span></div>`;
-                html += `<div class="detail"><span>Namespaces:</span><span>${ctrl.namespace_count}</span></div>`;
+                html += '<div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 15px; border: 2px solid var(--border-gray);">';
+                html += `<h4 style="margin: 0 0 15px 0; color: var(--dark-black);">${ctrl.device}</h4>`;
+                html += '<div class="results-detail-grid">';
+                html += `<div class="results-detail-item">`;
+                html += `<div class="results-detail-label">Model</div>`;
+                html += `<div class="results-detail-value">${ctrl.model}</div>`;
+                html += `</div>`;
+                html += `<div class="results-detail-item">`;
+                html += `<div class="results-detail-label">Serial</div>`;
+                html += `<div class="results-detail-value">${ctrl.serial}</div>`;
+                html += `</div>`;
+                html += `<div class="results-detail-item">`;
+                html += `<div class="results-detail-label">Firmware</div>`;
+                html += `<div class="results-detail-value">${ctrl.firmware}</div>`;
+                html += `</div>`;
+                html += `<div class="results-detail-item">`;
+                html += `<div class="results-detail-label">PCI Address</div>`;
+                html += `<div class="results-detail-value">${ctrl.pci_address}</div>`;
+                html += `</div>`;
+                html += `<div class="results-detail-item">`;
+                html += `<div class="results-detail-label">Capacity</div>`;
+                html += `<div class="results-detail-value">${ctrl.total_capacity_gb.toFixed(2)} GB</div>`;
+                html += `</div>`;
+                html += `<div class="results-detail-item">`;
+                html += `<div class="results-detail-label">Namespaces</div>`;
+                html += `<div class="results-detail-value">${ctrl.namespace_count}</div>`;
+                html += `</div>`;
 
                 if (ctrl.temperature_c !== undefined) {
-                    const tempStyle = ctrl.temperature_c > 70 ? 'color: #ef4444; font-weight: 700;' : '';
-                    html += `<div class="detail"><span>Temperature:</span><span style="${tempStyle}">${ctrl.temperature_c}°C</span></div>`;
+                    const tempColor = ctrl.temperature_c > 70 ? '#ef4444' : ctrl.temperature_c > 50 ? '#f59e0b' : '#22c55e';
+                    html += `<div class="results-detail-item">`;
+                    html += `<div class="results-detail-label">Temperature</div>`;
+                    html += `<div class="results-detail-value" style="color: ${tempColor};">${ctrl.temperature_c}°C</div>`;
+                    html += `</div>`;
                 }
 
-                if (ctrl.percentage_used !== undefined) {
-                    html += `<div class="detail"><span>Used:</span><span>${ctrl.percentage_used}%</span></div>`;
+                if (ctrl.spare_percent !== undefined) {
+                    html += `<div class="results-detail-item">`;
+                    html += `<div class="results-detail-label">Spare</div>`;
+                    html += `<div class="results-detail-value">${ctrl.spare_percent}%</div>`;
+                    html += `</div>`;
                 }
 
-                if (ctrl.available_spare_pct !== undefined) {
-                    html += `<div class="detail"><span>Spare:</span><span>${ctrl.available_spare_pct}%</span></div>`;
-                }
-
-                html += '</div>';
+                html += '</div>'; // results-detail-grid
+                html += '</div>'; // controller card
             });
 
             html += '</div>';
-            html += '</div>';
         }
 
-        // Atlas 3 Buses (if present)
-        if (result.atlas3_buses && result.atlas3_buses.length > 0) {
-            html += '<div class="section">';
-            html += '<h2>Atlas 3 Bus Configuration</h2>';
-            html += '<div class="topology-tree">';
-            html += `<div class="device">Downstream Buses: ${result.atlas3_buses.map(b => `0x${b.toString(16).padStart(2, '0')}`).join(', ')}</div>`;
-            html += '</div>';
-            html += '</div>';
-        }
+        return html;
+    }
 
-        // Warnings
-        if (result.warnings && result.warnings.length > 0) {
-            html += '<div class="section">';
-            html += '<div class="warnings">';
-            html += '<h3>Warnings</h3>';
-            html += '<ul>';
-            result.warnings.forEach(warn => {
-                html += `<li>${warn}</li>`;
+    generateGenericResultsHTML(result) {
+        let html = '';
+
+        if (result.summary) {
+            html += '<div class="results-section">';
+            html += '<h3>📋 Summary</h3>';
+            html += '<div class="results-detail-grid">';
+            Object.entries(result.summary).forEach(([key, value]) => {
+                html += `<div class="results-detail-item">`;
+                html += `<div class="results-detail-label">${key.replace(/_/g, ' ').toUpperCase()}</div>`;
+                html += `<div class="results-detail-value">${value}</div>`;
+                html += `</div>`;
             });
-            html += '</ul>';
-            html += '</div>';
-            html += '</div>';
-        }
-
-        // Errors
-        if (result.errors && result.errors.length > 0) {
-            html += '<div class="section">';
-            html += '<div class="errors">';
-            html += '<h3>Errors</h3>';
-            html += '<ul>';
-            result.errors.forEach(err => {
-                html += `<li>${err}</li>`;
-            });
-            html += '</ul>';
             html += '</div>';
             html += '</div>';
         }
@@ -702,89 +652,102 @@ class TestingDashboard {
         return html;
     }
 
-    generateCSVExportScript(result) {
-        return `
-            const csvData = [];
-            csvData.push(['CalypsoPy+ Test Results']);
-            csvData.push(['Test Name', '${result.test_name}']);
-            csvData.push(['Status', '${result.status}']);
-            csvData.push(['Duration (ms)', '${result.duration_ms}']);
-            csvData.push(['Timestamp', '${result.timestamp}']);
-            csvData.push([]);
+    generateAllTestsResultsHTML(runResult) {
+        let html = '<div class="test-results-content">';
 
-            // Summary
-            if (${JSON.stringify(result.summary)}) {
-                csvData.push(['Summary']);
-                const summary = ${JSON.stringify(result.summary)};
-                for (const [key, value] of Object.entries(summary)) {
-                    csvData.push([key, value]);
-                }
-                csvData.push([]);
-            }
-
-            // Controllers
-            if (${JSON.stringify(result.controllers)}) {
-                csvData.push(['NVMe Controllers']);
-                csvData.push(['Device', 'Model', 'Serial', 'Firmware', 'PCI Address', 'Capacity (GB)', 'Temp (C)', 'Used (%)', 'Spare (%)']);
-                const controllers = ${JSON.stringify(result.controllers)};
-                controllers.forEach(ctrl => {
-                    csvData.push([
-                        ctrl.device,
-                        ctrl.model,
-                        ctrl.serial,
-                        ctrl.firmware,
-                        ctrl.pci_address,
-                        ctrl.total_capacity_gb.toFixed(2),
-                        ctrl.temperature_c || 'N/A',
-                        ctrl.percentage_used || 'N/A',
-                        ctrl.available_spare_pct || 'N/A'
-                    ]);
-                });
-                csvData.push([]);
-            }
-
-            // Create CSV content
-            const csvContent = csvData.map(row => row.join(',')).join('\\n');
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'CalypsoPy_TestResults_' + new Date().toISOString().slice(0,19).replace(/:/g,'-') + '.csv';
-            link.click();
-        `;
-    }
-
-    displayTestResults(testId, result) {
-        const resultsContainer = document.getElementById(`${testId}Results`);
-        if (!resultsContainer) return;
-
-        let html = '<div class="test-result-panel">';
-        html += `<div class="test-result-inline">`;
-        html += `<strong>${result.test_name}</strong> - ${result.status.toUpperCase()} (${result.duration_ms}ms)`;
-        html += `<button class="btn btn-sm" onclick="testingDashboard.openResultsWindow('${testId}', testingDashboard.testResults['${testId}'])">🔍 View Details</button>`;
+        // Overall Summary
+        html += '<div class="results-summary-header">';
+        html += '<div class="results-summary-status">';
+        html += `<div class="results-status-badge ${runResult.overall_status}">${runResult.overall_status.toUpperCase()}</div>`;
+        html += '</div>';
+        html += '<div class="results-summary-stats">';
+        html += `<div class="results-stat-item">`;
+        html += `<span class="results-stat-value">${runResult.summary.total_tests}</span>`;
+        html += `<span class="results-stat-label">Total Tests</span>`;
+        html += `</div>`;
+        html += `<div class="results-stat-item">`;
+        html += `<span class="results-stat-value">${runResult.summary.passed}</span>`;
+        html += `<span class="results-stat-label">Passed</span>`;
+        html += `</div>`;
+        html += `<div class="results-stat-item">`;
+        html += `<span class="results-stat-value">${runResult.summary.failed}</span>`;
+        html += `<span class="results-stat-label">Failed</span>`;
+        html += `</div>`;
+        html += `<div class="results-stat-item">`;
+        html += `<span class="results-stat-value">${runResult.summary.warnings}</span>`;
+        html += `<span class="results-stat-label">Warnings</span>`;
+        html += `</div>`;
+        html += `<div class="results-stat-item">`;
+        html += `<span class="results-stat-value">${runResult.total_duration_ms}</span>`;
+        html += `<span class="results-stat-label">Duration (ms)</span>`;
         html += `</div>`;
         html += '</div>';
+        html += '</div>';
 
-        resultsContainer.innerHTML = html;
+        // Individual Test Results
+        html += '<div class="results-section">';
+        html += '<h3>📊 Individual Test Results</h3>';
+
+        Object.entries(runResult.results).forEach(([testId, result]) => {
+            html += `<div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 15px; border-left: 4px solid ${
+                result.status === 'pass' ? '#22c55e' : 
+                result.status === 'warning' ? '#f59e0b' : '#ef4444'
+            };">`;
+            html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">`;
+            html += `<h4 style="margin: 0; color: var(--dark-black);">${result.test_name || testId}</h4>`;
+            html += `<span class="results-status-badge ${result.status}">${result.status.toUpperCase()}</span>`;
+            html += `</div>`;
+            html += `<p style="color: var(--secondary-gray); font-size: 13px; margin: 0;">Duration: ${result.duration_ms}ms</p>`;
+
+            if (result.warnings && result.warnings.length > 0) {
+                html += `<p style="color: #f59e0b; font-size: 13px; margin: 5px 0 0 0;">⚠️ ${result.warnings.length} warning(s)</p>`;
+            }
+            if (result.errors && result.errors.length > 0) {
+                html += `<p style="color: #ef4444; font-size: 13px; margin: 5px 0 0 0;">❌ ${result.errors.length} error(s)</p>`;
+            }
+
+            html += `</div>`;
+        });
+
+        html += '</div>';
+        html += '</div>';
+
+        return html;
     }
 
-    displayOverallResults(runResult) {
-        const overallContainer = document.getElementById('overallTestResults');
-        if (!overallContainer) return;
+    closeResultsWindow() {
+        if (this.resultsWindowElement) {
+            this.resultsWindowElement.classList.remove('active');
+        }
+    }
 
-        let html = '<div class="overall-results">';
-        html += `<h3>Test Run: ${runResult.run_id}</h3>`;
-        html += `<div class="overall-status ${runResult.overall_status}">${runResult.overall_status.toUpperCase()}</div>`;
-        html += `<div class="overall-duration">Total Duration: ${runResult.total_duration_ms}ms</div>`;
+    exportResultsAsJSON() {
+        const testName = document.getElementById('resultsWindowTestName').textContent;
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 
-        html += '<div class="overall-summary">';
-        html += `<span class="summary-stat">Total: ${runResult.summary.total_tests}</span>`;
-        html += `<span class="summary-stat pass">Passed: ${runResult.summary.passed}</span>`;
-        html += `<span class="summary-stat fail">Failed: ${runResult.summary.failed}</span>`;
-        html += `<span class="summary-stat warning">Warnings: ${runResult.summary.warnings}</span>`;
-        html += '</div>';
+        // Get current test results
+        const exportData = {
+            test_name: testName,
+            timestamp: new Date().toISOString(),
+            results: this.testResults,
+            history: this.testHistory
+        };
 
-        html += '</div>';
-        overallContainer.innerHTML = html;
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `calypso_test_results_${timestamp}.json`;
+        link.click();
+
+        URL.revokeObjectURL(url);
+        showNotification('Results exported as JSON', 'success');
+    }
+
+    printResults() {
+        window.print();
     }
 
     showExportDialog() {
@@ -793,12 +756,8 @@ class TestingDashboard {
             return;
         }
 
-        // Simple export - open results window for latest test
-        const latestTestId = Object.keys(this.testResults)[Object.keys(this.testResults).length - 1];
-        const latestResult = this.testResults[latestTestId];
-        this.openResultsWindow(latestTestId, latestResult);
-
-        showNotification('Results opened in new window. Use Print/PDF or Export CSV buttons.', 'info');
+        // Export all results
+        this.exportResultsAsJSON();
     }
 
     clearHistory() {
@@ -806,21 +765,11 @@ class TestingDashboard {
             this.testHistory = [];
             this.testResults = {};
 
-            // Clear all result displays
-            document.querySelectorAll('[id$="Results"]').forEach(container => {
-                container.innerHTML = '<p class="no-results">No test results yet. Run a test to see results here.</p>';
-            });
-
             // Reset status indicators
             document.querySelectorAll('.test-status').forEach(status => {
                 status.className = 'test-status idle';
                 status.textContent = '⏸️ Idle';
             });
-
-            const overallContainer = document.getElementById('overallTestResults');
-            if (overallContainer) {
-                overallContainer.innerHTML = '<p class="no-results">No test runs completed yet.</p>';
-            }
 
             showNotification('Test history cleared', 'info');
         }

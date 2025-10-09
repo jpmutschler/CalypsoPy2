@@ -1670,7 +1670,7 @@
                 </div>
             </div>
 
-            <!-- Testing Dashboard -->
+            			<!-- Testing Dashboard -->
 			<div id="testing-dashboard" class="dashboard-content">
 			    <div class="dashboard-header">
 			        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
@@ -1710,9 +1710,11 @@
 			            <div class="card-header test-card-header">
 			                <div class="card-title">
 			                    <div class="card-icon">🔍</div>
-			                    PCIe Discovery
+			                    <span>PCIe Discovery</span>
 			                </div>
-			                <span class="test-status idle" id="pcie_discoveryStatus">⏸️ Idle</span>
+			                <div class="test-card-header-actions">
+			                    <span class="test-status idle" id="pcie_discoveryStatus">⏸️ Idle</span>
+			                </div>
 			            </div>
 
 			            <div class="test-card-body">
@@ -1738,31 +1740,7 @@
 			                    </button>
 			                </div>
 			            </div>
-
-			            						<div class="test-results-container">
-						    <h5>Test Results</h5>
-						    <div id="pcie_discoveryResults" class="test-results">
-						        <p class="no-results">No test results yet. Run the test to see results here.</p>
-						    </div>
-
-						    <!-- Topology Visualization -->
-						    <div id="topologyVisualizationContainer" style="display: none; margin-top: 20px;">
-						        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-						            <h5 style="color: var(--dark-black); font-size: 14px; font-weight: 700;">PCIe Topology Diagram</h5>
-						            <div style="display: flex; gap: 10px;">
-						                <button class="btn btn-sm btn-outline" onclick="window.topologyVisualizer?.exportAsPNG()" title="Export as PNG">
-						                    <span>📷</span> PNG
-						                </button>
-						                <button class="btn btn-sm btn-outline" onclick="window.topologyVisualizer?.exportAsSVG()" title="Export as SVG">
-						                    <span>📄</span> SVG
-						                </button>
-						            </div>
-						        </div>
-						        <div id="topologyVisualization" style="background: var(--light-gray); border-radius: 10px; padding: 20px; min-height: 400px;">
-						            <!-- SVG topology diagram will be rendered here -->
-						        </div>
-						    </div>
-						</div>
+			            <!-- ✅ REMOVED: test-results-container - Results now shown in modal -->
 			        </div>
 
 			        <!-- NVMe Discovery Test -->
@@ -1770,9 +1748,11 @@
 			            <div class="card-header test-card-header">
 			                <div class="card-title">
 			                    <div class="card-icon">💾</div>
-			                    NVMe Discovery
+			                    <span>NVMe Discovery</span>
 			                </div>
-			                <span class="test-status idle" id="nvme_discoveryStatus">⏸️ Idle</span>
+			                <div class="test-card-header-actions">
+			                    <span class="test-status idle" id="nvme_discoveryStatus">⏸️ Idle</span>
+			                </div>
 			            </div>
 
 			            <div class="test-card-body">
@@ -1802,39 +1782,25 @@
 			                    </button>
 			                </div>
 			            </div>
-
-			            <div class="test-results-container">
-			                <h5>Test Results</h5>
-			                <div id="nvme_discoveryResults" class="test-results">
-			                    <p class="no-results">No test results yet. Run the test to see results here.</p>
-			                </div>
-			            </div>
+			            <!-- ✅ REMOVED: test-results-container - Results now shown in modal -->
 			        </div>
 			    </div>
 
-			    <!-- Overall Test Results -->
-			    <div class="card">
-			        <div class="card-header">
-			            <div class="card-title">
-			                <div class="card-icon">📊</div>
-			                Overall Test Results
+			    <!-- ✅ Command Interface STAYS (unchanged) -->
+			    <div class="command-interface">
+			        <div class="console-header">
+			            <h3>Test Console</h3>
+			            <div class="console-actions">
+			                <button class="btn btn-sm btn-outline" onclick="document.getElementById('testConsole').innerHTML = ''">
+			                    Clear Console
+			                </button>
 			            </div>
 			        </div>
-			        <div id="overallTestResults">
-			            <p class="no-results">No test runs completed yet.</p>
-			        </div>
-			    </div>
-
-			    <!-- Test History -->
-			    <div class="card">
-			        <div class="card-header">
-			            <div class="card-title">
-			                <div class="card-icon">📜</div>
-			                Test Execution History
+			        <div id="testConsole" class="console-output">
+			            <div class="console-entry info">
+			                <span class="console-timestamp">[Ready]</span>
+			                <span class="console-content">Test console initialized. Run tests to see output here.</span>
 			            </div>
-			        </div>
-			        <div id="testHistoryContainer" class="test-history">
-			            <p class="no-results">No test history yet.</p>
 			        </div>
 			    </div>
 			</div>
