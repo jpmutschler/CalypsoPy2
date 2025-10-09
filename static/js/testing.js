@@ -16,6 +16,7 @@ class TestingDashboard {
         this.isRunning = false;
         this.resultsWindowElement = null;
         this.collapsedStates = {}; // Track which tests are collapsed
+        this.currentCategory = 'all';
         this.init();
     }
 
@@ -24,20 +25,134 @@ class TestingDashboard {
         this.bindEvents();
         this.loadAvailableTests();
         this.initializeCollapsibleStates();
+        this.initializeCategoryFilter();
         console.log('✅ Testing Dashboard initialized');
     }
 
     initializeCollapsibleStates() {
-        // Initialize all test cards as expanded by default
-        const testCards = document.querySelectorAll('.test-card');
-        testCards.forEach(card => {
-            const testId = card.getAttribute('data-test-id');
-            if (testId) {
-                this.collapsedStates[testId] = false;
+    const testCards = document.querySelectorAll('.test-card');
+    testCards.forEach(card => {
+        const testId = card.getAttribute('data-test-id');
+        if (testId) {
+            // Default tests start expanded, categorized tests start collapsed
+            const isDefault = card.getAttribute('data-default') === 'true';
+            const isCompact = card.classList.contains('test-card-compact');
+
+            // Set collapsed state: compact cards start collapsed, default cards start expanded
+            this.collapsedStates[testId] = isCompact ? true : false;
+
+            // Only add collapse toggle to non-compact cards (default tests)
+            if (!isCompact) {
                 this.addCollapseToggle(card, testId);
+            }
+
+            // Set initial collapsed state for compact cards
+            if (isCompact && this.collapsedStates[testId]) {
+                card.classList.add('collapsed');
+                }
             }
         });
     }
+
+	initializeCategoryFilter() {
+	    console.log('Initializing category filter...');
+	    this.updateCategoryCounts();
+	    this.filterByCategory('all'); // Show all tests initially
+	}
+
+    filterByCategory(category) {
+	    console.log(`Filtering tests by category: ${category}`);
+	    this.currentCategory = category;
+
+	    // Update active state on category links
+	    document.querySelectorAll('.category-link').forEach(link => {
+	        if (link.getAttribute('data-category') === category) {
+	            link.classList.add('active');
+	        } else {
+	            link.classList.remove('active');
+	        }
+	    });
+
+	    // Filter test cards
+	    const testCards = document.querySelectorAll('.test-card[data-category]');
+
+	    testCards.forEach(card => {
+	        const cardCategory = card.getAttribute('data-category');
+
+	        if (category === 'all' || cardCategory === category) {
+	            card.classList.remove('hidden');
+	        } else {
+	            card.classList.add('hidden');
+	        }
+	    });
+
+	    // Check if any tests are visible in this category
+	    this.checkEmptyCategory(category);
+
+	    // Scroll to categorized tests section
+	    if (category !== 'all') {
+	        const categorizedGrid = document.getElementById('categorizedTestsGrid');
+	        if (categorizedGrid) {
+	            categorizedGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+	        }
+	    }
+	}
+
+    checkEmptyCategory(category) {
+	    const categorizedGrid = document.getElementById('categorizedTestsGrid');
+	    if (!categorizedGrid) return;
+
+	    // Remove existing empty state message
+	    const existingEmptyState = categorizedGrid.querySelector('.category-empty-state');
+	    if (existingEmptyState) {
+	        existingEmptyState.remove();
+	    }
+
+	    // Check if any tests are visible
+	    const visibleTests = categorizedGrid.querySelectorAll('.test-card:not(.hidden)');
+
+	    if (visibleTests.length === 0) {
+	        const emptyState = document.createElement('div');
+	        emptyState.className = 'category-empty-state';
+	        emptyState.innerHTML = `
+	            <div class="category-empty-state-icon">📋</div>
+	            <p><strong>No tests available in this category</strong></p>
+	            <p>Tests for this category are coming soon or may require additional configuration.</p>
+	        `;
+	        categorizedGrid.appendChild(emptyState);
+	    }
+	}
+
+    updateCategoryCounts() {
+	    const categories = {
+	        'all': 0,
+	        'link-quality': 0,
+	        'nvme-validation': 0,
+	        'nvme-performance': 0,
+	        'nvme-health': 0,
+	        'pcie-compliance': 0,
+	        'pcie-6x': 0
+	    };
+
+	    // Count tests in each category
+	    document.querySelectorAll('.test-card[data-category]').forEach(card => {
+	        const category = card.getAttribute('data-category');
+	        if (categories.hasOwnProperty(category)) {
+	            categories[category]++;
+	        }
+	        categories['all']++; // Count for 'all' category
+	    });
+
+	    // Update count badges
+	    Object.keys(categories).forEach(category => {
+	        const countElement = document.getElementById(`count-${category}`);
+	        if (countElement) {
+	            countElement.textContent = categories[category];
+	        }
+	    });
+
+	    console.log('Category counts updated:', categories);
+	}
 
     addCollapseToggle(card, testId) {
         const header = card.querySelector('.test-card-header');
@@ -308,26 +423,27 @@ class TestingDashboard {
     }
 
     updateTestStatus(testId, status) {
-        const statusIndicator = document.getElementById(`${testId}Status`);
-        const runButtons = document.querySelectorAll(`[data-test-id="${testId}"] .btn-test-run, [data-test-id="${testId}"] .btn-test-run-compact`);
+	    const statusIndicator = document.getElementById(`${testId}Status`);
+	    const runButtons = document.querySelectorAll(`[data-test-id="${testId}"] .btn-test-run, [data-test-id="${testId}"] .btn-test-run-compact`);
 
-        if (statusIndicator) {
-            statusIndicator.className = `test-status ${status}`;
-            statusIndicator.textContent = this.getStatusText(status);
-        }
+	    if (statusIndicator) {
+	        statusIndicator.className = `test-status ${status}`;
+	        statusIndicator.textContent = this.getStatusText(status);
+	    }
 
-        runButtons.forEach(btn => {
-            if (btn) {
-                btn.disabled = (status === 'running');
-                if (status === 'running') {
-                    btn.innerHTML = '<span class="loading"></span> Running...';
-                } else {
-                    btn.innerHTML = btn.classList.contains('btn-test-run-compact') ?
-                        '<span>▶️</span> Run' : '<span>▶️</span> Run Test';
-                }
-            }
-        });
-    }
+	    runButtons.forEach(btn => {
+	        if (btn) {
+	            btn.disabled = (status === 'running');
+	            if (status === 'running') {
+	                btn.innerHTML = '<span class="loading"></span> Running...';
+	            } else {
+	                // Restore button text based on button type
+	                const isCompact = btn.classList.contains('btn-test-run-compact');
+	                btn.innerHTML = isCompact ? '<span>▶️</span> Run' : '<span>▶️</span> Run Test';
+	            }
+	        }
+	    });
+	}
 
     updateAllTestsStatus(status) {
         const allBtn = document.getElementById('runAllTests');
