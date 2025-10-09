@@ -1670,7 +1670,7 @@
                 </div>
             </div>
 
-            			<!-- Testing Dashboard -->
+            <!-- Testing Dashboard -->
 			<div id="testing-dashboard" class="dashboard-content">
 			    <div class="dashboard-header">
 			        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
@@ -1739,12 +1739,30 @@
 			                </div>
 			            </div>
 
-			            <div class="test-results-container">
-			                <h5>Test Results</h5>
-			                <div id="pcie_discoveryResults" class="test-results">
-			                    <p class="no-results">No test results yet. Run the test to see results here.</p>
-			                </div>
-			            </div>
+			            						<div class="test-results-container">
+						    <h5>Test Results</h5>
+						    <div id="pcie_discoveryResults" class="test-results">
+						        <p class="no-results">No test results yet. Run the test to see results here.</p>
+						    </div>
+
+						    <!-- Topology Visualization -->
+						    <div id="topologyVisualizationContainer" style="display: none; margin-top: 20px;">
+						        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+						            <h5 style="color: var(--dark-black); font-size: 14px; font-weight: 700;">PCIe Topology Diagram</h5>
+						            <div style="display: flex; gap: 10px;">
+						                <button class="btn btn-sm btn-outline" onclick="window.topologyVisualizer?.exportAsPNG()" title="Export as PNG">
+						                    <span>📷</span> PNG
+						                </button>
+						                <button class="btn btn-sm btn-outline" onclick="window.topologyVisualizer?.exportAsSVG()" title="Export as SVG">
+						                    <span>📄</span> SVG
+						                </button>
+						            </div>
+						        </div>
+						        <div id="topologyVisualization" style="background: var(--light-gray); border-radius: 10px; padding: 20px; min-height: 400px;">
+						            <!-- SVG topology diagram will be rendered here -->
+						        </div>
+						    </div>
+						</div>
 			        </div>
 
 			        <!-- NVMe Discovery Test -->
@@ -2090,6 +2108,9 @@
     <script src="{{ url_for('static', filename='js/terminal.js') }}"></script>
     <!-- Advanced Module -->
     <script src="{{ url_for('static', filename='js/advanced.js') }}"></script>
+    <!-- Testing & Topology Visualization Modules -->
+    <script src="{{ url_for('static', filename='js/testing.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/topology_visualizer.js') }}"></script>
     <!-- Firmware Updater Module -->
     <script src="{{ url_for('static', filename='js/FWUpdater.js') }}"></script>
 

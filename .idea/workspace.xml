@@ -4,16 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fc3e30f9-c418-4920-a510-76a20644706b" name="Changes" comment="Advanced dashboard">
-      <change afterPath="$PROJECT_DIR$/static/js/testing.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/js/topology_visualizer.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/nvme_discovery.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/pcie_discovery.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/test_runner.py" afterDir="false" />
+    <list default="true" id="fc3e30f9-c418-4920-a510-76a20644706b" name="Changes" comment="PCIe/NVMe Testing dashboard">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/css/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/static/css/styles.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -101,7 +93,7 @@
       <workItem from="1758652798873" duration="25339000" />
       <workItem from="1759406691446" duration="4839000" />
       <workItem from="1759922690302" duration="19843000" />
-      <workItem from="1760010162295" duration="6183000" />
+      <workItem from="1760010162295" duration="7531000" />
     </task>
     <task id="LOCAL-00001" summary="Initial Push of CalypsoPy+">
       <option name="closed" value="true" />
@@ -247,7 +239,15 @@
       <option name="project" value="LOCAL" />
       <updated>1759962543005</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="PCIe/NVMe Testing dashboard">
+      <option name="closed" value="true" />
+      <created>1760023446835</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1760023446835</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -274,10 +274,11 @@
     <MESSAGE value="Errors dashboard" />
     <MESSAGE value="Terminal dashboard" />
     <MESSAGE value="Advanced dashboard" />
-    <option name="LAST_COMMIT_MESSAGE" value="Advanced dashboard" />
+    <MESSAGE value="PCIe/NVMe Testing dashboard" />
+    <option name="LAST_COMMIT_MESSAGE" value="PCIe/NVMe Testing dashboard" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/CalypsoPy_$start.coverage" NAME="start Coverage Results" MODIFIED="1760022643885" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/CalypsoPy_$start.coverage" NAME="start Coverage Results" MODIFIED="1760024388614" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/CalypsoPy_$COMportTest.coverage" NAME="COMportTest Coverage Results" MODIFIED="1758721173617" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
