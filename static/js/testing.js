@@ -243,6 +243,11 @@ class TestingDashboard {
             if (response.ok) {
                 const result = await response.json();
                 this.handleTestResult(testId, result);
+
+                if (testId === 'nvme_discovery') {
+                    this.updateTestAvailability();
+                }
+
             } else {
                 throw new Error(`HTTP ${response.status}`);
             }
@@ -466,6 +471,14 @@ class TestingDashboard {
         } else {
             html += this.generateGenericResultsHTML(result);
         }
+        if (testId === 'link_training_time') {
+            html = this.generateLinkTrainingResultsHTML(result);
+
+            // Render chart after DOM is updated
+            setTimeout(() => {
+                this.renderLinkTrainingTimeChart(result);
+            }, 100);
+}
 
         // Warnings section
         if (result.warnings && result.warnings.length > 0) {
@@ -774,6 +787,406 @@ class TestingDashboard {
             showNotification('Test history cleared', 'info');
         }
     }
+
+    	updateTestAvailability() {
+	    fetch('/api/tests/available')
+	        .then(response => response.json())
+	        .then(tests => {
+	            tests.forEach(test => {
+	                const testCard = document.querySelector(`[data-test-id="${test.id}"]`);
+	                if (!testCard) return;
+
+	                const runBtn = testCard.querySelector('.btn-test-run');
+	                const requirementNote = testCard.querySelector('.test-requirement-note');
+
+	                if (test.requires_nvme_devices) {
+	                    if (test.is_available) {
+	                        // Enable the test
+	                        if (runBtn) runBtn.disabled = false;
+	                        if (requirementNote) requirementNote.style.display = 'none';
+	                    } else {
+	                        // Disable the test
+	                        if (runBtn) runBtn.disabled = true;
+	                        if (requirementNote) {
+	                            requirementNote.style.display = 'block';
+	                            requirementNote.innerHTML = `<strong>⚠️ Requirement:</strong> ${test.unavailable_reason}`;
+	                        }
+	                    }
+	                }
+	            });
+	        })
+	        .catch(error => {
+	            console.error('Error updating test availability:', error);
+	        });
+	}
+
+	/**
+	 * Generate HTML for Link Training Time results
+	 */
+	generateLinkTrainingResultsHTML(result) {
+	    let html = '<div class="test-results-content">';
+
+	    // Summary header
+	    html += '<div class="results-summary-header">';
+	    html += '<div class="results-summary-status">';
+	    html += `<div class="results-status-badge ${result.status}">${result.status.toUpperCase()}</div>`;
+	    html += '</div>';
+	    html += '<div class="results-summary-stats">';
+
+	    if (result.summary) {
+	        html += `<div class="results-stat-item">`;
+	        html += `<span class="results-stat-value">${result.summary.total_events || 0}</span>`;
+	        html += `<span class="results-stat-label">Total Events</span>`;
+	        html += `</div>`;
+
+	        html += `<div class="results-stat-item">`;
+	        html += `<span class="results-stat-value">${result.summary.devices_monitored || 0}</span>`;
+	        html += `<span class="results-stat-label">Devices Monitored</span>`;
+	        html += `</div>`;
+
+	        html += `<div class="results-stat-item">`;
+	        html += `<span class="results-stat-value">${result.summary.training_sequences_detected || 0}</span>`;
+	        html += `<span class="results-stat-label">Training Sequences</span>`;
+	        html += `</div>`;
+
+	        if (result.summary.overall_avg_training_time_ms) {
+	            html += `<div class="results-stat-item">`;
+	            html += `<span class="results-stat-value">${result.summary.overall_avg_training_time_ms}ms</span>`;
+	            html += `<span class="results-stat-label">Avg Training Time</span>`;
+	            html += `</div>`;
+	        }
+	    }
+
+	    html += '</div>'; // results-summary-stats
+	    html += '</div>'; // results-summary-header
+
+	    // Per-Device Statistics
+	    if (result.statistics && result.statistics.devices && result.statistics.devices.length > 0) {
+	        html += '<div class="results-section">';
+	        html += '<h3>📊 Device Training Statistics</h3>';
+
+	        result.statistics.devices.forEach(device => {
+	            html += '<div class="device-training-card">';
+	            html += `<h4>${device.device}</h4>`;
+
+	            html += '<div class="results-detail-grid">';
+
+	            html += `<div class="results-detail-item">`;
+	            html += `<div class="results-detail-label">Total Events</div>`;
+	            html += `<div class="results-detail-value">${device.total_events}</div>`;
+	            html += `</div>`;
+
+	            html += `<div class="results-detail-item">`;
+	            html += `<div class="results-detail-label">Training Sequences</div>`;
+	            html += `<div class="results-detail-value">${device.training_sequences}</div>`;
+	            html += `</div>`;
+
+	            if (device.avg_training_time_ms) {
+	                html += `<div class="results-detail-item">`;
+	                html += `<div class="results-detail-label">Avg Training Time</div>`;
+	                html += `<div class="results-detail-value">${device.avg_training_time_ms}ms</div>`;
+	                html += `</div>`;
+
+	                html += `<div class="results-detail-item">`;
+	                html += `<div class="results-detail-label">Min Training Time</div>`;
+	                html += `<div class="results-detail-value">${device.min_training_time_ms}ms</div>`;
+	                html += `</div>`;
+
+	                html += `<div class="results-detail-item">`;
+	                html += `<div class="results-detail-label">Max Training Time</div>`;
+	                html += `<div class="results-detail-value">${device.max_training_time_ms}ms</div>`;
+	                html += `</div>`;
+	            }
+
+	            html += '</div>'; // results-detail-grid
+
+	            // Event Type Breakdown
+	            if (device.event_counts && Object.keys(device.event_counts).length > 0) {
+	                html += '<div class="event-type-breakdown">';
+	                html += '<h5>Event Type Breakdown</h5>';
+	                html += '<div class="event-type-grid">';
+
+	                const eventTypeLabels = {
+	                    'state_transition': 'State Transitions',
+	                    'link_up': 'Link Up',
+	                    'link_down': 'Link Down',
+	                    'speed_change': 'Speed Changes',
+	                    'width_change': 'Width Changes',
+	                    'training_error': 'Training Errors',
+	                    'retrain': 'Retrains',
+	                    'other': 'Other'
+	                };
+
+	                Object.entries(device.event_counts).forEach(([type, count]) => {
+	                    html += `<div class="event-type-item">`;
+	                    html += `<span class="event-type-label">${eventTypeLabels[type] || type}</span>`;
+	                    html += `<span class="event-type-count">${count}</span>`;
+	                    html += `</div>`;
+	                });
+
+	                html += '</div>'; // event-type-grid
+	                html += '</div>'; // event-type-breakdown
+	            }
+
+	            html += '</div>'; // device-training-card
+	        });
+
+	        html += '</div>'; // results-section
+	    }
+
+	    // Training Time Chart
+	    if (result.statistics && result.statistics.training_sequences && result.statistics.training_sequences.length > 0) {
+	        html += '<div class="results-section">';
+	        html += '<h3>📈 Training Time Timeline</h3>';
+	        html += `<div id="linkTrainingTimeChart" style="width: 100%; height: 400px;"></div>`;
+	        html += '</div>';
+	    }
+
+	    // Event Timeline
+	    if (result.events && result.events.length > 0) {
+	        html += '<div class="results-section">';
+	        html += '<h3>📝 Event Timeline</h3>';
+	        html += '<div class="event-timeline-container">';
+
+	        // Limit to most recent 50 events for display
+	        const displayEvents = result.events.slice(-50);
+
+	        displayEvents.forEach(event => {
+	            const eventTypeClass = event.event_type.replace(/_/g, '-');
+	            html += `<div class="event-timeline-item ${eventTypeClass}">`;
+	            html += `<div class="event-timeline-time">${event.timestamp.toFixed(3)}s</div>`;
+	            html += `<div class="event-timeline-device">${event.device}</div>`;
+	            html += `<div class="event-timeline-type">${event.event_type.replace(/_/g, ' ').toUpperCase()}</div>`;
+	            html += `<div class="event-timeline-message">${event.raw_message}</div>`;
+	            html += `</div>`;
+	        });
+
+	        if (result.events.length > 50) {
+	            html += `<div class="event-timeline-note">Showing most recent 50 of ${result.events.length} events</div>`;
+	        }
+
+	        html += '</div>'; // event-timeline-container
+	        html += '</div>'; // results-section
+	    }
+
+	    // System Information
+	    html += '<div class="results-section">';
+	    html += '<h3>ℹ️ System Information</h3>';
+	    html += '<div class="results-detail-grid">';
+
+	    html += `<div class="results-detail-item">`;
+	    html += `<div class="results-detail-label">Permission Level</div>`;
+	    html += `<div class="results-detail-value">${result.permission_level || 'unknown'}</div>`;
+	    html += `</div>`;
+
+	    html += `<div class="results-detail-item">`;
+	    html += `<div class="results-detail-label">Test Duration</div>`;
+	    html += `<div class="results-detail-value">${result.duration_ms}ms</div>`;
+	    html += `</div>`;
+
+	    if (result.statistics && result.statistics.time_range) {
+	        html += `<div class="results-detail-item">`;
+	        html += `<div class="results-detail-label">Log Time Range</div>`;
+	        html += `<div class="results-detail-value">${result.statistics.time_range.duration_seconds.toFixed(2)}s</div>`;
+	        html += `</div>`;
+	    }
+
+	    html += '</div>'; // results-detail-grid
+	    html += '</div>'; // results-section
+
+	    // Warnings
+	    if (result.warnings && result.warnings.length > 0) {
+	        html += '<div class="results-section warning-section">';
+	        html += '<h3>⚠️ Warnings</h3>';
+	        html += '<ul class="results-warning-list">';
+	        result.warnings.forEach(warning => {
+	            html += `<li>${warning}</li>`;
+	        });
+	        html += '</ul>';
+	        html += '</div>';
+	    }
+
+	    // Errors
+	    if (result.errors && result.errors.length > 0) {
+	        html += '<div class="results-section error-section">';
+	        html += '<h3>❌ Errors</h3>';
+	        html += '<ul class="results-error-list">';
+	        result.errors.forEach(error => {
+	            html += `<li>${error}</li>`;
+	        });
+	        html += '</ul>';
+	        html += '</div>';
+	    }
+
+	    html += '</div>'; // test-results-content
+	    return html;
+	}
+
+	/**
+	 * Render Link Training Time Chart
+	 */
+	renderLinkTrainingTimeChart(result) {
+	    const chartContainer = document.getElementById('linkTrainingTimeChart');
+	    if (!chartContainer) return;
+
+	    const sequences = result.statistics.training_sequences;
+	    if (!sequences || sequences.length === 0) return;
+
+	    // Prepare chart data
+	    const chartData = sequences.map((seq, index) => ({
+	        sequence: `#${index + 1}`,
+	        device: seq.device,
+	        duration: seq.duration_ms,
+	        start: seq.start_time
+	    }));
+
+	    // Create simple bar chart using HTML/CSS
+	    let chartHTML = '<div class="training-time-chart">';
+
+	    // Find max duration for scaling
+	    const maxDuration = Math.max(...chartData.map(d => d.duration));
+
+	    chartData.forEach(data => {
+	        const barWidth = (data.duration / maxDuration) * 100;
+	        const color = data.duration < 50 ? '#22c55e' :
+	                     data.duration < 100 ? '#f59e0b' : '#ef4444';
+
+	        chartHTML += '<div class="chart-bar-container">';
+	        chartHTML += `<div class="chart-bar-label">${data.sequence} (${data.device})</div>`;
+	        chartHTML += '<div class="chart-bar-track">';
+	        chartHTML += `<div class="chart-bar-fill" style="width: ${barWidth}%; background-color: ${color};"></div>`;
+	        chartHTML += `<span class="chart-bar-value">${data.duration}ms</span>`;
+	        chartHTML += '</div>';
+	        chartHTML += '</div>';
+	    });
+
+	    chartHTML += '</div>';
+
+	    chartContainer.innerHTML = chartHTML;
+	}
+
+	/**
+	 * Export Link Training results
+	 */
+	exportLinkTrainingResults(result) {
+	    const timestamp = new Date().toLocaleString();
+	    const filename = `CalypsoPy_LinkTraining_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.txt`;
+
+	    let reportContent = '';
+	    reportContent += '='.repeat(80) + '\n';
+	    reportContent += 'CalypsoPy+ Link Training Time Measurement Report\n';
+	    reportContent += 'Generated by Serial Cables Professional Interface\n';
+	    reportContent += '='.repeat(80) + '\n';
+	    reportContent += `Report Generated: ${timestamp}\n`;
+	    reportContent += `Test Status: ${result.status.toUpperCase()}\n`;
+	    reportContent += `Test Duration: ${result.duration_ms}ms\n`;
+	    reportContent += `Permission Level: ${result.permission_level}\n`;
+	    reportContent += '\n';
+
+	    // Summary
+	    if (result.summary) {
+	        reportContent += 'SUMMARY\n';
+	        reportContent += '-'.repeat(80) + '\n';
+	        reportContent += `Total Events: ${result.summary.total_events || 0}\n`;
+	        reportContent += `Devices Monitored: ${result.summary.devices_monitored || 0}\n`;
+	        reportContent += `Training Sequences Detected: ${result.summary.training_sequences_detected || 0}\n`;
+	        if (result.summary.overall_avg_training_time_ms) {
+	            reportContent += `Overall Average Training Time: ${result.summary.overall_avg_training_time_ms}ms\n`;
+	        }
+	        if (result.summary.time_range_seconds) {
+	            reportContent += `Log Time Range: ${result.summary.time_range_seconds}s\n`;
+	        }
+	        reportContent += '\n';
+	    }
+
+	    // Per-Device Statistics
+	    if (result.statistics && result.statistics.devices) {
+	        reportContent += 'DEVICE TRAINING STATISTICS\n';
+	        reportContent += '='.repeat(80) + '\n\n';
+
+	        result.statistics.devices.forEach(device => {
+	            reportContent += `Device: ${device.device}\n`;
+	            reportContent += '-'.repeat(80) + '\n';
+	            reportContent += `Total Events: ${device.total_events}\n`;
+	            reportContent += `Training Sequences: ${device.training_sequences}\n`;
+
+	            if (device.avg_training_time_ms) {
+	                reportContent += `Average Training Time: ${device.avg_training_time_ms}ms\n`;
+	                reportContent += `Min Training Time: ${device.min_training_time_ms}ms\n`;
+	                reportContent += `Max Training Time: ${device.max_training_time_ms}ms\n`;
+	            }
+
+	            if (device.event_counts) {
+	                reportContent += '\nEvent Type Breakdown:\n';
+	                Object.entries(device.event_counts).forEach(([type, count]) => {
+	                    reportContent += `  ${type}: ${count}\n`;
+	                });
+	            }
+
+	            reportContent += '\n';
+	        });
+	    }
+
+	    // Training Sequences
+	    if (result.statistics && result.statistics.training_sequences && result.statistics.training_sequences.length > 0) {
+	        reportContent += 'TRAINING SEQUENCES\n';
+	        reportContent += '='.repeat(80) + '\n';
+	        reportContent += String.prototype.padEnd.call('Seq#', 8);
+	        reportContent += String.prototype.padEnd.call('Device', 20);
+	        reportContent += String.prototype.padEnd.call('Start Time', 15);
+	        reportContent += String.prototype.padEnd.call('End Time', 15);
+	        reportContent += 'Duration (ms)\n';
+	        reportContent += '-'.repeat(80) + '\n';
+
+	        result.statistics.training_sequences.forEach((seq, index) => {
+	            reportContent += String.prototype.padEnd.call(`#${index + 1}`, 8);
+	            reportContent += String.prototype.padEnd.call(seq.device, 20);
+	            reportContent += String.prototype.padEnd.call(seq.start_time.toFixed(3), 15);
+	            reportContent += String.prototype.padEnd.call(seq.end_time.toFixed(3), 15);
+	            reportContent += `${seq.duration_ms}\n`;
+	        });
+	        reportContent += '\n';
+	    }
+
+	    // Warnings
+	    if (result.warnings && result.warnings.length > 0) {
+	        reportContent += 'WARNINGS\n';
+	        reportContent += '-'.repeat(80) + '\n';
+	        result.warnings.forEach(warning => {
+	            reportContent += `- ${warning}\n`;
+	        });
+	        reportContent += '\n';
+	    }
+
+	    // Errors
+	    if (result.errors && result.errors.length > 0) {
+	        reportContent += 'ERRORS\n';
+	        reportContent += '-'.repeat(80) + '\n';
+	        result.errors.forEach(error => {
+	            reportContent += `- ${error}\n`;
+	        });
+	        reportContent += '\n';
+	    }
+
+	    reportContent += '='.repeat(80) + '\n';
+	    reportContent += 'End of Link Training Report\n';
+	    reportContent += 'Visit: https://serial-cables.com for more information\n';
+	    reportContent += '='.repeat(80) + '\n';
+
+	    // Download the report
+	    const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+	    const url = window.URL.createObjectURL(blob);
+	    const downloadLink = document.createElement('a');
+	    downloadLink.href = url;
+	    downloadLink.download = filename;
+	    downloadLink.style.display = 'none';
+	    document.body.appendChild(downloadLink);
+	    downloadLink.click();
+	    document.body.removeChild(downloadLink);
+	    window.URL.revokeObjectURL(url);
+
+	    showNotification(`Link training results exported: ${filename}`, 'success');
+	}
 }
 
 // Global instance

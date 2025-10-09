@@ -14,10 +14,12 @@ from dataclasses import dataclass, field
 try:
     from .pcie_discovery import PCIeDiscovery
     from .nvme_discovery import NVMeDiscovery
+    from .link_training_time import LinkTrainingTimeMeasurement
 except ImportError:
     # Handle direct execution
     from pcie_discovery import PCIeDiscovery
     from nvme_discovery import NVMeDiscovery
+    from link_training_time import LinkTrainingTimeMeasurement
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +32,7 @@ class TestSuite:
     test_class: Any
     requires_root: bool = False
     requires_nvme_cli: bool = False
+    requires_nvme_devices: bool = False  # New: requires NVMe devices to be detected first
 
 
 @dataclass
@@ -58,29 +61,78 @@ class TestRunner:
                 description='Discover and validate Atlas 3 PCIe switch topology',
                 test_class=PCIeDiscovery,
                 requires_root=False,
-                requires_nvme_cli=False
+                requires_nvme_cli=False,
+                requires_nvme_devices=False
             ),
             'nvme_discovery': TestSuite(
                 name='NVMe Discovery',
                 description='Discover and enumerate NVMe devices',
                 test_class=NVMeDiscovery,
                 requires_root=False,
-                requires_nvme_cli=True
+                requires_nvme_cli=True,
+                requires_nvme_devices=False
+            ),
+            'link_training_time': TestSuite(
+                name='Link Training Time Measurement',
+                description='Track LTSSM state transitions and measure link training times from kernel logs',
+                test_class=LinkTrainingTimeMeasurement,
+                requires_root=False,
+                requires_nvme_cli=False,
+                requires_nvme_devices=True  # Only enabled after NVMe discovery
             ),
         }
 
+        # Track if NVMe devices have been detected
+        self.nvme_devices_detected = False
+        self.last_nvme_discovery_result = None
+
         logger.info(f"Test Runner initialized with {len(self.test_suites)} test suites")
+
+    def update_nvme_detection_status(self, nvme_result: Dict[str, Any]):
+        """
+        Update whether NVMe devices have been detected
+        Called after NVMe discovery test completes
+        """
+        if nvme_result and nvme_result.get('status') in ['pass', 'warning']:
+            controllers = nvme_result.get('controllers', [])
+            self.nvme_devices_detected = len(controllers) > 0
+            self.last_nvme_discovery_result = nvme_result
+            logger.info(f"NVMe detection status updated: {len(controllers)} devices found")
+        else:
+            self.nvme_devices_detected = False
+            logger.info("NVMe detection status updated: no devices found")
+
+    def is_test_available(self, suite_id: str) -> tuple[bool, Optional[str]]:
+        """
+        Check if a test is available to run
+        Returns (is_available, reason_if_not)
+        """
+        if suite_id not in self.test_suites:
+            return False, f"Unknown test suite: {suite_id}"
+
+        suite = self.test_suites[suite_id]
+
+        # Check if test requires NVMe devices
+        if suite.requires_nvme_devices and not self.nvme_devices_detected:
+            return False, "NVMe devices must be detected first. Run NVMe Discovery test."
+
+        return True, None
 
     def list_available_tests(self) -> List[Dict[str, Any]]:
         """Get list of available test suites with their requirements"""
         tests = []
         for suite_id, suite in self.test_suites.items():
+            is_available, unavailable_reason = self.is_test_available(suite_id)
+
             tests.append({
                 'id': suite_id,
                 'name': suite.name,
                 'description': suite.description,
                 'requires_root': suite.requires_root,
-                'requires_nvme_cli': suite.requires_nvme_cli
+                'requires_nvme_cli': suite.requires_nvme_cli,
+                'requires_nvme_devices': suite.requires_nvme_devices,
+                'is_available': is_available,
+                'unavailable_reason': unavailable_reason
             })
         return tests
 
@@ -102,6 +154,15 @@ class TestRunner:
                 'errors': [f"Unknown test suite: {suite_id}"]
             }
 
+        # Check if test is available
+        is_available, reason = self.is_test_available(suite_id)
+        if not is_available:
+            return {
+                'test_name': self.test_suites[suite_id].name,
+                'status': 'error',
+                'errors': [reason]
+            }
+
         suite = self.test_suites[suite_id]
         logger.info(f"Running test suite: {suite.name}")
 
@@ -117,7 +178,17 @@ class TestRunner:
                     'message': f'Executing {suite.name}...'
                 })
 
-            result = test_instance.run_discovery_test()
+            # Execute the appropriate test method
+            if hasattr(test_instance, 'run_discovery_test'):
+                result = test_instance.run_discovery_test()
+            elif hasattr(test_instance, 'run_measurement_test'):
+                result = test_instance.run_measurement_test()
+            else:
+                raise AttributeError(f"Test class has no run method")
+
+            # Update NVMe detection status if this was NVMe discovery
+            if suite_id == 'nvme_discovery':
+                self.update_nvme_detection_status(result)
 
             if progress_callback:
                 progress_callback({
@@ -149,185 +220,105 @@ class TestRunner:
         run_id = datetime.now().strftime('%Y%m%d_%H%M%S')
         start_time = datetime.now()
 
+        logger.info(f"Starting test run {run_id}")
+
         run_result = TestRunResult(
             run_id=run_id,
             start_time=start_time
         )
 
-        logger.info(f"Starting test run {run_id}")
+        # Run tests in order: PCIe Discovery, NVMe Discovery, then conditional tests
+        test_order = ['pcie_discovery', 'nvme_discovery', 'link_training_time']
 
-        # Run each test suite
-        for suite_id in self.test_suites.keys():
-            result = self.run_test_suite(suite_id, progress_callback)
-            run_result.results[suite_id] = result
-            run_result.suites_run.append(suite_id)
+        for suite_id in test_order:
+            if suite_id not in self.test_suites:
+                continue
+
+            # Check if test is available
+            is_available, reason = self.is_test_available(suite_id)
+
+            if not is_available:
+                logger.info(f"Skipping {suite_id}: {reason}")
+                # Add a skipped result
+                run_result.results[suite_id] = {
+                    'test_name': self.test_suites[suite_id].name,
+                    'status': 'skipped',
+                    'reason': reason,
+                    'timestamp': datetime.now().isoformat()
+                }
+                continue
+
+            logger.info(f"Running test suite: {suite_id}")
+
+            try:
+                result = self.run_test_suite(suite_id, progress_callback)
+                run_result.results[suite_id] = result
+                run_result.suites_run.append(suite_id)
+
+            except Exception as e:
+                logger.error(f"Error running {suite_id}: {e}")
+                run_result.results[suite_id] = {
+                    'test_name': self.test_suites[suite_id].name,
+                    'status': 'error',
+                    'errors': [str(e)]
+                }
 
         # Calculate overall results
-        run_result.end_time = datetime.now()
-        run_result.total_duration_ms = int(
-            (run_result.end_time - run_result.start_time).total_seconds() * 1000
-        )
+        end_time = datetime.now()
+        run_result.end_time = end_time
+        run_result.total_duration_ms = int((end_time - start_time).total_seconds() * 1000)
 
         # Determine overall status
         statuses = [r.get('status', 'unknown') for r in run_result.results.values()]
+
         if 'error' in statuses or 'fail' in statuses:
             run_result.overall_status = 'fail'
         elif 'warning' in statuses:
             run_result.overall_status = 'warning'
-        elif all(s == 'pass' for s in statuses):
+        elif all(s in ['pass', 'skipped'] for s in statuses):
             run_result.overall_status = 'pass'
         else:
             run_result.overall_status = 'unknown'
 
-        # Build summary
-        run_result.summary = self._build_summary(run_result)
+        # Generate summary
+        run_result.summary = {
+            'total_tests': len(self.test_suites),
+            'tests_run': len(run_result.suites_run),
+            'passed': sum(1 for r in run_result.results.values() if r.get('status') == 'pass'),
+            'warnings': sum(1 for r in run_result.results.values() if r.get('status') == 'warning'),
+            'failed': sum(1 for r in run_result.results.values() if r.get('status') in ['fail', 'error']),
+            'skipped': sum(1 for r in run_result.results.values() if r.get('status') == 'skipped')
+        }
 
-        logger.info(f"Test run {run_id} completed with status: {run_result.overall_status}")
+        logger.info(f"Test run {run_id} completed: {run_result.overall_status}")
 
         return run_result
-
-    def _build_summary(self, run_result: TestRunResult) -> Dict[str, Any]:
-        """Build summary statistics from test run"""
-        summary = {
-            'total_tests': len(run_result.suites_run),
-            'passed': 0,
-            'failed': 0,
-            'warnings': 0,
-            'errors': 0,
-            'skipped': 0
-        }
-
-        for result in run_result.results.values():
-            status = result.get('status', 'unknown')
-            if status == 'pass':
-                summary['passed'] += 1
-            elif status == 'fail':
-                summary['failed'] += 1
-            elif status == 'warning':
-                summary['warnings'] += 1
-            elif status == 'error':
-                summary['errors'] += 1
-            elif status == 'skipped':
-                summary['skipped'] += 1
-
-        return summary
-
-    def export_results(self, run_result: TestRunResult, format: str = 'json') -> str:
-        """
-        Export test results to string format
-
-        Args:
-            run_result: Test run results
-            format: Export format ('json' or 'text')
-
-        Returns:
-            Formatted string
-        """
-        if format == 'json':
-            return self._export_json(run_result)
-        elif format == 'text':
-            return self._export_text(run_result)
-        else:
-            raise ValueError(f"Unknown export format: {format}")
-
-    def _export_json(self, run_result: TestRunResult) -> str:
-        """Export results as JSON"""
-        export_data = {
-            'run_id': run_result.run_id,
-            'start_time': run_result.start_time.isoformat(),
-            'end_time': run_result.end_time.isoformat() if run_result.end_time else None,
-            'total_duration_ms': run_result.total_duration_ms,
-            'overall_status': run_result.overall_status,
-            'summary': run_result.summary,
-            'results': run_result.results
-        }
-        return json.dumps(export_data, indent=2)
-
-    def _export_text(self, run_result: TestRunResult) -> str:
-        """Export results as text report"""
-        lines = []
-        lines.append('=' * 80)
-        lines.append('CalypsoPy+ PCIe/NVMe Test Report')
-        lines.append('=' * 80)
-        lines.append(f"Run ID: {run_result.run_id}")
-        lines.append(f"Start Time: {run_result.start_time.strftime('%Y-%m-%d %H:%M:%S')}")
-        lines.append(f"Duration: {run_result.total_duration_ms}ms")
-        lines.append(f"Overall Status: {run_result.overall_status.upper()}")
-        lines.append('')
-        lines.append('Summary:')
-        lines.append(f"  Total Tests: {run_result.summary['total_tests']}")
-        lines.append(f"  Passed: {run_result.summary['passed']}")
-        lines.append(f"  Failed: {run_result.summary['failed']}")
-        lines.append(f"  Warnings: {run_result.summary['warnings']}")
-        lines.append(f"  Errors: {run_result.summary['errors']}")
-        lines.append('')
-        lines.append('=' * 80)
-        lines.append('Test Results:')
-        lines.append('=' * 80)
-
-        for suite_id, result in run_result.results.items():
-            lines.append('')
-            lines.append(f"Test: {result.get('test_name', suite_id)}")
-            lines.append(f"Status: {result.get('status', 'unknown').upper()}")
-            lines.append(f"Duration: {result.get('duration_ms', 0)}ms")
-
-            if 'summary' in result:
-                lines.append('Summary:')
-                for key, value in result['summary'].items():
-                    lines.append(f"  {key}: {value}")
-
-            if result.get('warnings'):
-                lines.append('Warnings:')
-                for warn in result['warnings']:
-                    lines.append(f"  - {warn}")
-
-            if result.get('errors'):
-                lines.append('Errors:')
-                for err in result['errors']:
-                    lines.append(f"  - {err}")
-
-            lines.append('-' * 80)
-
-        lines.append('')
-        lines.append('=' * 80)
-        lines.append('End of Report')
-        lines.append('=' * 80)
-
-        return '\n'.join(lines)
 
 
 if __name__ == '__main__':
     # Test the runner
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
+    logging.basicConfig(level=logging.INFO)
 
     runner = TestRunner()
 
-    print("\nAvailable Test Suites:")
+    print("\n" + "=" * 60)
+    print("Available Tests:")
+    print("=" * 60)
     for test in runner.list_available_tests():
-        print(f"  - {test['name']}: {test['description']}")
-
-    print("\nRunning all tests...\n")
-
-
-    def progress_update(update):
-        if update['status'] == 'running':
-            print(f"  Running: {update['message']}")
-        elif update['status'] == 'completed':
-            result = update['result']
-            print(f"  Completed: {result['test_name']} - {result['status'].upper()}")
-
-
-    results = runner.run_all_tests(progress_callback=progress_update)
+        avail = "✓" if test['is_available'] else "✗"
+        print(f"{avail} {test['name']}: {test['description']}")
+        if not test['is_available']:
+            print(f"  Reason: {test['unavailable_reason']}")
 
     print("\n" + "=" * 60)
-    print("Test Run Complete")
+    print("Running All Tests:")
     print("=" * 60)
-    print(f"Overall Status: {results.overall_status.upper()}")
-    print(f"Total Duration: {results.total_duration_ms}ms")
-    print("\nExporting report...")
 
-    report = runner.export_results(results, format='text')
-    print(report)
+    result = runner.run_all_tests()
+
+    print(f"\nRun ID: {result.run_id}")
+    print(f"Overall Status: {result.overall_status}")
+    print(f"Duration: {result.total_duration_ms}ms")
+    print(f"\nSummary:")
+    for key, value in result.summary.items():
+        print(f"  {key}: {value}")

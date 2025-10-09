@@ -20,6 +20,7 @@ from collections import deque
 import hashlib
 import os
 import sys
+from tests.link_training_time import LinkTrainingTimeMeasurement
 
 # Add tests directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'tests'))
@@ -634,6 +635,7 @@ def list_available_tests():
         # Add system capability checks
         pcie_discovery = PCIeDiscovery()
         nvme_discovery = NVMeDiscovery()
+        link_training = LinkTrainingTimeMeasurement()  # NEW
 
         for test in tests:
             if test['id'] == 'pcie_discovery':
@@ -642,8 +644,10 @@ def list_available_tests():
             elif test['id'] == 'nvme_discovery':
                 test['has_permission'] = nvme_discovery.has_root or nvme_discovery.has_sudo
                 test['has_nvme_cli'] = nvme_discovery.has_nvme_cli
-                test[
-                    'permission_level'] = 'root' if nvme_discovery.has_root else 'sudo' if nvme_discovery.has_sudo else 'user'
+                test['permission_level'] = nvme_discovery.permission_level
+            elif test['id'] == 'link_training_time':  # NEW
+                test['has_permission'] = link_training.has_root or link_training.has_sudo
+                test['permission_level'] = link_training.permission_level
 
         return jsonify(tests)
     except Exception as e:

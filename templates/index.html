@@ -1670,7 +1670,7 @@
                 </div>
             </div>
 
-            			<!-- Testing Dashboard -->
+            <!-- Testing Dashboard -->
 			<div id="testing-dashboard" class="dashboard-content">
 			    <div class="dashboard-header">
 			        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
@@ -1784,6 +1784,46 @@
 			            </div>
 			            <!-- ✅ REMOVED: test-results-container - Results now shown in modal -->
 			        </div>
+                    <!-- Link Training Time Measurement Test -->
+					<div class="card test-card" data-test-id="link_training_time">
+					    <div class="card-header test-card-header">
+					        <div class="card-title">
+					            <div class="card-icon">⏱️</div>
+					            <span>Link Training Time</span>
+					        </div>
+					        <div class="test-card-header-actions">
+					            <span class="test-status idle" id="link_training_timeStatus">⏸️ Idle</span>
+					        </div>
+					    </div>
+
+					    <div class="test-card-body">
+					        <p class="test-description">
+					            Measures PCIe link training times by tracking LTSSM state transitions in kernel dmesg logs.
+					            Analyzes link down/up events and calculates training durations for Atlas 3 downstream devices.
+					        </p>
+
+					        <div class="test-requirements">
+					            <h5>Test Analyzes:</h5>
+					            <ul>
+					                <li>LTSSM state transitions from kernel logs</li>
+					                <li>Link training sequence timing</li>
+					                <li>Link up/down event detection</li>
+					                <li>Speed and width negotiation events</li>
+					                <li>Training errors and retrain events</li>
+					            </ul>
+					        </div>
+
+					        <div class="test-requirement-note" id="linkTrainingRequirement" style="display: none;">
+					            <strong>⚠️ Requirement:</strong> NVMe devices must be detected first. Please run <strong>NVMe Discovery</strong> test to enable this test.
+					        </div>
+
+					        <div class="test-actions">
+					            <button class="btn btn-primary btn-test-run" id="runLinkTrainingBtn" onclick="testingDashboard.runTest('link_training_time')" disabled>
+					                <span>▶️</span> Run Test
+					            </button>
+					        </div>
+					    </div>
+					</div>
 			    </div>
 
 			    <!-- ✅ Command Interface STAYS (unchanged) -->
