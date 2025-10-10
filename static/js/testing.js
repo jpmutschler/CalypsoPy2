@@ -330,59 +330,59 @@ class TestingDashboard {
     }
 
     runTest(testId) {
-    const status = document.getElementById(`${testId}Status`);
-    const testCard = document.querySelector(`[data-test-id="${testId}"]`);
+        const status = document.getElementById(`${testId}Status`);
+        const testCard = document.querySelector(`[data-test-id="${testId}"]`);
 
-    if (status) {
-        status.className = 'test-status running';
-        status.textContent = '🔄 Running...';
-    }
+        if (status) {
+            status.className = 'test-status running';
+            status.textContent = '🔄 Running...';
+        }
 
-    this.addConsoleEntry('info', `Starting ${testId} test...`);
+        this.addConsoleEntry('info', `Starting ${testId} test...`);
 
-    // Prepare test options
-    let options = {};
+        // Prepare test options
+        let options = {};
 
-    // Check if this is link training test and gather config
-    if (testId === 'link_training_time') {
-        const deviceSelect = document.getElementById('linkTrainingDeviceSelect');
-        const triggerReset = document.getElementById('linkTrainingTriggerReset');
-        const triggerHotplug = document.getElementById('linkTrainingTriggerHotplug');
+        // Check if this is link training test and gather config
+        if (testId === 'link_training_time') {
+            const deviceSelect = document.getElementById('linkTrainingDeviceSelect');
+            const triggerReset = document.getElementById('linkTrainingTriggerReset');
+            const triggerHotplug = document.getElementById('linkTrainingTriggerHotplug');
 
-        options = {
-            selected_device: deviceSelect?.value || null,
-            trigger_reset: triggerReset?.checked || false,
-            trigger_hotplug: triggerHotplug?.checked || false,
-            wait_time: 3
-        };
+            options = {
+                selected_device: deviceSelect?.value || null,
+                trigger_reset: triggerReset?.checked || false,
+                trigger_hotplug: triggerHotplug?.checked || false,
+                wait_time: 3
+            };
 
-        console.log('Link Training options:', options);
-    }
+            console.log('Link Training options:', options);
+        }
 
-    // Send test request with options
-    fetch('/api/tests/run', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            test_id: testId,
-            port: globalSerialPort,
-            options: options
+        // Send test request with options
+        fetch('/api/tests/run', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                test_id: testId,
+                port: globalSerialPort,
+                options: options
+            })
         })
-    })
-        .then(response => response.json())
-        .then(result => {
-            this.handleTestComplete(testId, result);
-        })
-        .catch(error => {
-            console.error(`Test ${testId} error:`, error);
-            this.addConsoleEntry('error', `Test failed: ${error.message}`);
+            .then(response => response.json())
+            .then(result => {
+                this.handleTestComplete(testId, result);
+            })
+            .catch(error => {
+                console.error(`Test ${testId} error:`, error);
+                this.addConsoleEntry('error', `Test failed: ${error.message}`);
 
-            if (status) {
-                status.className = 'test-status error';
-                status.textContent = '❌ Error';
-            }
-        });
-}
+                if (status) {
+                    status.className = 'test-status error';
+                    status.textContent = '❌ Error';
+                }
+            });
+    }
 
     async runAllTests() {
         if (this.isRunning) {
@@ -952,7 +952,7 @@ class TestingDashboard {
 		            console.error('Error updating test availability:', error);
 		        });
 		}
-populateLinkTrainingDevices() {
+    populateLinkTrainingDevices() {
     fetch('/api/tests/link_training/devices')
         .then(response => response.json())
         .then(devices => {
@@ -1342,6 +1342,709 @@ populateLinkTrainingDevices() {
 	    window.URL.revokeObjectURL(url);
 
 	    showNotification(`Link training results exported: ${filename}`, 'success');
+	}
+
+    /**
+	 * Initialize Link Retrain Count Test
+	 */
+	initializeLinkRetrainTest() {
+	    console.log('Initializing Link Retrain Count test...');
+
+	    const requirementNote = document.getElementById('linkRetrainRequirement');
+	    const configSection = document.getElementById('linkRetrainConfig');
+	    const runButton = document.getElementById('runLinkRetrainBtn');
+	    const deviceSelect = document.getElementById('linkRetrainDeviceSelect');
+
+	    // Check if NVMe devices are available
+	    if (this.nvmeDevicesDetected) {
+	        if (requirementNote) requirementNote.style.display = 'none';
+	        if (configSection) configSection.style.display = 'block';
+	        if (runButton) runButton.disabled = false;
+
+	        // Load available devices
+	        this.loadLinkRetrainDevices();
+	    } else {
+	        if (requirementNote) requirementNote.style.display = 'block';
+	        if (configSection) configSection.style.display = 'none';
+	        if (runButton) runButton.disabled = true;
+	    }
+	}
+
+	/**
+	 * Load available devices for Link Retrain test
+	 */
+	async loadLinkRetrainDevices() {
+	    try {
+	        const response = await fetch('/api/tests/link_retrain/devices');
+	        const devices = await response.json();
+
+	        const deviceSelect = document.getElementById('linkRetrainDeviceSelect');
+	        if (!deviceSelect) return;
+
+	        // Clear existing options except "All Devices"
+	        deviceSelect.innerHTML = '<option value="">All Devices</option>';
+
+	        // Add device options
+	        devices.forEach(device => {
+	            const option = document.createElement('option');
+	            option.value = device.pci_address;
+	            option.textContent = `${device.device} - ${device.model} (${device.pci_address})`;
+	            deviceSelect.appendChild(option);
+	        });
+
+	        console.log(`Loaded ${devices.length} devices for link retrain test`);
+	    } catch (error) {
+	        console.error('Error loading link retrain devices:', error);
+	    }
+	}
+
+	/**
+	 * Get Link Retrain test options from UI
+	 */
+	getLinkRetrainTestOptions() {
+	    const selectedDevice = document.getElementById('linkRetrainDeviceSelect')?.value || '';
+	    const numRetrains = parseInt(document.getElementById('linkRetrainNumRetrains')?.value || '5');
+	    const delayMs = parseInt(document.getElementById('linkRetrainDelay')?.value || '100');
+	    const showTiming = document.getElementById('linkRetrainShowTiming')?.checked || true;
+	    const checkCompliance = document.getElementById('linkRetrainCheckCompliance')?.checked || true;
+
+	    const options = {
+	        num_retrains: numRetrains,
+	        delay_between_ms: delayMs,
+	        show_timing: showTiming,
+	        check_compliance: checkCompliance
+	    };
+
+	    // Add specific device if selected
+	    if (selectedDevice) {
+	        options.pci_address = selectedDevice;
+	    }
+
+	    return options;
+	}
+
+	/**
+	 * Render Link Retrain Count test results
+	 */
+	renderLinkRetrainResults(result) {
+	    let html = '<div class="test-results-content">';
+
+	    // Summary Section
+	    html += '<div class="results-section">';
+	    html += '<h3>📊 Test Summary</h3>';
+	    html += '<div class="results-stat-grid">';
+
+	    html += `<div class="results-stat-item">`;
+	    html += `<span class="results-stat-value">${result.summary.total_devices || 0}</span>`;
+	    html += `<span class="results-stat-label">Devices Tested</span>`;
+	    html += `</div>`;
+
+	    html += `<div class="results-stat-item">`;
+	    html += `<span class="results-stat-value">${result.summary.total_retrains || 0}</span>`;
+	    html += `<span class="results-stat-label">Total Retrains</span>`;
+	    html += `</div>`;
+
+	    html += `<div class="results-stat-item">`;
+	    html += `<span class="results-stat-value" style="color: #22c55e;">${result.summary.successful_retrains || 0}</span>`;
+	    html += `<span class="results-stat-label">Successful</span>`;
+	    html += `</div>`;
+
+	    html += `<div class="results-stat-item">`;
+	    html += `<span class="results-stat-value" style="color: #ef4444;">${result.summary.failed_retrains || 0}</span>`;
+	    html += `<span class="results-stat-label">Failed</span>`;
+	    html += `</div>`;
+
+	    html += `<div class="results-stat-item">`;
+	    html += `<span class="results-stat-value">${result.summary.success_rate || 0}%</span>`;
+	    html += `<span class="results-stat-label">Success Rate</span>`;
+	    html += `</div>`;
+
+	    html += '</div>'; // results-stat-grid
+	    html += '</div>'; // results-section
+
+	    // Overall Statistics
+	    if (result.statistics) {
+	        html += '<div class="results-section">';
+	        html += '<h3>📈 Overall Statistics</h3>';
+	        html += '<div class="results-detail-grid">';
+
+	        html += `<div class="results-detail-item">`;
+	        html += `<div class="results-detail-label">Average Retrain Time</div>`;
+	        html += `<div class="results-detail-value">${result.statistics.avg_retrain_time_ms}ms</div>`;
+	        html += `</div>`;
+
+	        html += `<div class="results-detail-item">`;
+	        html += `<div class="results-detail-label">Min Retrain Time</div>`;
+	        html += `<div class="results-detail-value">${result.statistics.min_retrain_time_ms}ms</div>`;
+	        html += `</div>`;
+
+	        html += `<div class="results-detail-item">`;
+	        html += `<div class="results-detail-label">Max Retrain Time</div>`;
+	        html += `<div class="results-detail-value">${result.statistics.max_retrain_time_ms}ms</div>`;
+	        html += `</div>`;
+
+	        html += `<div class="results-detail-item">`;
+	        html += `<div class="results-detail-label">Std Deviation</div>`;
+	        html += `<div class="results-detail-value">${result.statistics.std_dev_ms}ms</div>`;
+	        html += `</div>`;
+
+	        html += '</div>'; // results-detail-grid
+	        html += '</div>'; // results-section
+	    }
+
+	    // PCIe 6.x Compliance
+	    if (result.compliance) {
+	        html += '<div class="results-section">';
+	        html += '<h3>✅ PCIe 6.x Compliance</h3>';
+	        html += '<div class="results-detail-grid">';
+
+	        const complianceColor = result.compliance.compliant ? '#22c55e' : '#ef4444';
+	        const complianceText = result.compliance.compliant ? 'COMPLIANT' : 'NON-COMPLIANT';
+
+	        html += `<div class="results-detail-item">`;
+	        html += `<div class="results-detail-label">Compliance Status</div>`;
+	        html += `<div class="results-detail-value" style="color: ${complianceColor}; font-weight: 700;">${complianceText}</div>`;
+	        html += `</div>`;
+
+	        html += `<div class="results-detail-item">`;
+	        html += `<div class="results-detail-label">Specification Version</div>`;
+	        html += `<div class="results-detail-value">${result.compliance.spec_version}</div>`;
+	        html += `</div>`;
+
+	        html += `<div class="results-detail-item">`;
+	        html += `<div class="results-detail-label">Max Retrain Time Limit</div>`;
+	        html += `<div class="results-detail-value">${result.compliance.max_retrain_time_ms}ms</div>`;
+	        html += `</div>`;
+
+	        html += '</div>'; // results-detail-grid
+
+	        // Compliance Issues
+	        if (result.compliance.issues && result.compliance.issues.length > 0) {
+	            html += '<div style="margin-top: 15px;">';
+	            html += '<h5 style="color: #ef4444; font-size: 14px; font-weight: 700; margin-bottom: 10px;">⚠️ Compliance Issues</h5>';
+	            html += '<ul style="margin: 0; padding-left: 20px; color: #ef4444;">';
+	            result.compliance.issues.forEach(issue => {
+	                html += `<li style="margin-bottom: 8px;">${issue}</li>`;
+	            });
+	            html += '</ul>';
+	            html += '</div>';
+	        }
+
+	        html += '</div>'; // results-section
+	    }
+
+	    // Per-Device Results
+	    if (result.devices && result.devices.length > 0) {
+	        html += '<div class="results-section">';
+	        html += '<h3>🔧 Per-Device Results</h3>';
+
+	        result.devices.forEach(device => {
+	            html += '<div class="device-training-card">';
+	            html += `<h4>${device.name} (${device.pci_address})</h4>`;
+
+	            // Device Statistics
+	            html += '<div class="results-detail-grid">';
+
+	            html += `<div class="results-detail-item">`;
+	            html += `<div class="results-detail-label">Total Retrains</div>`;
+	            html += `<div class="results-detail-value">${device.statistics.total}</div>`;
+	            html += `</div>`;
+
+	            html += `<div class="results-detail-item">`;
+	            html += `<div class="results-detail-label">Successful</div>`;
+	            html += `<div class="results-detail-value" style="color: #22c55e;">${device.statistics.successful}</div>`;
+	            html += `</div>`;
+
+	            html += `<div class="results-detail-item">`;
+	            html += `<div class="results-detail-label">Failed</div>`;
+	            html += `<div class="results-detail-value" style="color: #ef4444;">${device.statistics.failed}</div>`;
+	            html += `</div>`;
+
+	            html += `<div class="results-detail-item">`;
+	            html += `<div class="results-detail-label">Timeouts</div>`;
+	            html += `<div class="results-detail-value" style="color: #f59e0b;">${device.statistics.timeouts}</div>`;
+	            html += `</div>`;
+
+	            if (device.statistics.avg_time_ms > 0) {
+	                html += `<div class="results-detail-item">`;
+	                html += `<div class="results-detail-label">Avg Time</div>`;
+	                html += `<div class="results-detail-value">${device.statistics.avg_time_ms}ms</div>`;
+	                html += `</div>`;
+
+	                html += `<div class="results-detail-item">`;
+	                html += `<div class="results-detail-label">Min Time</div>`;
+	                html += `<div class="results-detail-value">${device.statistics.min_time_ms}ms</div>`;
+	                html += `</div>`;
+
+	                html += `<div class="results-detail-item">`;
+	                html += `<div class="results-detail-label">Max Time</div>`;
+	                html += `<div class="results-detail-value">${device.statistics.max_time_ms}ms</div>`;
+	                html += `</div>`;
+	            }
+
+	            html += '</div>'; // results-detail-grid
+
+	            // Retrain Timeline Chart
+	            if (device.retrains && device.retrains.length > 0) {
+	                html += '<div style="margin-top: 20px;">';
+	                html += '<h5 style="font-size: 13px; font-weight: 700; margin-bottom: 10px;">Retrain Timeline</h5>';
+	                html += '<div class="training-time-chart">';
+
+	                const maxTime = Math.max(...device.retrains.map(r => r.time_ms));
+
+	                device.retrains.forEach(retrain => {
+	                    const barWidth = (retrain.time_ms / maxTime) * 100;
+	                    const color = retrain.success ? '#22c55e' :
+	                                  retrain.timeout ? '#f59e0b' : '#ef4444';
+	                    const icon = retrain.success ? '✓' : retrain.timeout ? '⏱️' : '✗';
+
+	                    html += '<div class="chart-bar-container">';
+	                    html += `<div class="chart-bar-label">#${retrain.sequence} ${icon}</div>`;
+	                    html += '<div class="chart-bar-track">';
+	                    html += `<div class="chart-bar-fill" style="width: ${barWidth}%; background-color: ${color};"></div>`;
+	                    html += `<span class="chart-bar-value">${retrain.time_ms}ms</span>`;
+	                    html += '</div>';
+	                    html += '</div>';
+	                });
+
+	                html += '</div>'; // training-time-chart
+	                html += '</div>';
+	            }
+
+	            html += '</div>'; // device-training-card
+	        });
+
+	        html += '</div>'; // results-section
+	    }
+
+	    // System Information
+	    html += '<div class="results-section">';
+	    html += '<h3>ℹ️ System Information</h3>';
+	    html += '<div class="results-detail-grid">';
+
+	    html += `<div class="results-detail-item">`;
+	    html += `<div class="results-detail-label">Permission Level</div>`;
+	    html += `<div class="results-detail-value">${result.permission_level || 'unknown'}</div>`;
+	    html += `</div>`;
+
+	    html += `<div class="results-detail-item">`;
+	    html += `<div class="results-detail-label">Test Duration</div>`;
+	    html += `<div class="results-detail-value">${result.duration_ms}ms</div>`;
+	    html += `</div>`;
+
+	    html += `<div class="results-detail-item">`;
+	    html += `<div class="results-detail-label">Timestamp</div>`;
+	    html += `<div class="results-detail-value">${new Date(result.timestamp).toLocaleString()}</div>`;
+	    html += `</div>`;
+
+	    html += '</div>'; // results-detail-grid
+	    html += '</div>'; // results-section
+
+	    // Warnings
+	    if (result.warnings && result.warnings.length > 0) {
+	        html += '<div class="results-section warning-section">';
+	        html += '<h3>⚠️ Warnings</h3>';
+	        html += '<ul class="results-warning-list">';
+	        result.warnings.forEach(warning => {
+	            html += `<li>${warning}</li>`;
+	        });
+	        html += '</ul>';
+	        html += '</div>';
+	    }
+
+	    // Errors
+	    if (result.errors && result.errors.length > 0) {
+	        html += '<div class="results-section error-section">';
+	        html += '<h3>❌ Errors</h3>';
+	        html += '<ul class="results-error-list">';
+	        result.errors.forEach(error => {
+	            html += `<li>${error}</li>`;
+	        });
+	        html += '</ul>';
+	        html += '</div>';
+	    }
+
+	    html += '</div>'; // test-results-content
+	    return html;
+	}
+
+	/**
+	 * Export Link Retrain Count results
+	 */
+	exportLinkRetrainResults(result) {
+	    const timestamp = new Date().toLocaleString();
+	    const csvFilename = `CalypsoPy_LinkRetrain_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`;
+	    const txtFilename = `CalypsoPy_LinkRetrain_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.txt`;
+
+	    // Generate CSV Export
+	    let csvContent = 'Device,PCI Address,Sequence,Success,Time (ms),Training Detected,Training Completed,Timeout,Error\n';
+
+	    if (result.devices) {
+	        result.devices.forEach(device => {
+	            if (device.retrains) {
+	                device.retrains.forEach(retrain => {
+	                    csvContent += `"${device.name}",${device.pci_address},${retrain.sequence},`;
+	                    csvContent += `${retrain.success},${retrain.time_ms},${retrain.training_detected},`;
+	                    csvContent += `${retrain.training_completed},${retrain.timeout},"${retrain.error || ''}"\n`;
+	                });
+	            }
+	        });
+	    }
+
+	    // Generate Text Report
+	    let reportContent = '';
+	    reportContent += '='.repeat(80) + '\n';
+	    reportContent += 'CalypsoPy+ Link Retrain Count Test Report\n';
+	    reportContent += 'Generated by Serial Cables Professional Interface\n';
+	    reportContent += '='.repeat(80) + '\n';
+	    reportContent += `Report Generated: ${timestamp}\n`;
+	    reportContent += `Test Status: ${result.status.toUpperCase()}\n`;
+	    reportContent += `Test Duration: ${result.duration_ms}ms\n`;
+	    reportContent += `Permission Level: ${result.permission_level}\n`;
+	    reportContent += '\n';
+
+	    // Summary
+	    if (result.summary) {
+	        reportContent += 'SUMMARY\n';
+	        reportContent += '-'.repeat(80) + '\n';
+	        reportContent += `Total Devices: ${result.summary.total_devices || 0}\n`;
+	        reportContent += `Total Retrains: ${result.summary.total_retrains || 0}\n`;
+	        reportContent += `Successful: ${result.summary.successful_retrains || 0}\n`;
+	        reportContent += `Failed: ${result.summary.failed_retrains || 0}\n`;
+	        reportContent += `Timeouts: ${result.summary.timeout_retrains || 0}\n`;
+	        reportContent += `Success Rate: ${result.summary.success_rate || 0}%\n`;
+	        reportContent += '\n';
+	    }
+
+	    // Statistics
+	    if (result.statistics) {
+	        reportContent += 'STATISTICS\n';
+	        reportContent += '-'.repeat(80) + '\n';
+	        reportContent += `Average Retrain Time: ${result.statistics.avg_retrain_time_ms}ms\n`;
+	        reportContent += `Min Retrain Time: ${result.statistics.min_retrain_time_ms}ms\n`;
+	        reportContent += `Max Retrain Time: ${result.statistics.max_retrain_time_ms}ms\n`;
+	        reportContent += `Standard Deviation: ${result.statistics.std_dev_ms}ms\n`;
+	        reportContent += '\n';
+	    }
+
+	    // PCIe 6.x Compliance
+	    if (result.compliance) {
+	        reportContent += 'PCIe 6.x COMPLIANCE\n';
+	        reportContent += '-'.repeat(80) + '\n';
+	        reportContent += `Specification: ${result.compliance.spec_version}\n`;
+	        reportContent += `Compliant: ${result.compliance.compliant ? 'YES' : 'NO'}\n`;
+	        reportContent += `Max Retrain Time Limit: ${result.compliance.max_retrain_time_ms}ms\n`;
+
+	        if (result.compliance.issues && result.compliance.issues.length > 0) {
+	            reportContent += '\nCompliance Issues:\n';
+	            result.compliance.issues.forEach(issue => {
+	                reportContent += `  - ${issue}\n`;
+	            });
+	        }
+	        reportContent += '\n';
+	    }
+
+	    // Per-Device Results
+	    if (result.devices && result.devices.length > 0) {
+	        reportContent += 'PER-DEVICE RESULTS\n';
+	        reportContent += '-'.repeat(80) + '\n';
+
+	        result.devices.forEach(device => {
+	            reportContent += `\nDevice: ${device.name}\n`;
+	            reportContent += `PCI Address: ${device.pci_address}\n`;
+	            reportContent += `Capability Offset: ${device.capability_offset}\n`;
+	            reportContent += `Total Retrains: ${device.statistics.total}\n`;
+	            reportContent += `Successful: ${device.statistics.successful}\n`;
+	            reportContent += `Failed: ${device.statistics.failed}\n`;
+	            reportContent += `Timeouts: ${device.statistics.timeouts}\n`;
+
+	            if (device.statistics.avg_time_ms > 0) {
+	                reportContent += `Average Time: ${device.statistics.avg_time_ms}ms\n`;
+	                reportContent += `Min Time: ${device.statistics.min_time_ms}ms\n`;
+	                reportContent += `Max Time: ${device.statistics.max_time_ms}ms\n`;
+	            }
+
+	            if (device.retrains && device.retrains.length > 0) {
+	                reportContent += '\nRetrain Sequence:\n';
+	                device.retrains.forEach(retrain => {
+	                    const status = retrain.success ? 'SUCCESS' : retrain.timeout ? 'TIMEOUT' : 'FAILED';
+	                    reportContent += `  #${retrain.sequence}: ${status} - ${retrain.time_ms}ms`;
+	                    if (retrain.error) {
+	                        reportContent += ` (${retrain.error})`;
+	                    }
+	                    reportContent += '\n';
+	                });
+	            }
+
+	            reportContent += '-'.repeat(80) + '\n';
+	        });
+	    }
+
+	    // Warnings
+	    if (result.warnings && result.warnings.length > 0) {
+	        reportContent += '\nWARNINGS\n';
+	        reportContent += '-'.repeat(80) + '\n';
+	        result.warnings.forEach(warning => {
+	            reportContent += `⚠️  ${warning}\n`;
+	        });
+	        reportContent += '\n';
+	    }
+
+	    // Errors
+	    if (result.errors && result.errors.length > 0) {
+	        reportContent += '\nERRORS\n';
+	        reportContent += '-'.repeat(80) + '\n';
+	        result.errors.forEach(error => {
+	            reportContent += `❌ ${error}\n`;
+	        });
+	        reportContent += '\n';
+	    }
+
+	    reportContent += '='.repeat(80) + '\n';
+	    reportContent += 'End of Link Retrain Count Report\n';
+	    reportContent += 'Visit: https://serial-cables.com for more information\n';
+	    reportContent += '='.repeat(80) + '\n';
+
+	    // Create download for CSV
+	    const csvBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+	    const csvUrl = window.URL.createObjectURL(csvBlob);
+	    const csvLink = document.createElement('a');
+	    csvLink.href = csvUrl;
+	    csvLink.download = csvFilename;
+	    csvLink.style.display = 'none';
+	    document.body.appendChild(csvLink);
+	    csvLink.click();
+	    document.body.removeChild(csvLink);
+	    window.URL.revokeObjectURL(csvUrl);
+
+	    // Create download for text report
+	    const txtBlob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+	    const txtUrl = window.URL.createObjectURL(txtBlob);
+	    const txtLink = document.createElement('a');
+	    txtLink.href = txtUrl;
+	    txtLink.download = txtFilename;
+	    txtLink.style.display = 'none';
+	    document.body.appendChild(txtLink);
+	    txtLink.click();
+	    document.body.removeChild(txtLink);
+	    window.URL.revokeObjectURL(txtUrl);
+
+	    showNotification(`Link retrain results exported: ${csvFilename} and ${txtFilename}`, 'success');
+	}
+
+    /**
+	 * Show results in popup window with export/print options
+	 */
+	showResultsWindow(testId, result) {
+	    this.currentResultTestId = testId;
+
+	    // Update window title
+	    const titleElement = document.getElementById('resultsWindowTestName');
+	    if (titleElement) {
+	        titleElement.textContent = result.test_name || testId;
+	    }
+
+	    // Update status badge
+	    const statusElement = document.getElementById('resultsWindowStatus');
+	    if (statusElement) {
+	        statusElement.textContent = result.status.toUpperCase();
+	        statusElement.className = `results-status-badge ${result.status}`;
+	    }
+
+	    // Update timestamp
+	    const timestampElement = document.getElementById('resultsWindowTimestamp');
+	    if (timestampElement) {
+	        const timestamp = result.timestamp ? new Date(result.timestamp).toLocaleString() : new Date().toLocaleString();
+	        timestampElement.textContent = timestamp;
+	    }
+
+	    // Render test-specific results
+	    this.renderTestResults(testId, result);
+
+	    // Show the window
+	    if (this.resultsWindowElement) {
+	        this.resultsWindowElement.classList.add('active');
+	    }
+	}
+
+	/**
+	 * Print current results
+	 */
+	printCurrentResults() {
+	    // Store original title
+	    const originalTitle = document.title;
+	    const testName = document.getElementById('resultsWindowTestName').textContent;
+
+	    // Set print title
+	    document.title = `CalypsoPy+ - ${testName} Results`;
+
+	    // Hide non-printable elements
+	    const actionsElements = document.querySelectorAll('.results-window-actions, .btn-close-results');
+	    actionsElements.forEach(el => el.style.display = 'none');
+
+	    // Trigger print
+	    window.print();
+
+	    // Restore
+	    document.title = originalTitle;
+	    actionsElements.forEach(el => el.style.display = '');
+	}
+
+	/**
+	 * Export results as PDF (using browser's print to PDF)
+	 */
+	exportResultsAsPDF() {
+	    showNotification('Use Print dialog and select "Save as PDF" to export', 'info');
+	    this.printCurrentResults();
+	}
+
+	/**
+	 * Export all results as comprehensive CSV
+	 */
+	exportAllResultsAsCSV() {
+	    if (Object.keys(this.testResults).length === 0) {
+	        showNotification('No test results to export', 'warning');
+	        return;
+	    }
+
+	    const timestamp = new Date().toISOString().slice(0,19).replace(/:/g,'-');
+	    const filename = `CalypsoPy_AllResults_${timestamp}.csv`;
+
+	    let csvContent = 'Test Name,Test ID,Status,Duration (ms),Timestamp\n';
+
+	    Object.entries(this.testResults).forEach(([testId, result]) => {
+	        csvContent += `"${result.test_name || testId}",${testId},${result.status},`;
+	        csvContent += `${result.duration_ms || 0},"${result.timestamp || ''}"\n`;
+	    });
+
+	    // Create download
+	    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+	    const url = window.URL.createObjectURL(blob);
+	    const link = document.createElement('a');
+	    link.href = url;
+	    link.download = filename;
+	    link.style.display = 'none';
+	    document.body.appendChild(link);
+	    link.click();
+	    document.body.removeChild(link);
+	    window.URL.revokeObjectURL(url);
+
+	    showNotification(`Results exported: ${filename}`, 'success');
+	}
+
+	/**
+	 * Export current test results in appropriate format
+	 */
+	exportCurrentResults() {
+	    const testName = document.getElementById('resultsWindowTestName').textContent;
+	    const testId = this.currentResultTestId;
+	    const result = this.testResults[testId];
+
+	    if (!result) {
+	        showNotification('No results to export', 'warning');
+	        return;
+	    }
+
+	    // Handle specific export formats based on test type
+	    if (testId === 'link_training_time') {
+	        this.exportLinkTrainingResults(result);
+	    } else if (testId === 'link_retrain_count') {
+	        this.exportLinkRetrainResults(result);
+	    } else if (testId === 'pcie_discovery') {
+	        this.exportPCIeDiscoveryResults(result);
+	    } else if (testId === 'nvme_discovery') {
+	        this.exportNVMeDiscoveryResults(result);
+	    } else {
+	        // Default JSON export
+	        this.exportResultsAsJSON();
+	    }
+	}
+
+	/**
+	 * Export PCIe Discovery results
+	 */
+	exportPCIeDiscoveryResults(result) {
+	    const timestamp = new Date().toISOString().slice(0,19).replace(/:/g,'-');
+	    const filename = `CalypsoPy_PCIeDiscovery_${timestamp}.txt`;
+
+	    let reportContent = '';
+	    reportContent += '='.repeat(80) + '\n';
+	    reportContent += 'CalypsoPy+ PCIe Discovery Report\n';
+	    reportContent += '='.repeat(80) + '\n';
+	    reportContent += `Report Generated: ${new Date().toLocaleString()}\n`;
+	    reportContent += `Test Status: ${result.status.toUpperCase()}\n\n`;
+
+	    if (result.devices) {
+	        reportContent += `Total Devices: ${result.devices.length}\n\n`;
+
+	        result.devices.forEach(device => {
+	            reportContent += '-'.repeat(80) + '\n';
+	            reportContent += `Device: ${device.device_description || device.device_class}\n`;
+	            reportContent += `PCI Address: ${device.pci_address}\n`;
+	            reportContent += `Vendor: ${device.vendor_name || 'Unknown'} (${device.vendor_id})\n`;
+	            reportContent += `Device ID: ${device.device_id}\n`;
+
+	            if (device.link_speed) {
+	                reportContent += `Link Speed: ${device.link_speed}\n`;
+	            }
+	            if (device.link_width) {
+	                reportContent += `Link Width: ${device.link_width}\n`;
+	            }
+
+	            reportContent += '\n';
+	        });
+	    }
+
+	    reportContent += '='.repeat(80) + '\n';
+
+	    // Download
+	    const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+	    const url = window.URL.createObjectURL(blob);
+	    const link = document.createElement('a');
+	    link.href = url;
+	    link.download = filename;
+	    link.style.display = 'none';
+	    document.body.appendChild(link);
+	    link.click();
+	    document.body.removeChild(link);
+	    window.URL.revokeObjectURL(url);
+
+	    showNotification(`PCIe discovery results exported: ${filename}`, 'success');
+	}
+
+	/**
+	 * Export NVMe Discovery results
+	 */
+	exportNVMeDiscoveryResults(result) {
+	    const timestamp = new Date().toISOString().slice(0,19).replace(/:/g,'-');
+	    const csvFilename = `CalypsoPy_NVMeDiscovery_${timestamp}.csv`;
+
+	    let csvContent = 'Device,Model,Serial,PCI Address,Firmware,Namespaces,Total Size (GB),Temperature (C)\n';
+
+	    if (result.controllers) {
+	        result.controllers.forEach(controller => {
+	            const sizeGB = controller.total_capacity_bytes ? (controller.total_capacity_bytes / 1e9).toFixed(2) : '0';
+	            const temp = controller.smart_data?.temperature_celsius || 'N/A';
+
+	            csvContent += `"${controller.device}","${controller.model}","${controller.serial_number}",`;
+	            csvContent += `${controller.pci_address || 'N/A'},"${controller.firmware_revision}",`;
+	            csvContent += `${controller.namespace_count},${sizeGB},${temp}\n`;
+	        });
+	    }
+
+	    // Download CSV
+	    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+	    const url = window.URL.createObjectURL(blob);
+	    const link = document.createElement('a');
+	    link.href = url;
+	    link.download = csvFilename;
+	    link.style.display = 'none';
+	    document.body.appendChild(link);
+	    link.click();
+	    document.body.removeChild(link);
+	    window.URL.revokeObjectURL(url);
+
+	    showNotification(`NVMe discovery results exported: ${csvFilename}`, 'success');
 	}
 }
 

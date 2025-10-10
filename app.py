@@ -21,6 +21,7 @@ import hashlib
 import os
 import sys
 from tests.link_training_time import LinkTrainingTimeMeasurement
+from tests.link_retrain_count import LinkRetrainCount
 
 # Add tests directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'tests'))
@@ -835,6 +836,7 @@ def list_available_tests():
         pcie_discovery = PCIeDiscovery()
         nvme_discovery = NVMeDiscovery()
         link_training = LinkTrainingTimeMeasurement()  # NEW
+        link_retrain = LinkRetrainCount()  # NEW
 
         for test in tests:
             if test['id'] == 'pcie_discovery':
@@ -847,6 +849,10 @@ def list_available_tests():
             elif test['id'] == 'link_training_time':  # NEW
                 test['has_permission'] = link_training.has_root or link_training.has_sudo
                 test['permission_level'] = link_training.permission_level
+            elif test['id'] == 'link_retrain_count':  # NEW
+                test['has_permission'] = link_retrain.has_root or link_retrain.has_sudo
+                test['has_setpci'] = link_retrain.has_setpci
+                test['permission_level'] = link_retrain.permission_level
 
         return jsonify(tests)
     except Exception as e:
@@ -1019,6 +1025,35 @@ def get_link_training_devices():
 
     except Exception as e:
         logger.error(f"Error getting link training devices: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/tests/link_retrain/devices')
+def get_link_retrain_devices():
+    """Get list of available devices for link retrain test"""
+    if not TESTING_AVAILABLE:
+        return jsonify({'error': 'Testing modules not available'}), 503
+
+    try:
+        # Return discovered NVMe devices if available
+        if test_runner.nvme_devices_detected and test_runner.discovered_nvme_devices:
+            devices = []
+            for controller in test_runner.discovered_nvme_devices:
+                if controller.get('pci_address'):
+                    devices.append({
+                        'device': controller.get('device', 'Unknown'),
+                        'pci_address': controller['pci_address'],
+                        'model': controller.get('model', 'Unknown'),
+                        'available': True
+                    })
+
+            logger.info(f"Retrieved {len(devices)} devices for link retrain test")
+            return jsonify(devices)
+        else:
+            return jsonify({'error': 'No NVMe devices detected. Run NVMe Discovery first.'}), 400
+
+    except Exception as e:
+        logger.error(f"Error getting link retrain devices: {e}")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':

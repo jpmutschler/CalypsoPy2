@@ -2096,52 +2096,89 @@
 			        </div>
 			    </div>
 
-			    <!-- Link Quality Analysis - Placeholder -->
-			    <div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="link_quality_analysis" data-category="link-quality" data-placeholder="true">
-			        <div class="card-header test-card-header">
-			            <div class="card-title">
-			                <div class="card-icon">📊</div>
-			                <span>Link Quality Analysis</span>
-			            </div>
-			            <div class="test-card-header-actions">
-			                <span class="placeholder-badge">Coming Soon</span>
-			            </div>
-			        </div>
-			        <div class="test-card-body">
-			            <p class="test-description">
-			                Comprehensive analysis of PCIe link quality metrics including signal integrity, error rates, and performance characteristics across all Atlas 3 downstream ports.
-			            </p>
+			    <div class="card test-card test-card-compact collapsed" data-test-id="link_retrain_count" data-category="link-quality">
+				    <div class="card-header test-card-header">
+				        <div class="card-title">
+				            <div class="card-icon">🔄</div>
+				            <span>Link Retrain Count</span>
+				        </div>
+				        <div class="test-card-header-actions">
+				            <button class="btn btn-primary btn-test-run-compact" onclick="testingDashboard.runTest('link_retrain_count')">
+				                <span>▶️</span> Run
+				            </button>
+				            <span class="test-status idle" id="link_retrain_countStatus">⏸️ Idle</span>
+				        </div>
+				    </div>
 
-			            <div class="test-requirements">
-			                <h5>Test Validates:</h5>
-			                <ul>
-			                    <li>PCIe link error counters and rates</li>
-			                    <li>Signal integrity measurements</li>
-			                    <li>Lane-to-lane skew detection</li>
-			                    <li>Receiver margining capabilities</li>
-			                    <li>Link stability over time</li>
-			                </ul>
-			            </div>
+				    <div class="test-card-body">
+				        <p class="test-description">
+				            Monitors PCIe Link Control register for retrain attempts and validates compliance with PCIe 6.x specification.
+				            Initiates controlled link retrains via setpci and tracks training success/failure rates and timing.
+				        </p>
 
-			            <div class="test-config-section">
-			                <h5>Test Options</h5>
+				        <div class="test-requirements">
+				            <h5>Test Validates:</h5>
+				            <ul>
+				                <li>PCIe Link Control register retrain bit operation</li>
+				                <li>Link Status register training state tracking</li>
+				                <li>Retrain completion timing vs PCIe 6.x limits</li>
+				                <li>Link training success/failure rates</li>
+				                <li>Specification compliance validation</li>
+				            </ul>
+				        </div>
 
-			                <div class="config-item">
-			                    <label for="linkQualityDuration">Monitoring Duration (seconds)</label>
-			                    <input type="number" id="linkQualityDuration" class="form-control" value="60" min="10" max="3600">
-			                    <span class="config-help">Duration to monitor link quality metrics</span>
-			                </div>
+				        <div class="test-requirement-note" id="linkRetrainRequirement" style="display: none;">
+				            <strong>⚠️ Requirement:</strong> NVMe devices must be detected first. Please run <strong>NVMe Discovery</strong> test to enable this test.
+				        </div>
 
-			                <div class="config-item">
-			                    <label>
-			                        <input type="checkbox" id="linkQualityStressTest">
-			                        Enable Stress Testing
-			                    </label>
-			                    <span class="config-help">Run bandwidth stress test during monitoring</span>
-			                </div>
-			            </div>
-			        </div>
-			    </div>
+				        <!-- Test Configuration Options -->
+				        <div class="test-config-section" id="linkRetrainConfig" style="display: none;">
+				            <h5>Test Options</h5>
+
+				            <div class="config-item">
+				                <label for="linkRetrainDeviceSelect">Target Device</label>
+				                <select id="linkRetrainDeviceSelect" class="form-control">
+				                    <option value="">All Devices</option>
+				                </select>
+				                <span class="config-help">Select specific device to test, or test all devices</span>
+				            </div>
+
+				            <div class="config-item">
+				                <label for="linkRetrainNumRetrains">Number of Retrains</label>
+				                <input type="number" id="linkRetrainNumRetrains" class="form-control" value="5" min="1" max="20">
+				                <span class="config-help">Number of link retrain attempts to perform per device</span>
+				            </div>
+
+				            <div class="config-item">
+				                <label for="linkRetrainDelay">Delay Between Retrains (ms)</label>
+				                <input type="number" id="linkRetrainDelay" class="form-control" value="100" min="50" max="5000" step="50">
+				                <span class="config-help">Time to wait between retrain attempts</span>
+				            </div>
+
+				            <div class="config-item">
+				                <label>
+				                    <input type="checkbox" id="linkRetrainShowTiming" checked>
+				                    Show Timing Details
+				                </label>
+				                <span class="config-help">Include detailed timing information in results</span>
+				            </div>
+
+				            <div class="config-item">
+				                <label>
+				                    <input type="checkbox" id="linkRetrainCheckCompliance" checked>
+				                    Check PCIe 6.x Compliance
+				                </label>
+				                <span class="config-help">Validate results against PCIe 6.x specification limits</span>
+				            </div>
+				        </div>
+
+				        <div class="test-actions">
+				            <button class="btn btn-primary btn-test-run" id="runLinkRetrainBtn" onclick="testingDashboard.runTest('link_retrain_count')" disabled>
+				                <span>▶️</span> Run Test
+				            </button>
+				        </div>
+				    </div>
+				</div>
 
 			    <!-- LTSSM State Tracking - Placeholder -->
 			    <div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="ltssm_state_tracking" data-category="link-quality" data-placeholder="true">
