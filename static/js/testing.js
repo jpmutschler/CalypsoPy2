@@ -1376,23 +1376,62 @@ class TestingDashboard {
 	async loadLinkRetrainDevices() {
 	    try {
 	        const response = await fetch('/api/tests/link_retrain/devices');
-	        const devices = await response.json();
+	        const data = await response.json();
+
+	        if (data.error) {
+	            console.warn('Error loading link retrain devices:', data.error);
+	            return;
+	        }
 
 	        const deviceSelect = document.getElementById('linkRetrainDeviceSelect');
+	        const excludedDevicesDiv = document.getElementById('linkRetrainExcludedDevices');
+	        const excludedList = document.getElementById('linkRetrainExcludedList');
+
 	        if (!deviceSelect) return;
 
-	        // Clear existing options except "All Devices"
-	        deviceSelect.innerHTML = '<option value="">All Devices</option>';
+	        // Clear existing options
+	        deviceSelect.innerHTML = '<option value="">All Atlas 3 Downstream Endpoints</option>';
 
-	        // Add device options
-	        devices.forEach(device => {
+	        // Separate available and excluded devices
+	        const availableDevices = data.available_devices || [];
+	        const excludedDevices = data.excluded_devices || [];
+
+	        // Add available device options
+	        if (availableDevices.length > 0) {
+	            availableDevices.forEach(device => {
+	                const option = document.createElement('option');
+	                option.value = device.pci_address;
+	                option.textContent = `${device.name} (${device.pci_address})`;
+	                deviceSelect.appendChild(option);
+	            });
+
+	            console.log(`Loaded ${availableDevices.length} available endpoint device(s)`);
+	        } else {
 	            const option = document.createElement('option');
-	            option.value = device.pci_address;
-	            option.textContent = `${device.device} - ${device.model} (${device.pci_address})`;
+	            option.value = '';
+	            option.textContent = 'No Atlas 3 downstream endpoints found';
+	            option.disabled = true;
 	            deviceSelect.appendChild(option);
-	        });
+	        }
 
-	        console.log(`Loaded ${devices.length} devices for link retrain test`);
+	        // Show excluded devices if any
+	        if (excludedDevices.length > 0 && excludedDevicesDiv && excludedList) {
+	            let excludedHTML = '<ul style="margin: 5px 0 0 20px; padding: 0;">';
+	            excludedDevices.forEach(device => {
+	                excludedHTML += `<li style="margin-bottom: 3px;"><strong>${device.name}</strong> (${device.pci_address}): ${device.reason}</li>`;
+	            });
+	            excludedHTML += '</ul>';
+
+	            excludedList.innerHTML = excludedHTML;
+	            excludedDevicesDiv.style.display = 'block';
+
+	            console.log(`${excludedDevices.length} device(s) excluded from link retrain test`);
+	        } else if (excludedDevicesDiv) {
+	            excludedDevicesDiv.style.display = 'none';
+	        }
+
+	        console.log(`Link Retrain Devices: ${availableDevices.length} available, ${excludedDevices.length} excluded`);
+
 	    } catch (error) {
 	        console.error('Error loading link retrain devices:', error);
 	    }

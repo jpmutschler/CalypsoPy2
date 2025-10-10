@@ -1030,27 +1030,75 @@ def get_link_training_devices():
 
 @app.route('/api/tests/link_retrain/devices')
 def get_link_retrain_devices():
-    """Get list of available devices for link retrain test"""
+    """Get list of available Atlas 3 downstream endpoint devices for link retrain test"""
     if not TESTING_AVAILABLE:
         return jsonify({'error': 'Testing modules not available'}), 503
 
     try:
-        # Return discovered NVMe devices if available
+        # Initialize link retrain test to get filtering capability
+        link_retrain = LinkRetrainCount()
+
+        # Identify Atlas 3 buses
+        link_retrain.atlas3_buses = link_retrain._identify_atlas3_buses()
+
+        if not link_retrain.atlas3_buses:
+            return jsonify({
+                'available_devices': [],
+                'excluded_devices': [],
+                'error': 'No Atlas 3 buses identified'
+            }), 400
+
+        # Get discovered devices from test runner
+        all_devices = []
+        excluded_devices = []
+
         if test_runner.nvme_devices_detected and test_runner.discovered_nvme_devices:
-            devices = []
+            # Use NVMe discovered devices
             for controller in test_runner.discovered_nvme_devices:
                 if controller.get('pci_address'):
-                    devices.append({
+                    device_info = {
                         'device': controller.get('device', 'Unknown'),
                         'pci_address': controller['pci_address'],
-                        'model': controller.get('model', 'Unknown'),
-                        'available': True
-                    })
+                        'name': controller.get('model', 'Unknown'),
+                        'model': controller.get('model', 'Unknown')
+                    }
 
-            logger.info(f"Retrieved {len(devices)} devices for link retrain test")
-            return jsonify(devices)
-        else:
-            return jsonify({'error': 'No NVMe devices detected. Run NVMe Discovery first.'}), 400
+                    # Check if downstream of Atlas 3
+                    if not link_retrain._is_device_atlas3_downstream(device_info['pci_address']):
+                        excluded_devices.append({
+                            'pci_address': device_info['pci_address'],
+                            'name': device_info['name'],
+                            'reason': 'Not downstream of Atlas 3 switch'
+                        })
+                        continue
+
+                    # Check if it's an endpoint (not a bridge)
+                    if not link_retrain._is_endpoint_device(device_info['pci_address']):
+                        excluded_devices.append({
+                            'pci_address': device_info['pci_address'],
+                            'name': device_info['name'],
+                            'reason': 'Device is a bridge/switch, not an endpoint'
+                        })
+                        continue
+
+                    # Device is valid
+                    device_info['available'] = True
+                    all_devices.append(device_info)
+
+        if not all_devices and not excluded_devices:
+            return jsonify({
+                'available_devices': [],
+                'excluded_devices': [],
+                'error': 'No devices detected. Run PCIe Discovery or NVMe Discovery first.'
+            }), 400
+
+        logger.info(f"Link Retrain Devices: {len(all_devices)} available, {len(excluded_devices)} excluded")
+
+        return jsonify({
+            'available_devices': all_devices,
+            'excluded_devices': excluded_devices,
+            'atlas3_buses': list(link_retrain.atlas3_buses)
+        })
 
     except Exception as e:
         logger.error(f"Error getting link retrain devices: {e}")

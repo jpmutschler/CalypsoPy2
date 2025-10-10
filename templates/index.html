@@ -2099,7 +2099,7 @@
 			    <div class="card test-card test-card-compact collapsed" data-test-id="link_retrain_count" data-category="link-quality">
 				    <div class="card-header test-card-header">
 				        <div class="card-title">
-				            <div class="card-icon">🔄</div>
+				            <div class="card-icon">🔁</div>
 				            <span>Link Retrain Count</span>
 				        </div>
 				        <div class="test-card-header-actions">
@@ -2112,8 +2112,8 @@
 
 				    <div class="test-card-body">
 				        <p class="test-description">
-				            Monitors PCIe Link Control register for retrain attempts and validates compliance with PCIe 6.x specification.
-				            Initiates controlled link retrains via setpci and tracks training success/failure rates and timing.
+				            Monitors PCIe Link Control register for retrain attempts on <strong>Atlas 3 downstream endpoint devices only</strong>.
+				            Validates compliance with PCIe 6.x specification.
 				        </p>
 
 				        <div class="test-requirements">
@@ -2127,22 +2127,56 @@
 				            </ul>
 				        </div>
 
+                        <div class="test-requirement-note">
+                            <strong>Note:</strong> Requires <code>pciutils</code> for full functionality
+                        </div>
+
 				        <div class="test-requirement-note" id="linkRetrainRequirement" style="display: none;">
-				            <strong>⚠️ Requirement:</strong> NVMe devices must be detected first. Please run <strong>NVMe Discovery</strong> test to enable this test.
+				            <strong>⚠️ Requirement:</strong> Devices must be detected first. Please run <strong>PCIe Discovery</strong> or <strong>NVMe Discovery</strong> test to enable this test.
 				        </div>
 
 				        <!-- Test Configuration Options -->
 				        <div class="test-config-section" id="linkRetrainConfig" style="display: none;">
 				            <h5>Test Options</h5>
 
-				            <div class="config-item">
-				                <label for="linkRetrainDeviceSelect">Target Device</label>
-				                <select id="linkRetrainDeviceSelect" class="form-control">
-				                    <option value="">All Devices</option>
-				                </select>
-				                <span class="config-help">Select specific device to test, or test all devices</span>
+				            <!-- Device Filtering Info Box -->
+				            <div class="info-box" style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px; margin-bottom: 15px;">
+				                <div style="display: flex; align-items: start; gap: 10px;">
+				                    <span style="font-size: 20px;">ℹ️</span>
+				                    <div style="font-size: 13px; color: #1e40af;">
+				                        <strong>Device Filtering:</strong> This test automatically filters devices to only test <strong>endpoint devices downstream of Atlas 3 switch</strong>.
+				                        Bridges, switches, and the Atlas 3 itself are excluded to prevent system instability.
+				                    </div>
+				                </div>
 				            </div>
 
+				            <!-- Device Selection -->
+				            <div class="config-item">
+				                <label for="linkRetrainDeviceSelect">Target Device(s)</label>
+				                <select id="linkRetrainDeviceSelect" class="form-control">
+				                    <option value="">All Atlas 3 Downstream Endpoints</option>
+				                </select>
+				                <span class="config-help">Select specific endpoint device or test all downstream devices</span>
+				            </div>
+
+				            <!-- Filter Options -->
+				            <div class="config-item">
+				                <label>
+				                    <input type="checkbox" id="linkRetrainFilterEndpoints" checked disabled>
+				                    Filter Endpoints Only (Required)
+				                </label>
+				                <span class="config-help">Automatically excludes bridges and switches - cannot be disabled for safety</span>
+				            </div>
+
+				            <!-- Show Excluded Devices -->
+				            <div id="linkRetrainExcludedDevices" style="display: none; margin-top: 10px; padding: 10px; background: #fef3c7; border-radius: 6px; border-left: 4px solid #f59e0b;">
+				                <div style="font-size: 13px; font-weight: 600; color: #92400e; margin-bottom: 5px;">
+				                    ⚠️ Excluded Devices
+				                </div>
+				                <div id="linkRetrainExcludedList" style="font-size: 12px; color: #78350f;"></div>
+				            </div>
+
+				            <!-- Test Parameters -->
 				            <div class="config-item">
 				                <label for="linkRetrainNumRetrains">Number of Retrains</label>
 				                <input type="number" id="linkRetrainNumRetrains" class="form-control" value="5" min="1" max="20">
