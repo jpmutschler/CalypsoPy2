@@ -1896,7 +1896,14 @@
 			            <strong>Testing Requirements:</strong>
 			            Some tests require sudo/root permissions for full functionality.
 			            Tests will run with available permissions and note any limitations.
-			            Install <code>nvme-cli</code> for comprehensive NVMe testing: <code>sudo apt install nvme-cli</code>
+                    </div>
+                    <div>
+                        <strong>Required Utilities on Host Server:</strong>
+                        <ul>
+                            <li><code>pciutils</code> for inspecting and manipulating PCI device configurations: <code>sudo apt install pciutils</code></li>
+                            <li><code>nvme-cli</code> for comprehensive NVMe testing: <code>sudo apt install nvme-cli</code></li>
+                            <li><code>fio</code> for NVMe benchmarking: <code>sudo apt install fio</code></li>
+                        </ul>
 			        </div>
 			    </div>
 
