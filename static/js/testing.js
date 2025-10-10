@@ -16,7 +16,7 @@ class TestingDashboard {
         this.isRunning = false;
         this.resultsWindowElement = null;
         this.collapsedStates = {}; // Track which tests are collapsed
-        this.currentCategory = 'all';
+        this.currentCategory = 'link-quality';
         this.init();
     }
 
@@ -30,34 +30,68 @@ class TestingDashboard {
     }
 
     initializeCollapsibleStates() {
-    const testCards = document.querySelectorAll('.test-card');
-    testCards.forEach(card => {
-        const testId = card.getAttribute('data-test-id');
-        if (testId) {
-            // Default tests start expanded, categorized tests start collapsed
-            const isDefault = card.getAttribute('data-default') === 'true';
-            const isCompact = card.classList.contains('test-card-compact');
+	    const testCards = document.querySelectorAll('.test-card');
+	    testCards.forEach(card => {
+	        const testId = card.getAttribute('data-test-id');
+	        if (testId) {
+	            // Default tests start expanded, categorized tests start collapsed
+	            const isDefault = card.getAttribute('data-default') === 'true';
+	            const isCompact = card.classList.contains('test-card-compact');
+	            const isPlaceholder = card.getAttribute('data-placeholder') === 'true';
 
-            // Set collapsed state: compact cards start collapsed, default cards start expanded
-            this.collapsedStates[testId] = isCompact ? true : false;
+	            // Set collapsed state: compact cards start collapsed, default cards start expanded
+	            this.collapsedStates[testId] = isCompact ? true : false;
 
-            // Only add collapse toggle to non-compact cards (default tests)
-            if (!isCompact) {
-                this.addCollapseToggle(card, testId);
-            }
+	            // Only add collapse toggle to non-compact cards (default tests)
+	            if (!isCompact) {
+	                this.addCollapseToggle(card, testId);
+	            }
 
-            // Set initial collapsed state for compact cards
-            if (isCompact && this.collapsedStates[testId]) {
-                card.classList.add('collapsed');
-                }
-            }
-        });
-    }
+	            // Set initial collapsed state for compact cards
+	            if (isCompact && this.collapsedStates[testId]) {
+	                card.classList.add('collapsed');
+	            }
+
+	            // Add click handler to compact card headers
+	            if (isCompact) {
+	                const header = card.querySelector('.card-header');
+	                if (header) {
+	                    // Make header clickable for all compact cards
+	                    header.style.cursor = isPlaceholder ? 'pointer' : 'pointer';
+
+	                    header.onclick = (e) => {
+	                        // Don't toggle if clicking on buttons
+	                        if (e.target.closest('button')) {
+	                            return;
+	                        }
+	                        this.toggleCompactCard(testId);
+	                    };
+	                }
+	            }
+	        }
+	    });
+	}
+
+	toggleCompactCard(testId) {
+	    const card = document.querySelector(`[data-test-id="${testId}"]`);
+	    if (!card) return;
+
+	    // Toggle collapsed state
+	    this.collapsedStates[testId] = !this.collapsedStates[testId];
+
+	    if (this.collapsedStates[testId]) {
+	        card.classList.add('collapsed');
+	    } else {
+	        card.classList.remove('collapsed');
+	    }
+
+	    console.log(`Compact test card ${testId} ${this.collapsedStates[testId] ? 'collapsed' : 'expanded'}`);
+	}
 
 	initializeCategoryFilter() {
 	    console.log('Initializing category filter...');
-	    this.updateCategoryCounts();
-	    this.filterByCategory('all'); // Show all tests initially
+	    // Set Link Quality & Training as the default category
+        this.filterByCategory('link-quality');
 	}
 
     filterByCategory(category) {
@@ -73,13 +107,13 @@ class TestingDashboard {
 	        }
 	    });
 
-	    // Filter test cards
-	    const testCards = document.querySelectorAll('.test-card[data-category]');
+	    // Filter test cards - only show tests matching the selected category
+        const testCards = document.querySelectorAll('.test-card[data-category]');
 
-	    testCards.forEach(card => {
+        testCards.forEach(card => {
 	        const cardCategory = card.getAttribute('data-category');
 
-	        if (category === 'all' || cardCategory === category) {
+	        if (cardCategory === category) {
 	            card.classList.remove('hidden');
 	        } else {
 	            card.classList.add('hidden');
@@ -90,13 +124,11 @@ class TestingDashboard {
 	    this.checkEmptyCategory(category);
 
 	    // Scroll to categorized tests section
-	    if (category !== 'all') {
-	        const categorizedGrid = document.getElementById('categorizedTestsGrid');
-	        if (categorizedGrid) {
-	            categorizedGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
-	        }
-	    }
-	}
+        const categorizedGrid = document.getElementById('categorizedTestsGrid');
+	    if (categorizedGrid) {
+            categorizedGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
 
     checkEmptyCategory(category) {
 	    const categorizedGrid = document.getElementById('categorizedTestsGrid');
@@ -121,37 +153,6 @@ class TestingDashboard {
 	        `;
 	        categorizedGrid.appendChild(emptyState);
 	    }
-	}
-
-    updateCategoryCounts() {
-	    const categories = {
-	        'all': 0,
-	        'link-quality': 0,
-	        'nvme-validation': 0,
-	        'nvme-performance': 0,
-	        'nvme-health': 0,
-	        'pcie-compliance': 0,
-	        'pcie-6x': 0
-	    };
-
-	    // Count tests in each category
-	    document.querySelectorAll('.test-card[data-category]').forEach(card => {
-	        const category = card.getAttribute('data-category');
-	        if (categories.hasOwnProperty(category)) {
-	            categories[category]++;
-	        }
-	        categories['all']++; // Count for 'all' category
-	    });
-
-	    // Update count badges
-	    Object.keys(categories).forEach(category => {
-	        const countElement = document.getElementById(`count-${category}`);
-	        if (countElement) {
-	            countElement.textContent = categories[category];
-	        }
-	    });
-
-	    console.log('Category counts updated:', categories);
 	}
 
     addCollapseToggle(card, testId) {

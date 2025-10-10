@@ -6001,3 +6001,470 @@ Testing Dashboard Styles
     margin-top: 5px;
     font-style: italic;
 }
+
+/* Test Category Filter Styles */
+.test-category-filter {
+    margin: 40px 0 30px 0;
+    padding: 25px;
+    background: var(--light-gray);
+    border-radius: 15px;
+}
+
+.category-filter-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--dark-black);
+    margin-bottom: 20px;
+    letter-spacing: -0.3px;
+}
+
+.category-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.category-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    background: var(--pure-white);
+    border: 2px solid var(--border-gray);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--secondary-gray);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.category-link:hover {
+    border-color: var(--primary-red);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(121, 0, 0, 0.15);
+    color: var(--dark-black);
+}
+
+.category-link.active {
+    background: var(--primary-red);
+    border-color: var(--primary-red);
+    color: var(--pure-white);
+    box-shadow: 0 4px 15px rgba(121, 0, 0, 0.3);
+}
+
+.category-link.active:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(121, 0, 0, 0.4);
+}
+
+.category-icon {
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.category-name {
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+/* Responsive adjustments for category filter */
+@media (max-width: 768px) {
+    .category-links {
+        flex-direction: column;
+    }
+
+    .category-link {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
+/* Category Empty State */
+.category-empty-state {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 40px;
+    background: var(--light-gray);
+    border-radius: 15px;
+    border: 2px dashed var(--border-gray);
+    margin: 20px 0;
+}
+
+.category-empty-state-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.category-empty-state p {
+    color: var(--secondary-gray);
+    text-align: center;
+    margin: 8px 0;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.category-empty-state p:first-of-type {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--dark-black);
+}
+
+/* Categorized Tests Grid - 3 Column Layout */
+.categorized-tests-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 25px;
+}
+
+/* Compact Test Card Styling */
+.test-card-compact {
+    min-height: auto;
+}
+
+.test-card-compact .card-header {
+    padding: 15px 20px;
+    cursor: pointer;
+}
+
+.test-card-compact .card-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.test-card-compact .card-icon {
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.test-card-compact .test-card-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Collapsed State for Compact Cards */
+.test-card-compact.collapsed .test-card-body {
+    max-height: 0;
+    opacity: 0;
+    padding: 0 20px;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.2s ease, padding 0.3s ease;
+}
+
+.test-card-compact:not(.collapsed) .test-card-body {
+    max-height: 1000px;
+    opacity: 1;
+    padding: 20px;
+    transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.3s ease;
+}
+
+/* Make compact card headers clickable for expand/collapse */
+.test-card-compact .card-header {
+    user-select: none;
+    transition: background 0.2s ease;
+}
+
+.test-card-compact .card-header:hover {
+    background: var(--light-gray);
+}
+
+/* Placeholder Test Card Styling */
+.test-card-placeholder {
+    opacity: 0.7;
+    cursor: default;
+}
+
+.test-card-placeholder .card-header {
+    cursor: default !important;
+    pointer-events: none;
+}
+
+.test-card-placeholder:hover {
+    border-color: var(--border-gray);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.placeholder-badge {
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(100, 116, 139, 0.15);
+    color: var(--secondary-gray);
+    border: 1px solid rgba(100, 116, 139, 0.2);
+}
+
+/* Hidden class for filtering */
+.hidden {
+    display: none !important;
+}
+
+/* Responsive Grid - 2 columns on tablets */
+@media (max-width: 1200px) {
+    .categorized-tests-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Responsive Grid - 1 column on mobile */
+@media (max-width: 768px) {
+    .categorized-tests-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Enhanced Test Card Body for Compact Cards */
+.test-card-compact .test-card-body {
+    padding: 20px;
+}
+
+.test-card-compact .test-description {
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.test-card-compact .test-requirements {
+    padding: 12px;
+    margin-bottom: 15px;
+}
+
+.test-card-compact .test-requirements h5 {
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+.test-card-compact .test-requirements li {
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.test-card-compact .test-requirement-note {
+    padding: 10px;
+    margin-bottom: 15px;
+    font-size: 12px;
+}
+
+.test-card-compact .test-actions {
+    gap: 8px;
+}
+
+/* Compact Test Card Body - Expanded State */
+.test-card-compact .test-card-body {
+    padding: 0 20px;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.3s ease;
+}
+
+.test-card-compact:not(.collapsed) .test-card-body {
+    max-height: 2500px; /* Increased to accommodate config sections */
+    opacity: 1;
+    padding: 20px;
+}
+
+/* Test Description */
+.test-card-compact .test-description {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--secondary-gray);
+    margin-bottom: 15px;
+}
+
+/* Test Requirements Section */
+.test-card-compact .test-requirements {
+    background: var(--light-gray);
+    border-radius: 8px;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+}
+
+.test-card-compact .test-requirements h5 {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--dark-black);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.test-card-compact .test-requirements ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.test-card-compact .test-requirements li {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--secondary-gray);
+    margin-bottom: 4px;
+}
+
+/* Test Configuration Section */
+.test-card-compact .test-config-section {
+    background: rgba(59, 130, 246, 0.05);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 8px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.test-card-compact .test-config-section h5 {
+    font-size: 12px;
+    font-weight: 700;
+    color: #3b82f6;
+    margin: 0 0 12px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.test-card-compact .config-item {
+    margin-bottom: 12px;
+}
+
+.test-card-compact .config-item:last-child {
+    margin-bottom: 0;
+}
+
+.test-card-compact .config-item label {
+    display: block;
+    font-weight: 600;
+    color: var(--dark-black);
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.test-card-compact .config-item .form-control {
+    width: 100%;
+    padding: 8px 10px;
+    border: 2px solid var(--border-gray);
+    border-radius: 6px;
+    font-size: 12px;
+    background: var(--pure-white);
+    color: var(--dark-black);
+    transition: border-color 0.2s ease;
+    font-family: inherit;
+}
+
+.test-card-compact .config-item .form-control:focus {
+    outline: none;
+    border-color: var(--primary-red);
+}
+
+.test-card-compact .config-item select.form-control[multiple] {
+    height: auto;
+    padding: 6px;
+}
+
+.test-card-compact .config-item input[type="checkbox"] {
+    margin-right: 6px;
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.test-card-compact .config-item label:has(input[type="checkbox"]) {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.test-card-compact .config-help {
+    display: block;
+    font-size: 11px;
+    color: var(--secondary-gray);
+    margin-top: 4px;
+    font-style: italic;
+    line-height: 1.4;
+}
+
+/* Test Requirement Note */
+.test-card-compact .test-requirement-note {
+    background: rgba(251, 191, 36, 0.1);
+    border-left: 3px solid #f59e0b;
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-size: 12px;
+    color: var(--dark-black);
+}
+
+.test-card-compact .test-requirement-note code {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-family: 'Monaco', monospace;
+    font-size: 11px;
+}
+
+/* Test Actions for Compact Cards */
+.test-card-compact .test-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.test-card-compact .btn-test-run {
+    flex: 1;
+    padding: 10px 16px;
+    font-size: 13px;
+}
+
+/* Placeholder Cards - Disable Config Sections */
+.test-card-placeholder .test-config-section {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.test-card-placeholder .config-item .form-control,
+.test-card-placeholder .config-item input[type="checkbox"] {
+    cursor: not-allowed;
+}
+
+/* Smooth Transitions for Expand/Collapse */
+.test-card-compact {
+    transition: all 0.3s ease;
+}
+
+.test-card-compact:not(.collapsed) {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Hover Effect - Only on Non-Placeholder Cards */
+.test-card-compact:not(.test-card-placeholder) .card-header:hover {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1200px) {
+    .test-card-compact:not(.collapsed) .test-card-body {
+        max-height: 3000px; /* More space for mobile layouts */
+    }
+}
+
+@media (max-width: 768px) {
+    .test-card-compact .test-config-section {
+        padding: 12px;
+    }
+
+    .test-card-compact .config-item .form-control {
+        font-size: 14px; /* Slightly larger on mobile for better usability */
+    }
+}

@@ -1793,175 +1793,982 @@
 				<div class="test-category-filter">
 				    <h3 class="category-filter-title">Additional Test Categories</h3>
 				    <div class="category-links">
-				        <button class="category-link active" data-category="all" onclick="testingDashboard.filterByCategory('all')">
-				            <span class="category-icon">📋</span>
-				            <span class="category-name">All Tests</span>
-				            <span class="category-count" id="count-all">0</span>
-				        </button>
-				        <button class="category-link" data-category="link-quality" onclick="testingDashboard.filterByCategory('link-quality')">
+				        <button class="category-link active" data-category="link-quality" onclick="testingDashboard.filterByCategory('link-quality')">
 				            <span class="category-icon">🔗</span>
 				            <span class="category-name">Link Quality & Training</span>
-				            <span class="category-count" id="count-link-quality">0</span>
 				        </button>
 				        <button class="category-link" data-category="nvme-validation" onclick="testingDashboard.filterByCategory('nvme-validation')">
 				            <span class="category-icon">✅</span>
 				            <span class="category-name">NVMe Validation</span>
-				            <span class="category-count" id="count-nvme-validation">0</span>
 				        </button>
 				        <button class="category-link" data-category="nvme-performance" onclick="testingDashboard.filterByCategory('nvme-performance')">
 				            <span class="category-icon">⚡</span>
 				            <span class="category-name">NVMe Performance</span>
-				            <span class="category-count" id="count-nvme-performance">0</span>
 				        </button>
 				        <button class="category-link" data-category="nvme-health" onclick="testingDashboard.filterByCategory('nvme-health')">
 				            <span class="category-icon">🏥</span>
 				            <span class="category-name">NVMe Health & SMART</span>
-				            <span class="category-count" id="count-nvme-health">0</span>
 				        </button>
 				        <button class="category-link" data-category="pcie-compliance" onclick="testingDashboard.filterByCategory('pcie-compliance')">
 				            <span class="category-icon">📐</span>
 				            <span class="category-name">PCIe Compliance & Validation</span>
-				            <span class="category-count" id="count-pcie-compliance">0</span>
 				        </button>
 				        <button class="category-link" data-category="pcie-6x" onclick="testingDashboard.filterByCategory('pcie-6x')">
 				            <span class="category-icon">🚀</span>
 				            <span class="category-name">PCIe 6.x-Specific Tests</span>
-				            <span class="category-count" id="count-pcie-6x">0</span>
 				        </button>
 				    </div>
 				</div>
 
-				<!-- CATEGORIZED TESTS GRID -->
-				<div class="categorized-tests-grid" id="categorizedTestsGrid">
-				    <!-- Link Training Time Test - Link Quality & Training Category -->
-				    <div class="card test-card test-card-compact collapsed" data-test-id="link_training_time" data-category="link-quality">
-				        <div class="card-header test-card-header">
-				            <div class="card-title">
-				                <div class="card-icon">⏱️</div>
-				                <span>Link Training Time</span>
-				            </div>
-				            <div class="test-card-header-actions">
-				                <button class="btn btn-primary btn-test-run-compact" onclick="testingDashboard.runTest('link_training_time')">
-				                    <span>▶️</span> Run
-				                </button>
-				                <span class="test-status idle" id="link_training_timeStatus">⏸️ Idle</span>
-				            </div>
-				        </div>
+						<!-- CATEGORIZED TESTS GRID -->
+			<div class="categorized-tests-grid" id="categorizedTestsGrid">
+			    <!-- ========================================
+			         LINK QUALITY & TRAINING CATEGORY
+			         ======================================== -->
 
-				        <div class="test-card-body">
-				            <p class="test-description">
-				                Measures PCIe link training times by tracking LTSSM state transitions in kernel dmesg logs.
-				                Analyzes link down/up events and calculates training durations for Atlas 3 downstream devices.
-				                Requires NVMe Discovery prior to Execution.
-				            </p>
+			    <!-- Link Training Time Test - COMPLETED TEST -->
+			    <div class="card test-card test-card-compact collapsed" data-test-id="link_training_time" data-category="link-quality">
+			        <div class="card-header test-card-header">
+			            <div class="card-title">
+			                <div class="card-icon">⏱️</div>
+			                <span>Link Training Time</span>
+			            </div>
+			            <div class="test-card-header-actions">
+			                <button class="btn btn-primary btn-test-run-compact" onclick="testingDashboard.runTest('link_training_time')">
+			                    <span>▶️</span> Run
+			                </button>
+			                <span class="test-status idle" id="link_training_timeStatus">⏸️ Idle</span>
+			            </div>
+			        </div>
 
-				            <div class="test-requirements">
-				                <h5>Test Analyzes:</h5>
-				                <ul>
-				                    <li>LTSSM state transitions from kernel logs</li>
-				                    <li>Link training sequence timing</li>
-				                    <li>Link up/down event detection</li>
-				                    <li>Speed and width negotiation events</li>
-				                    <li>Training errors and retrain events</li>
-				                </ul>
-				            </div>
+			        <div class="test-card-body">
+			            <p class="test-description">
+			                Measures PCIe link training times by tracking LTSSM state transitions in kernel dmesg logs.
+			                Analyzes link down/up events and calculates training durations for Atlas 3 downstream devices.
+			            </p>
 
-				            <div class="test-requirement-note" id="linkTrainingRequirement" style="display: none;">
-				                <strong>⚠️ Requirement:</strong> NVMe devices must be detected first. Please run <strong>NVMe Discovery</strong> test to enable this test.
-				            </div>
+			            <div class="test-requirements">
+			                <h5>Test Validates:</h5>
+			                <ul>
+			                    <li>LTSSM state transitions from kernel logs</li>
+			                    <li>Link training sequence timing</li>
+			                    <li>Link up/down event detection</li>
+			                    <li>Speed and width negotiation events</li>
+			                    <li>Training errors and retrain events</li>
+			                </ul>
+			            </div>
 
-				            <div class="test-actions">
-				                <button class="btn btn-primary btn-test-run" id="runLinkTrainingBtn" onclick="testingDashboard.runTest('link_training_time')" disabled>
-				                    <span>▶️</span> Run Test
-				                </button>
-				            </div>
-				        </div>
-				    </div>
+			            <div class="test-requirement-note" id="linkTrainingRequirement" style="display: none;">
+			                <strong>⚠️ Requirement:</strong> NVMe devices must be detected first. Please run <strong>NVMe Discovery</strong> test to enable this test.
+			            </div>
 
-				    <!-- Additional categorized tests would go here -->
-				    <!-- Example placeholder tests for demonstration -->
+			            <!-- Test Configuration Options -->
+			            <div class="test-config-section" id="linkTrainingConfig" style="display: none;">
+			                <h5>Test Options</h5>
 
-				    <!-- NVMe Validation Category -->
-				    <div class="card test-card test-card-compact collapsed" data-test-id="nvme_namespace_validation" data-category="nvme-validation">
-				        <div class="card-header test-card-header">
-				            <div class="card-title">
-				                <div class="card-icon">📦</div>
-				                <span>NVMe Namespace Validation</span>
-				            </div>
-				            <div class="test-card-header-actions">
-				                <button class="btn btn-primary btn-test-run-compact" onclick="testingDashboard.runTest('nvme_namespace_validation')">
-				                    <span>▶️</span> Run
-				                </button>
-				                <span class="test-status idle" id="nvme_namespace_validationStatus">⏸️ Idle</span>
-				            </div>
-				        </div>
-				    </div>
+			                <div class="config-item">
+			                    <label for="linkTrainingDeviceSelect">Target Device</label>
+			                    <select id="linkTrainingDeviceSelect" class="form-control">
+			                        <option value="">All Devices</option>
+			                    </select>
+			                    <span class="config-help">Select specific device to monitor, or test all devices</span>
+			                </div>
 
-				    <!-- NVMe Performance Category -->
-				    <div class="card test-card test-card-compact collapsed" data-test-id="nvme_sequential_read" data-category="nvme-performance">
-				        <div class="card-header test-card-header">
-				            <div class="card-title">
-				                <div class="card-icon">📈</div>
-				                <span>Sequential Read Performance</span>
-				            </div>
-				            <div class="test-card-header-actions">
-				                <button class="btn btn-primary btn-test-run-compact" onclick="testingDashboard.runTest('nvme_sequential_read')">
-				                    <span>▶️</span> Run
-				                </button>
-				                <span class="test-status idle" id="nvme_sequential_readStatus">⏸️ Idle</span>
-				            </div>
-				        </div>
-				    </div>
+			                <div class="config-item">
+			                    <label>
+			                        <input type="checkbox" id="linkTrainingTriggerReset">
+			                        Trigger Device Reset
+			                    </label>
+			                    <span class="config-help">Perform PCIe device reset before measurement (requires root/sudo)</span>
+			                </div>
 
-				    <!-- NVMe Health & SMART Category -->
-				    <div class="card test-card test-card-compact collapsed" data-test-id="nvme_smart_analysis" data-category="nvme-health">
-				        <div class="card-header test-card-header">
-				            <div class="card-title">
-				                <div class="card-icon">🩺</div>
-				                <span>SMART Health Analysis</span>
-				            </div>
-				            <div class="test-card-header-actions">
-				                <button class="btn btn-primary btn-test-run-compact" onclick="testingDashboard.runTest('nvme_smart_analysis')">
-				                    <span>▶️</span> Run
-				                </button>
-				                <span class="test-status idle" id="nvme_smart_analysisStatus">⏸️ Idle</span>
-				            </div>
-				        </div>
-				    </div>
+			                <div class="config-item">
+			                    <label>
+			                        <input type="checkbox" id="linkTrainingTriggerHotplug">
+			                        Trigger Hot-Plug Event
+			                    </label>
+			                    <span class="config-help">Simulate hot-plug to trigger link training (requires root/sudo)</span>
+			                </div>
+			            </div>
 
-				    <!-- PCIe Compliance Category -->
-				    <div class="card test-card test-card-compact collapsed" data-test-id="pcie_link_width_test" data-category="pcie-compliance">
-				        <div class="card-header test-card-header">
-				            <div class="card-title">
-				                <div class="card-icon">📏</div>
-				                <span>PCIe Link Width Validation</span>
-				            </div>
-				            <div class="test-card-header-actions">
-				                <button class="btn btn-primary btn-test-run-compact" onclick="testingDashboard.runTest('pcie_link_width_test')">
-				                    <span>▶️</span> Run
-				                </button>
-				                <span class="test-status idle" id="pcie_link_width_testStatus">⏸️ Idle</span>
-				            </div>
-				        </div>
-				    </div>
+			            <div class="test-actions">
+			                <button class="btn btn-primary btn-test-run" id="runLinkTrainingBtn" onclick="testingDashboard.runTest('link_training_time')" disabled>
+			                    <span>▶️</span> Run Test
+			                </button>
+			            </div>
+			        </div>
+			    </div>
 
-				    <!-- PCIe 6.x-Specific Tests Category -->
-				    <div class="card test-card test-card-compact collapsed" data-test-id="pcie_flit_mode_test" data-category="pcie-6x">
-				        <div class="card-header test-card-header">
-				            <div class="card-title">
-				                <div class="card-icon">🎯</div>
-				                <span>FLIT Mode Validation</span>
-				            </div>
-				            <div class="test-card-header-actions">
-				                <button class="btn btn-primary btn-test-run-compact" onclick="testingDashboard.runTest('pcie_flit_mode_test')">
-				                    <span>▶️</span> Run
-				                </button>
-				                <span class="test-status idle" id="pcie_flit_mode_testStatus">⏸️ Idle</span>
-				            </div>
-				        </div>
-				    </div>
+			    <!-- Link Quality Analysis - Placeholder -->
+			    <div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="link_quality_analysis" data-category="link-quality" data-placeholder="true">
+			        <div class="card-header test-card-header">
+			            <div class="card-title">
+			                <div class="card-icon">📊</div>
+			                <span>Link Quality Analysis</span>
+			            </div>
+			            <div class="test-card-header-actions">
+			                <span class="placeholder-badge">Coming Soon</span>
+			            </div>
+			        </div>
+			        <div class="test-card-body">
+			            <p class="test-description">
+			                Comprehensive analysis of PCIe link quality metrics including signal integrity, error rates, and performance characteristics across all Atlas 3 downstream ports.
+			            </p>
 
-				</div>
+			            <div class="test-requirements">
+			                <h5>Test Validates:</h5>
+			                <ul>
+			                    <li>PCIe link error counters and rates</li>
+			                    <li>Signal integrity measurements</li>
+			                    <li>Lane-to-lane skew detection</li>
+			                    <li>Receiver margining capabilities</li>
+			                    <li>Link stability over time</li>
+			                </ul>
+			            </div>
+
+			            <div class="test-config-section">
+			                <h5>Test Options</h5>
+
+			                <div class="config-item">
+			                    <label for="linkQualityDuration">Monitoring Duration (seconds)</label>
+			                    <input type="number" id="linkQualityDuration" class="form-control" value="60" min="10" max="3600">
+			                    <span class="config-help">Duration to monitor link quality metrics</span>
+			                </div>
+
+			                <div class="config-item">
+			                    <label>
+			                        <input type="checkbox" id="linkQualityStressTest">
+			                        Enable Stress Testing
+			                    </label>
+			                    <span class="config-help">Run bandwidth stress test during monitoring</span>
+			                </div>
+			            </div>
+			        </div>
+			    </div>
+
+			    <!-- LTSSM State Tracking - Placeholder -->
+			    <div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="ltssm_state_tracking" data-category="link-quality" data-placeholder="true">
+			        <div class="card-header test-card-header">
+			            <div class="card-title">
+			                <div class="card-icon">🔄</div>
+			                <span>LTSSM State Tracking</span>
+			            </div>
+			            <div class="test-card-header-actions">
+			                <span class="placeholder-badge">Coming Soon</span>
+			            </div>
+			        </div>
+			        <div class="test-card-body">
+			            <p class="test-description">
+			                Real-time monitoring of Link Training and Status State Machine transitions for debugging and validation of PCIe link behavior.
+			            </p>
+
+			            <div class="test-requirements">
+			                <h5>Test Validates:</h5>
+			                <ul>
+			                    <li>LTSSM state machine transitions</li>
+			                    <li>Recovery state frequency</li>
+			                    <li>L0/L1 power state transitions</li>
+			                    <li>Unexpected state changes</li>
+			                    <li>State dwell time analysis</li>
+			                </ul>
+			            </div>
+
+			            <div class="test-config-section">
+			                <h5>Test Options</h5>
+
+			                <div class="config-item">
+			                    <label for="ltssmTrackingMode">Tracking Mode</label>
+			                    <select id="ltssmTrackingMode" class="form-control">
+			                        <option value="continuous">Continuous Monitoring</option>
+			                        <option value="event_triggered">Event-Triggered</option>
+			                        <option value="snapshot">Single Snapshot</option>
+			                    </select>
+			                    <span class="config-help">Select LTSSM tracking mode</span>
+			                </div>
+
+			                <div class="config-item">
+			                    <label>
+			                        <input type="checkbox" id="ltssmLogTransitions">
+			                        Log All Transitions
+			                    </label>
+			                    <span class="config-help">Create detailed log of every state transition</span>
+			                </div>
+			            </div>
+			        </div>
+			    </div>
+
+			    <!-- ========================================
+			         NVME VALIDATION CATEGORY
+			         ======================================== -->
+
+			    <div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="nvme_namespace_validation" data-category="nvme-validation" data-placeholder="true">
+			        <div class="card-header test-card-header">
+			            <div class="card-title">
+			                <div class="card-icon">📦</div>
+			                <span>Namespace Validation</span>
+			            </div>
+			            <div class="test-card-header-actions">
+			                <span class="placeholder-badge">Coming Soon</span>
+			            </div>
+			        </div>
+			        <div class="test-card-body">
+			            <p class="test-description">
+			                Validates NVMe namespace configuration, capacity allocation, and formatting compliance against NVMe specification requirements.
+			            </p>
+
+			            <div class="test-requirements">
+			                <h5>Test Validates:</h5>
+			                <ul>
+			                    <li>Namespace identification and attributes</li>
+			                    <li>Logical block addressing (LBA) format</li>
+			                    <li>Namespace capacity and utilization</li>
+			                    <li>Format compliance (sector size, metadata)</li>
+			                    <li>Multiple namespace support</li>
+			                </ul>
+			            </div>
+
+			            <div class="test-config-section">
+			                <h5>Test Options</h5>
+
+			                <div class="config-item">
+			                    <label for="nvmeNamespaceSelect">Target Namespace</label>
+			                    <select id="nvmeNamespaceSelect" class="form-control">
+			                        <option value="all">All Namespaces</option>
+			                    </select>
+			                    <span class="config-help">Select namespace to validate</span>
+			                </div>
+
+			                <div class="config-item">
+			                    <label>
+			                        <input type="checkbox" id="nvmeValidateFormat">
+			                        Validate Format Compliance
+			                    </label>
+			                    <span class="config-help">Check LBA format and metadata configuration</span>
+			                </div>
+			            </div>
+			        </div>
+			    </div>
+
+			    <div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="nvme_command_set_validation" data-category="nvme-validation" data-placeholder="true">
+			        <div class="card-header test-card-header">
+			            <div class="card-title">
+			                <div class="card-icon">⚙️</div>
+			                <span>Command Set Validation</span>
+			            </div>
+			            <div class="test-card-header-actions">
+			                <span class="placeholder-badge">Coming Soon</span>
+			            </div>
+			        </div>
+			        <div class="test-card-body">
+			            <p class="test-description">
+			                Tests NVMe administrative and I/O command set compliance, proper response handling, and error conditions per NVMe specification.
+			            </p>
+
+			            <div class="test-requirements">
+			                <h5>Test Validates:</h5>
+			                <ul>
+			                    <li>Admin command set compliance</li>
+			                    <li>I/O command execution</li>
+			                    <li>Command status and completion</li>
+			                    <li>Error injection and handling</li>
+			                    <li>Queue management operations</li>
+			                </ul>
+			            </div>
+
+			            <div class="test-config-section">
+			                <h5>Test Options</h5>
+
+			                <div class="config-item">
+			                    <label for="nvmeCommandTestMode">Test Mode</label>
+			                    <select id="nvmeCommandTestMode" class="form-control">
+			                        <option value="basic">Basic Commands Only</option>
+			                        <option value="extended">Extended Command Set</option>
+			                        <option value="comprehensive">Comprehensive (All Commands)</option>
+			                    </select>
+			                    <span class="config-help">Select command test coverage level</span>
+			                </div>
+
+			                <div class="config-item">
+			                    <label>
+			                        <input type="checkbox" id="nvmeTestErrorConditions">
+			                        Test Error Conditions
+			                    </label>
+			                    <span class="config-help">Include error injection and recovery testing</span>
+			                </div>
+			            </div>
+			        </div>
+			    </div>
+
+			    <div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="nvme_identify_validation" data-category="nvme-validation" data-placeholder="true">
+			        <div class="card-header test-card-header">
+			            <div class="card-title">
+			                <div class="card-icon">🆔</div>
+			                <span>Identify Structure Validation</span>
+			            </div>
+			            <div class="test-card-header-actions">
+			                <span class="placeholder-badge">Coming Soon</span>
+			            </div>
+			        </div>
+			        <div class="test-card-body">
+			            <p class="test-description">
+			                Verifies NVMe Identify Controller and Namespace structures for spec compliance, checking field values and mandatory features.
+			            </p>
+
+			            <div class="test-requirements">
+			                <h5>Test Validates:</h5>
+			                <ul>
+			                    <li>Identify Controller data structure</li>
+			                    <li>Identify Namespace data structure</li>
+			                    <li>Mandatory capability bits</li>
+			                    <li>Feature support flags</li>
+			                    <li>Vendor-specific identification</li>
+			                </ul>
+			            </div>
+
+			            <div class="test-config-section">
+			                <h5>Test Options</h5>
+
+			                <div class="config-item">
+			                    <label>
+			                        <input type="checkbox" id="nvmeIdentifyVerbose">
+			                        Verbose Output
+			                    </label>
+			                    <span class="config-help">Show all identify structure fields and values</span>
+			                </div>
+
+			                <div class="config-item">
+			                    <label>
+			                        <input type="checkbox" id="nvmeIdentifyCheckVendor">
+			                        Validate Vendor Fields
+			                    </label>
+			                    <span class="config-help">Include vendor-specific field validation</span>
+			                </div>
+			            </div>
+			        </div>
+			    </div>
+
+			    <!-- ========================================
+			         NVME PERFORMANCE CATEGORY
+			         ======================================== -->
+
+			    <div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="nvme_sequential_read" data-category="nvme-performance" data-placeholder="true">
+			        <div class="card-header test-card-header">
+			            <div class="card-title">
+			                <div class="card-icon">📈</div>
+			                <span>Sequential Read Performance</span>
+			            </div>
+			            <div class="test-card-header-actions">
+			                <span class="placeholder-badge">Coming Soon</span>
+			            </div>
+			        </div>
+			        <div class="test-card-body">
+			            <p class="test-description">
+			                Measures sequential read throughput and latency across various block sizes to characterize maximum read performance.
+			            </p>
+
+			            <div class="test-requirements">
+			                <h5>Test Validates:</h5>
+			                <ul>
+			                    <li>Maximum sequential read bandwidth</li>
+			                    <li>Read latency characteristics</li>
+			                    <li>Performance scaling with block size</li>
+			                    <li>Queue depth impact on throughput</li>
+			                    <li>Sustained performance over time</li>
+			                </ul>
+			            </div>
+
+			            <div class="test-config-section">
+			                <h5>Test Options</h5>
+
+			                <div class="config-item">
+			                    <label for="nvmeReadBlockSize">Block Size</label>
+			                    <select id="nvmeReadBlockSize" class="form-control">
+			                        <option value="4k">4 KiB</option>
+			                        <option value="8k">8 KiB</option>
+			                        <option value="16k">16 KiB</option>
+			                        <option value="32k">32 KiB</option>
+			                        <option value="64k">64 KiB</option>
+			                        <option value="128k" selected>128 KiB</option>
+			                        <option value="256k">256 KiB</option>
+			                    </select>
+			                    <span class="config-help">I/O block size for sequential reads</span>
+			                </div>
+
+			                <div class="config-item">
+			                    <label for="nvmeReadQueueDepth">Queue Depth</label>
+			                    <input type="number" id="nvmeReadQueueDepth" class="form-control" value="32" min="1" max="256">
+			                    <span class="config-help">Number of outstanding I/O commands</span>
+			                </div>
+
+			                <div class="config-item">
+			                    <label for="nvmeReadDuration">Test Duration (seconds)</label>
+			                    <input type="number" id="nvmeReadDuration" class="form-control" value="30" min="10" max="600">
+			                    <span class="config-help">How long to run the performance test</span>
+			                </div>
+			            </div>
+			        </div>
+			    </div>
+
+			    <div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="nvme_sequential_write" data-category="nvme-performance" data-placeholder="true">
+			        <div class="card-header test-card-header">
+			            <div class="card-title">
+			                <div class="card-icon">✍️</div>
+			                <span>Sequential Write Performance</span>
+			            </div>
+			            <div class="test-card-header-actions">
+			                <span class="placeholder-badge">Coming Soon</span>
+			            </div>
+			        </div>
+			        <div class="test-card-body">
+			            <p class="test-description">
+			                Benchmarks sequential write performance and evaluates write amplification characteristics under sustained workload.
+			            </p>
+
+			            <div class="test-requirements">
+			                <h5>Test Validates:</h5>
+			                <ul>
+			                    <li>Maximum sequential write bandwidth</li>
+			                    <li>Write latency and consistency</li>
+			                    <li>Write cache behavior</li>
+			                    <li>Garbage collection impact</li>
+			                    <li>Write amplification factor</li>
+			                </ul>
+			            </div>
+
+			            <div class="test-config-section">
+			                <h5>Test Options</h5>
+
+			                <div class="config-item">
+			                    <label for="nvmeWriteBlockSize">Block Size</label>
+			                    <select id="nvmeWriteBlockSize" class="form-control">
+			                        <option value="4k">4 KiB</option>
+			                        <option value="8k">8 KiB</option>
+			                        <option value="16k">16 KiB</option>
+			                        <option value="32k">32 KiB</option>
+			                        <option value="64k">64 KiB</option>
+			                        <option value="128k" selected>128 KiB</option>
+			                    </select>
+			                    <span class="config-help">I/O block size for sequential writes</span>
+			                </div>
+
+			                <div class="config-item">
+			                    <label for="nvmeWriteQueueDepth">Queue Depth</label>
+			                    <input type="number" id="nvmeWriteQueueDepth" class="form-control" value="32" min="1" max="256">
+			                    <span class="config-help">Number of outstanding write commands</span>
+			                </div>
+
+			                <div class="config-item">
+			                    <label>
+			                        <input type="checkbox" id="nvmeWriteVerify">
+			                        Verify Written Data
+			                    </label>
+			                    <span class="config-help">Read back and verify written data (reduces performance)</span>
+			                </div>
+			            </div>
+			        </div>
+			    </div>
+
+			    <div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="nvme_random_iops" data-category="nvme-performance" data-placeholder="true">
+			        <div class="card-header test-card-header">
+			            <div class="card-title">
+			                <div class="card-icon">🎲</div>
+			                <span>Random IOPS Testing</span>
+			            </div>
+			            <div class="test-card-header-actions">
+			                <span class="placeholder-badge">Coming Soon</span>
+			            </div>
+			        </div>
+			        <div class="test-card-body">
+			            <p class="test-description">
+			                Tests random read/write IOPS performance at various queue depths and block sizes to measure random access capabilities.
+			            </p>
+
+			            <div class="test-requirements">
+			                <h5>Test Validates:</h5>
+			                <ul>
+			                    <li>4K random read IOPS</li>
+			                    <li>4K random write IOPS</li>
+			                    <li>Mixed random workload performance</li>
+			                    <li>Queue depth scaling</li>
+			                    <li>Latency distribution</li>
+			                </ul>
+			            </div>
+
+			            <div class="test-config-section">
+			                <h5>Test Options</h5>
+
+			                <div class="config-item">
+			                    <label for="nvmeRandomWorkload">Workload Type</label>
+			                    <select id="nvmeRandomWorkload" class="form-control">
+			                        <option value="read">Random Read</option>
+			                        <option value="write">Random Write</option>
+			                        <option value="mixed_7030" selected>Mixed (70% Read / 30% Write)</option>
+			                        <option value="mixed_5050">Mixed (50% Read / 50% Write)</option>
+			                    </select>
+			                    <span class="config-help">Type of random I/O workload</span>
+			                </div>
+
+			                <div class="config-item">
+			                    <label for="nvmeRandomQD">Queue Depth</label>
+			                    <input type="number" id="nvmeRandomQD" class="form-control" value="64" min="1" max="256">
+			                    <span class="config-help">I/O queue depth for random operations</span>
+			                </div>
+
+			                <div class="config-item">
+			                    <label for="nvmeRandomDuration">Test Duration (seconds)</label>
+			                    <input type="number" id="nvmeRandomDuration" class="form-control" value="60" min="10" max="600">
+			                    <span class="config-help">Duration of the IOPS test</span>
+			                </div>
+			            </div>
+			        </div>
+			    </div>
+
+			    <!-- ========================================
+			         NVME HEALTH & SMART CATEGORY
+			         ======================================== -->
+
+			    <div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="nvme_smart_analysis" data-category="nvme-health" data-placeholder="true">
+			        <div class="card-header test-card-header">
+			            <div class="card-title">
+			                <div class="card-icon">🩺</div>
+			                <span>SMART Health Analysis</span>
+			            </div>
+			            <div class="test-card-header-actions">
+			                <span class="placeholder-badge">Coming Soon</span>
+			            </div>
+			        </div>
+			        <div class="test-card-body">
+			            <p class="test-description">
+			                Comprehensive SMART data analysis including temperature monitoring, wear leveling, and endurance metrics for drive health assessment.
+			            </p>
+
+			            <div class="test-requirements">
+			                <h5>Test Validates:</h5>
+			                <ul>
+			                    <li>Critical warning status</li>
+			                    <li>Temperature sensors and thresholds</li>
+			                    <li>Available spare capacity</li>
+			                    <li>Percentage used indicator</li>
+			                    <li>Media and data integrity errors</li>
+			                </ul>
+			            </div>
+
+			            <div class="test-config-section">
+			                <h5>Test Options</h5>
+
+			                <div class="config-item">
+			                    <label>
+			                        <input type="checkbox" id="nvmeSmartContinuous" checked>
+			                        Continuous Monitoring
+			                    </label>
+			                    <span class="config-help">Monitor SMART attributes continuously during test</span>
+			                </div>
+
+			                <div class="config-item">
+			                    <label for="nvmeSmartInterval">Update Interval (seconds)</label>
+			                    <input type="number" id="nvmeSmartInterval" class="form-control" value="5" min="1" max="60">
+			                    <span class="config-help">How often to update SMART data</span>
+			                </div>
+
+			                <div class="config-item">
+			                    <label>
+			                        <input type="checkbox" id="nvmeSmartAlerts">
+			                        Enable Threshold Alerts
+			                    </label>
+			                    <span class="config-help">Alert on critical threshold violations</span>
+			                </div>
+			            </div>
+			        </div>
+			    </div>
+
+			    <div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="nvme_temperature_monitoring" data-category="nvme-health" data-placeholder="true">
+			        <div class="card-header test-card-header">
+			            <div class="card-title">
+			                <div class="card-icon">🌡️</div>
+			                <span>Temperature Monitoring</span>
+			            </div>
+			            <div class="test-card-header-actions">
+			                <span class="placeholder-badge">Coming Soon</span>
+			            </div>
+			        </div>
+			        <div class="test-card-body">
+			            <p class="test-description">
+			                Real-time temperature tracking with thermal throttling detection and thermal management assessment across all sensors.
+			            </p>
+
+			            <div class="test-requirements">
+			                <h5>Test Validates:</h5>
+			                <ul>
+			                    <li>Composite temperature reading</li>
+			                    <li>Individual sensor temperatures</li>
+			                    <li>Thermal throttling detection</li>
+			                    <li>Over/under temperature warnings</li>
+			                    <li>Temperature trends over time</li>
+			                </ul>
+			            </div>
+
+			            <div class="test-config-section">
+			                <h5>Test Options</h5>
+
+			                <div class="config-item">
+			                    <label for="nvmeTempDuration">Monitoring Duration (minutes)</label>
+			                    <input type="number" id="nvmeTempDuration" class="form-control" value="10" min="1" max="120">
+			                    <span class="config-help">How long to monitor temperatures</span>
+			                </div>
+
+			                <div class="config-item">
+			                    <label for="nvmeTempThreshold">Alert Threshold (°C)</label>
+			                    <input type="number" id="nvmeTempThreshold" class="form-control" value="70" min="40" max="100">
+			                    <span class="config-help">Temperature threshold for alerts</span>
+			                </div>
+
+			                <div class="config-item">
+			                    <label>
+			                        <input type="checkbox" id="nvmeTempStressTest">
+			                        Run Under Load
+			                    </label>
+			                    <span class="config-help">Monitor temperature during I/O stress test</span>
+			                </div>
+			            </div>
+			        </div>
+			    </div>
+
+			    <div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="nvme_endurance_tracking" data-category="nvme-health" data-placeholder="true">
+			        <div class="card-header test-card-header">
+			            <div class="card-title">
+			                <div class="card-icon">⏳</div>
+			                <span>Endurance & Wear Tracking</span>
+			            </div>
+			            <div class="test-card-header-actions">
+			                <span class="placeholder-badge">Coming Soon</span>
+			            </div>
+			        </div>
+			        <div class="test-card-body">
+			            <p class="test-description">
+			                Monitors percentage used, data units written, and remaining endurance for drive lifecycle management and prediction.
+			            </p>
+
+			            <div class="test-requirements">
+			                <h5>Test Validates:</h5>
+			                <ul>
+			                    <li>Percentage used indicator</li>
+			                    <li>Data units written counter</li>
+			                    <li>Data units read counter</li>
+			                    <li>Remaining endurance estimate</li>
+			                    <li>Write amplification tracking</li>
+			                </ul>
+			            </div>
+
+			            <div class="test-config-section">
+			                <h5>Test Options</h5>
+
+			                <div class="config-item">
+			                    <label>
+			                        <input type="checkbox" id="nvmeEnduranceBaseline" checked>
+			                        Capture Baseline
+			                    </label>
+			                    <span class="config-help">Record current endurance metrics as baseline</span>
+			                </div>
+
+			                <div class="config-item">
+			                    <label>
+			                        <input type="checkbox" id="nvmeEnduranceProjection">
+			                        Project Remaining Life
+			                    </label>
+			                    <span class="config-help">Calculate estimated remaining drive life based on usage patterns</span>
+			                </div>
+
+			                <div class="config-item">
+			                    <label for="nvmeEnduranceReportFormat">Report Format</label>
+			                    <select id="nvmeEnduranceReportFormat" class="form-control">
+			                        <option value="summary">Summary</option>
+			                        <option value="detailed" selected>Detailed</option>
+			                        <option value="trend">Trend Analysis</option>
+			                    </select>
+			                    <span class="config-help">Level of detail in endurance report</span>
+			                </div>
+			            </div>
+			        </div>
+			    </div>
+
+			    <!-- ========================================
+			         PCIE COMPLIANCE CATEGORY
+			         ======================================== -->
+
+			    <div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="pcie_link_width_test" data-category="pcie-compliance" data-placeholder="true">
+			        <div class="card-header test-card-header">
+			            <div class="card-title">
+			                <div class="card-icon">📏</div>
+			                <span>Link Width Validation</span>
+			            </div>
+			            <div class="test-card-header-actions">
+			                <span class="placeholder-badge">Coming Soon</span>
+			            </div>
+			        </div>
+			        <div class="test-card-body">
+			            <p class="test-description">
+			                Validates negotiated link width against device capabilities and configuration, ensuring optimal lane utilization.
+			            </p>
+
+			            <div class="test-requirements">
+			                <h5>Test Validates:</h5>
+			                <ul>
+			                    <li>Negotiated vs. maximum link width</li>
+			                    <li>Lane reversal detection</li>
+			                    <li>Asymmetric link configurations</li>
+			                    <li>Width downgrade causes</li>
+			                    <li>Multi-function device width allocation</li>
+			                </ul>
+			            </div>
+
+			            <div class="test-config-section">
+			                <h5>Test Options</h5>
+
+			                <div class="config-item">
+			                    <label>
+			                        <input type="checkbox" id="pcieLinkWidthStress">
+			                        Stress Test Link
+			                    </label>
+			                    <span class="config-help">Test width stability under bandwidth stress</span>
+			                </div>
+
+			                <div class="config-item">
+			                    <label>JMContinue <input type="checkbox" id="pcieLinkWidthRetrain">
+			                        Test Width Retrain
+			                    </label>
+			                    <span class="config-help">Trigger link retrain and verify width restoration</span>
+			                </div>
+			            </div>
+			        </div>
+			    </div><div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="pcie_link_speed_test" data-category="pcie-compliance" data-placeholder="true">
+			    <div class="card-header test-card-header">
+			        <div class="card-title">
+			            <div class="card-icon">⚡</div>
+			            <span>Link Speed Compliance</span>
+			        </div>
+			        <div class="test-card-header-actions">
+			            <span class="placeholder-badge">Coming Soon</span>
+			        </div>
+			    </div>
+			    <div class="test-card-body">
+			        <p class="test-description">
+			            Verifies PCIe generation and speed compliance from Gen1 through Gen6 operation, validating speed negotiation.
+			        </p>        <div class="test-requirements">
+			            <h5>Test Validates:</h5>
+			            <ul>
+			                <li>Current vs. maximum link speed</li>
+			                <li>Speed negotiation sequence</li>
+			                <li>Gen3+ equalization</li>
+			                <li>Speed downgrade detection</li>
+			                <li>Per-lane speed verification</li>
+			            </ul>
+			        </div>        <div class="test-config-section">
+			            <h5>Test Options</h5>            <div class="config-item">
+			                <label for="pcieLinkSpeedTarget">Target Speed</label>
+			                <select id="pcieLinkSpeedTarget" class="form-control">
+			                    <option value="max" selected>Maximum Supported</option>
+			                    <option value="gen6">Gen6 (64 GT/s)</option>
+			                    <option value="gen5">Gen5 (32 GT/s)</option>
+			                    <option value="gen4">Gen4 (16 GT/s)</option>
+			                    <option value="gen3">Gen3 (8 GT/s)</option>
+			                </select>
+			                <span class="config-help">Target link speed for validation</span>
+			            </div>            <div class="config-item">
+			                <label>
+			                    <input type="checkbox" id="pcieLinkSpeedCycle">
+			                    Test Speed Cycling
+			                </label>
+			                <span class="config-help">Test transitions between different link speeds</span>
+			            </div>
+			        </div>
+			    </div>
+			</div><div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="pcie_power_management" data-category="pcie-compliance" data-placeholder="true">
+			    <div class="card-header test-card-header">
+			        <div class="card-title">
+			            <div class="card-icon">🔋</div>
+			            <span>Power Management Validation</span>
+			        </div>
+			        <div class="test-card-header-actions">
+			            <span class="placeholder-badge">Coming Soon</span>
+			        </div>
+			    </div>
+			    <div class="test-card-body">
+			        <p class="test-description">
+			            Tests PCIe power state transitions (L0, L1, L2, L3) and ASPM (Active State Power Management) functionality.
+			        </p>        <div class="test-requirements">
+			            <h5>Test Validates:</h5>
+			            <ul>
+			                <li>L0/L0s/L1/L2/L3 state transitions</li>
+			                <li>ASPM L1 entry/exit latency</li>
+			                <li>Clock power management</li>
+			                <li>Link power state recovery</li>
+			                <li>PME (Power Management Event) generation</li>
+			            </ul>
+			        </div>        <div class="test-config-section">
+			            <h5>Test Options</h5>            <div class="config-item">
+			                <label for="pciePowerStates">Power States to Test</label>
+			                <select id="pciePowerStates" class="form-control" multiple size="3">
+			                    <option value="l0s">L0s (Link Standby)</option>
+			                    <option value="l1" selected>L1 (Link Power Down)</option>
+			                    <option value="l2">L2 (Link Off)</option>
+			                </select>
+			                <span class="config-help">Select power states to validate</span>
+			            </div>            <div class="config-item">
+			                <label>
+			                    <input type="checkbox" id="pciePowerASPM" checked>
+			                    Test ASPM Transitions
+			                </label>
+			                <span class="config-help">Validate Active State Power Management</span>
+			            </div>            <div class="config-item">
+			                <label for="pciePowerCycles">Number of Cycles</label>
+			                <input type="number" id="pciePowerCycles" class="form-control" value="100" min="10" max="1000">
+			                <span class="config-help">Number of power state transitions to test</span>
+			            </div>
+			        </div>
+			    </div>
+			</div><!-- ========================================
+			     PCIE 6.X-SPECIFIC TESTS CATEGORY
+			     ======================================== --><div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="pcie6_flit_mode_test" data-category="pcie-6x" data-placeholder="true">
+			    <div class="card-header test-card-header">
+			        <div class="card-title">
+			            <div class="card-icon">🔷</div>
+			            <span>FLIT Mode Operation</span>
+			        </div>
+			        <div class="test-card-header-actions">
+			            <span class="placeholder-badge">Coming Soon</span>
+			        </div>
+			    </div>
+			    <div class="test-card-body">
+			        <p class="test-description">
+			            Validates PCIe 6.0 FLIT (Flow Control Unit) mode operation and packet framing with 242-byte FLIT structure.
+			        </p>        <div class="test-requirements">
+			            <h5>Test Validates:</h5>
+			            <ul>
+			                <li>FLIT mode negotiation</li>
+			                <li>242-byte FLIT structure</li>
+			                <li>CRC and FEC operation</li>
+			                <li>FLIT packet framing</li>
+			                <li>Retry buffer management</li>
+			            </ul>
+			        </div>        <div class="test-config-section">
+			            <h5>Test Options</h5>            <div class="config-item">
+			                <label>
+			                    <input type="checkbox" id="pcie6FlitFECTest" checked>
+			                    Test FEC Operation
+			                </label>
+			                <span class="config-help">Validate Forward Error Correction in FLIT mode</span>
+			            </div>            <div class="config-item">
+			                <label>
+			                    <input type="checkbox" id="pcie6FlitErrorInject">
+			                    Error Injection Testing
+			                </label>
+			                <span class="config-help">Inject errors to test FLIT recovery mechanisms</span>
+			            </div>            <div class="config-item">
+			                <label for="pcie6FlitDuration">Test Duration (seconds)</label>
+			                <input type="number" id="pcie6FlitDuration" class="form-control" value="60" min="10" max="600">
+			                <span class="config-help">Duration to monitor FLIT mode operation</span>
+			            </div>
+			        </div>
+			    </div>
+			</div><div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="pcie6_pam4_signaling" data-category="pcie-6x" data-placeholder="true">
+			    <div class="card-header test-card-header">
+			        <div class="card-title">
+			            <div class="card-icon">📡</div>
+			            <span>PAM4 Signaling Test</span>
+			        </div>
+			        <div class="test-card-header-actions">
+			            <span class="placeholder-badge">Coming Soon</span>
+			        </div>
+			    </div>
+			    <div class="test-card-body">
+			        <p class="test-description">
+			            Tests PAM4 (4-level Pulse Amplitude Modulation) signaling characteristics and error rates for Gen6 64 GT/s operation.
+			        </p>        <div class="test-requirements">
+			            <h5>Test Validates:</h5>
+			            <ul>
+			                <li>PAM4 signal integrity</li>
+			                <li>Symbol error rate (SER)</li>
+			                <li>Eye diagram characteristics</li>
+			                <li>Transmitter output levels</li>
+			                <li>Receiver sensitivity</li>
+			            </ul>
+			        </div>        <div class="test-config-section">
+			            <h5>Test Options</h5>            <div class="config-item">
+			                <label for="pcie6PAM4TestMode">Test Mode</label>
+			                <select id="pcie6PAM4TestMode" class="form-control">
+			                    <option value="normal" selected>Normal Operation</option>
+			                    <option value="ber">Bit Error Rate (BER) Test</option>
+			                    <option value="compliance">Compliance Pattern</option>
+			                    <option value="prbs">PRBS Pattern</option>
+			                </select>
+			                <span class="config-help">PAM4 test pattern/mode</span>
+			            </div>            <div class="config-item">
+			                <label for="pcie6PAM4Duration">Measurement Duration (minutes)</label>
+			                <input type="number" id="pcie6PAM4Duration" class="form-control" value="5" min="1" max="60">
+			                <span class="config-help">Duration for PAM4 signal measurement</span>
+			            </div>            <div class="config-item">
+			                <label>
+			                    <input type="checkbox" id="pcie6PAM4PerLane">
+			                    Per-Lane Analysis
+			                </label>
+			                <span class="config-help">Analyze each lane individually</span>
+			            </div>
+			        </div>
+			    </div>
+			</div><div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="pcie6_lane_margining" data-category="pcie-6x" data-placeholder="true">
+			    <div class="card-header test-card-header">
+			        <div class="card-title">
+			            <div class="card-icon">📐</div>
+			            <span>Lane Margining Analysis</span>
+			        </div>
+			        <div class="test-card-header-actions">
+			            <span class="placeholder-badge">Coming Soon</span>
+			        </div>
+			    </div>
+			    <div class="test-card-body">
+			        <p class="test-description">
+			            Performs PCIe 6.0 lane margining to assess signal integrity margins and link robustness at operating conditions.
+			        </p>        <div class="test-requirements">
+			            <h5>Test Validates:</h5>
+			            <ul>
+			                <li>Timing margin (UI)</li>
+			                <li>Voltage margin (mV)</li>
+			                <li>Eye height and width</li>
+			                <li>Per-lane margin analysis</li>
+			                <li>Margin at operational speed</li>
+			            </ul>
+			        </div>        <div class="test-config-section">
+			            <h5>Test Options</h5>            <div class="config-item">
+			                <label for="pcie6MarginType">Margining Type</label>
+			                <select id="pcie6MarginType" class="form-control">
+			                    <option value="both" selected>Timing & Voltage</option>
+			                    <option value="timing">Timing Only</option>
+			                    <option value="voltage">Voltage Only</option>
+			                </select>
+			                <span class="config-help">Type of margining to perform</span>
+			            </div>            <div class="config-item">
+			                <label for="pcie6MarginLanes">Lanes to Test</label>
+			                <select id="pcie6MarginLanes" class="form-control">
+			                    <option value="all" selected>All Lanes</option>
+			                    <option value="worst">Worst Case Lane</option>
+			                    <option value="random">Random Sample</option>
+			                </select>
+			                <span class="config-help">Which lanes to include in margining test</span>
+			            </div>            <div class="config-item">
+			                <label for="pcie6MarginSteps">Margin Steps</label>
+			                <input type="number" id="pcie6MarginSteps" class="form-control" value="32" min="16" max="64">
+			                <span class="config-help">Number of margin steps per direction</span>
+			            </div>            <div class="config-item">
+			                <label>
+			                    <input type="checkbox" id="pcie6MarginHeatmap">
+			                    Generate Heatmap
+			                </label>
+			                <span class="config-help">Create visual margin heatmap for analysis</span>
+			            </div>
+			        </div>
+			    </div>
+			</div>
+			</div>
 
 			    <!-- ✅ Command Interface STAYS (unchanged) -->
 			    <div class="command-interface">
