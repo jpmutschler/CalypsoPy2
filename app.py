@@ -403,37 +403,47 @@ class CalypsoPyManager:
 
                 parsed_data = HardwareResponseParser.parse_response(raw_response, command, dashboard)
 
-                result = {
+                # Add parsing for register commands
+                parsed_data = {'raw': raw_response}
+                if dashboard == 'registers':
+                    cmd_lower = command.lower().strip()
+                    if any(cmd_lower.startswith(cmd) for cmd in ['mr ', 'mw ', 'dr ', 'dp ']):
+                        try:
+                            parsed_data = self._parse_register_command(raw_response, command)
+                            logger.info(f"Parsed register command: {parsed_data.get('operation', 'unknown')}")
+                        except Exception as e:
+                            logger.error(f"Error parsing register command: {e}")
+                            parsed_data = {'raw': raw_response, 'parse_error': str(e)}
+
+                response = {
                     'success': True,
-                    'data': parsed_data,
-                    'response_time_ms': round(response_time, 2),
-                    'from_cache': False,
-                    'dashboard': dashboard
+                    'data': {
+                        'raw': raw_response,
+                        'parsed': parsed_data,  # ADD parsed data
+                        'command': command,
+                        'timestamp': datetime.now().isoformat(),
+                        'response_time_ms': response_time,
+                        'from_cache': False
+                    }
                 }
 
-                if use_cache and parsed_data['status'] == 'success':
-                    self.cache.set(command, port, result, dashboard)
+                # Cache the response if enabled
+                if use_cache:
+                    self.cache.set(command, port, response, dashboard)
 
-                if port in self.command_history:
-                    self.command_history[port].append({
-                        'timestamp': parsed_data['timestamp'],
-                        'command': command,
-                        'dashboard': dashboard,
-                        'response_time_ms': response_time,
-                        'success': True,
-                        'response': raw_response[:200] + '...' if len(raw_response) > 200 else raw_response
-                    })
+                # Store in command history
+                self.command_history[port].append({
+                    'command': command,
+                    'response': raw_response,
+                    'timestamp': datetime.now().isoformat(),
+                    'dashboard': dashboard
+                })
 
-                if dashboard in self.dashboard_states:
-                    self.dashboard_states[dashboard]['last_update'] = datetime.now().isoformat()
-                    self.dashboard_states[dashboard]['command_count'] += 1
-
-                return result
+                return response
 
             except Exception as e:
-                error_msg = f"Command execution error: {str(e)}"
-                logger.error(f"Error executing '{command}' on {port}: {error_msg}")
-                return {'success': False, 'message': error_msg}
+                logger.error(f"Error executing command: {e}")
+                return {'success': False, 'message': str(e)}
 
     def _simulate_showport_response(self) -> str:
         """Simulate showport command response for development"""
@@ -504,6 +514,195 @@ Cmd>"""
                     'total_commands': sum(len(hist) for hist in self.command_history.values())
                 }
             }
+
+    def _parse_register_command(self, raw_response: str, command: str) -> Dict[str, Any]:
+        """
+        Parse register read/write/dump commands
+        Supports: mr, mw, dr, dp
+        """
+        parsed = {
+            'command_type': 'register',
+            'raw': raw_response,
+            'registers': []
+        }
+
+        cmd_lower = command.lower().strip()
+
+        # Detect command type
+        if cmd_lower.startswith('mr '):
+            parsed['operation'] = 'read'
+            parsed.update(self._parse_mr_response(raw_response))
+        elif cmd_lower.startswith('mw '):
+            parsed['operation'] = 'write'
+            parsed.update(self._parse_mw_response(raw_response))
+        elif cmd_lower.startswith('dr '):
+            parsed['operation'] = 'dump_register'
+            parsed.update(self._parse_dr_response(raw_response))
+        elif cmd_lower.startswith('dp '):
+            parsed['operation'] = 'dump_port'
+            parsed.update(self._parse_dp_response(raw_response, command))
+        else:
+            parsed['operation'] = 'unknown'
+            parsed['error'] = 'Unknown register command'
+
+        return parsed
+
+    def _parse_mr_response(self, response: str) -> Dict[str, Any]:
+        """
+        Parse 'mr' (memory read) command response
+        Example: "cmd>mr 0x60800000 0xffffffff"
+        """
+        result = {
+            'address': None,
+            'value': None,
+            'success': False
+        }
+
+        # Match pattern: address followed by value (both hex)
+        pattern = r'0x([0-9a-fA-F]+)\s+0x([0-9a-fA-F]+)'
+        match = re.search(pattern, response)
+
+        if match:
+            result['address'] = match.group(1).upper()
+            result['value'] = match.group(2).upper()
+            result['success'] = True
+            result['decimal_value'] = int(match.group(2), 16)
+            result['binary_value'] = bin(int(match.group(2), 16))[2:].zfill(32)
+
+            # Add register info
+            result['registers'] = [{
+                'address': result['address'],
+                'value': result['value'],
+                'decimal': result['decimal_value'],
+                'binary': result['binary_value']
+            }]
+
+        return result
+
+    def _parse_mw_response(self, response: str) -> Dict[str, Any]:
+        """
+        Parse 'mw' (memory write) command response
+        Example: "cmd>mw 0x60800000 0xffffffff"
+        """
+        result = {
+            'address': None,
+            'value': None,
+            'success': False
+        }
+
+        # Match pattern: mw command with address and data
+        pattern = r'mw\s+0x([0-9a-fA-F]+)\s+0x([0-9a-fA-F]+)'
+        match = re.search(pattern, response, re.IGNORECASE)
+
+        if match:
+            result['address'] = match.group(1).upper()
+            result['value'] = match.group(2).upper()
+            result['success'] = True
+            result['operation'] = 'write'
+
+            result['registers'] = [{
+                'address': result['address'],
+                'value': result['value'],
+                'written': True
+            }]
+
+        return result
+
+    def _parse_dr_response(self, response: str) -> Dict[str, Any]:
+        """
+        Parse 'dr' (dump register) command response
+        Example format:
+        60800000:00000000 00100000 00000000 00000000
+        60800010:00000000 00000000 00000000 000001f1
+        """
+        result = {
+            'registers': [],
+            'success': False,
+            'count': 0
+        }
+
+        # Match lines with format: ADDRESS:DATA DATA DATA DATA
+        lines = response.split('\n')
+
+        for line in lines:
+            # Match pattern: base_address:value1 value2 value3 value4
+            match = re.match(r'^([0-9a-fA-F]+):(.+)', line.strip())
+            if match:
+                base_addr = match.group(1).upper()
+                values_str = match.group(2).strip()
+                values = values_str.split()
+
+                for idx, value in enumerate(values):
+                    if re.match(r'^[0-9a-fA-F]{8}$', value):
+                        offset = idx * 4
+                        full_address_int = int(base_addr, 16) + offset
+                        full_address = format(full_address_int, '08X')
+
+                        register_entry = {
+                            'address': full_address,
+                            'value': value.upper(),
+                            'offset': '+0x{:X}'.format(offset),
+                            'decimal': int(value, 16)
+                        }
+
+                        result['registers'].append(register_entry)
+                        result['count'] += 1
+
+        if result['count'] > 0:
+            result['success'] = True
+
+        return result
+
+    def _parse_dp_response(self, response: str, command: str) -> Dict[str, Any]:
+        """
+        Parse 'dp' (dump port) command response
+        Similar to dr but port-specific
+        Example: dp 32
+        Returns port-specific register dump
+        """
+        result = {
+            'registers': [],
+            'success': False,
+            'count': 0,
+            'port_number': None
+        }
+
+        # Extract port number from command
+        port_match = re.search(r'dp\s+(\d+)', command, re.IGNORECASE)
+        if port_match:
+            result['port_number'] = int(port_match.group(1))
+
+        # Parse same format as dr
+        lines = response.split('\n')
+
+        for line in lines:
+            match = re.match(r'^([0-9a-fA-F]+):(.+)', line.strip())
+            if match:
+                base_addr = match.group(1).upper()
+                values_str = match.group(2).strip()
+                values = values_str.split()
+
+                for idx, value in enumerate(values):
+                    if re.match(r'^[0-9a-fA-F]{8}$', value):
+                        offset = idx * 4
+                        full_address_int = int(base_addr, 16) + offset
+                        full_address = format(full_address_int, '08X')
+
+                        register_entry = {
+                            'address': full_address,
+                            'value': value.upper(),
+                            'offset': '+0x{:X}'.format(offset),
+                            'decimal': int(value, 16),
+                            'port': result['port_number']
+                        }
+
+                        result['registers'].append(register_entry)
+                        result['count'] += 1
+
+        if result['count'] > 0:
+            result['success'] = True
+
+        return result
 
 
 # Flask application setup

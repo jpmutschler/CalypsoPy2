@@ -6468,3 +6468,198 @@ Testing Dashboard Styles
         font-size: 14px; /* Slightly larger on mobile for better usability */
     }
 }
+
+/* Register Dashboard Specific Styles
+   Add this to styles.css */
+
+/* Register Table Styles */
+.register-table {
+    margin-top: 15px;
+    overflow-x: auto;
+}
+
+.register-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 12px;
+}
+
+.register-table thead {
+    background: var(--primary-red);
+    color: var(--pure-white);
+}
+
+.register-table th {
+    padding: 12px 10px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid var(--primary-red);
+}
+
+.register-table tbody tr {
+    border-bottom: 1px solid var(--border-gray);
+    transition: background 0.2s ease;
+}
+
+.register-table tbody tr:hover {
+    background: rgba(121, 0, 0, 0.05);
+}
+
+.register-table td {
+    padding: 10px;
+}
+
+.register-table .addr-col {
+    color: var(--primary-red);
+    font-weight: 600;
+    background: rgba(121, 0, 0, 0.05);
+}
+
+.register-table .data-col {
+    color: var(--dark-black);
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Register Result Display */
+.register-result {
+    margin-top: 12px;
+    padding: 15px;
+    background: rgba(121, 0, 0, 0.05);
+    border-radius: 10px;
+    border-left: 4px solid var(--primary-red);
+}
+
+.reg-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.reg-row:last-child {
+    border-bottom: none;
+}
+
+.reg-label {
+    font-weight: 600;
+    color: var(--dark-black);
+    min-width: 100px;
+}
+
+.reg-value {
+    font-weight: 500;
+    color: var(--primary-red);
+}
+
+.reg-value.mono {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 13px;
+}
+
+/* Parsed Data Header */
+.parsed-header {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--primary-red);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--primary-red);
+}
+
+/* Console Parsed Data Entry */
+.console-entry.parsed-data {
+    background: rgba(34, 197, 94, 0.05);
+    border-left-color: #22c55e;
+}
+
+/* Info Box Styling */
+.info-box {
+    padding: 15px;
+    background: var(--light-gray);
+    border-radius: 10px;
+    border: 2px solid var(--border-gray);
+}
+
+/* Form Label */
+.form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--dark-black);
+}
+
+/* Enhanced Console for Registers */
+#registersConsole {
+    max-height: 500px;
+}
+
+#registersConsole .console-entry {
+    animation: slideInLeft 0.3s ease;
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Register Value Inputs */
+#regHexValue,
+#regDecValue,
+#regBinValue {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+#regHexValue:focus,
+#regDecValue:focus,
+#regBinValue:focus {
+    border-color: var(--primary-red);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(121, 0, 0, 0.1);
+}
+
+/* Port Selector Enhancement */
+#regPortNumber {
+    font-weight: 600;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+#regBaseAddress {
+    font-size: 16px;
+    letter-spacing: 1px;
+}
+
+/* Preset Button Hover for Registers */
+#registersPresets .preset-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(121, 0, 0, 0.2);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .register-table {
+        font-size: 10px;
+    }
+
+    .register-table th,
+    .register-table td {
+        padding: 6px 4px;
+    }
+
+    .reg-row {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .reg-label {
+        min-width: auto;
+    }
+}

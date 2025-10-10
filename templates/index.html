@@ -65,9 +65,9 @@
                     <div class="nav-icon">🔀</div>
                     <div class="nav-text">Bifurcation</div>
                 </div>
-                <div class="nav-item" data-dashboard="i2c">
-                    <div class="nav-icon">🔗</div>
-                    <div class="nav-text">I2C/I3C</div>
+                <div class="nav-item" data-dashboard="registers">
+                    <div class="nav-icon">📝</div>
+                    <div class="nav-text">Registers</div>
                 </div>
                 <div class="nav-item" data-dashboard="advanced">
                     <div class="nav-icon">🔬</div>
@@ -654,49 +654,246 @@
                 </div>
             </div>
 
-            <!-- I2C Dashboard -->
-            <div id="i2c-dashboard" class="dashboard-content">
-                <div class="dashboard-header">
-                    <h2 class="dashboard-title">I2C/I3C Interface</h2>
-                    <p class="dashboard-subtitle">Configure and monitor I2C/I3C communication interfaces</p>
-                </div>
+            <!-- Registers Dashboard -->
+			<div id="registers-dashboard" class="dashboard-content">
+			    <div class="dashboard-header">
+			        <h2 class="dashboard-title">Register Operations</h2>
+			        <p class="dashboard-subtitle">Read, write, and dump PCIe 6.x switch registers</p>
+			    </div>
 
-                <div class="dashboard-grid">
-                    <div class="card command-interface">
-                        <div class="card-header">
-                            <div class="card-title">
-                                <div class="card-icon">🔗</div>
-                                I2C/I3C Commands
-                            </div>
-                        </div>
+			    <!-- Port Selector Card -->
+			    <div class="card" style="margin-bottom: 20px;">
+			        <div class="card-header">
+			            <div class="card-title">
+			                <div class="card-icon">🎯</div>
+			                Target Port Selection
+			            </div>
+			        </div>
+			        <div style="padding: 20px;">
+			            <div style="display: flex; gap: 20px; align-items: center;">
+			                <div style="flex: 1;">
+			                    <label class="form-label">Port Number (0-144)</label>
+			                    <select id="regPortNumber" class="form-control">
+			                        <!-- Populated by JavaScript -->
+			                    </select>
+			                </div>
+			                <div style="flex: 2;">
+			                    <label class="form-label">Calculated Base Address</label>
+			                    <div style="padding: 12px; background: var(--light-gray); border-radius: 8px; font-family: monospace; font-weight: 600; color: var(--primary-red);" id="regBaseAddress">
+			                        0x60800000
+			                    </div>
+			                </div>
+			            </div>
+			            <div style="margin-top: 15px; padding: 12px; background: rgba(121, 0, 0, 0.05); border-radius: 8px; border-left: 4px solid var(--primary-red);">
+			                <div style="font-size: 13px; color: var(--dark-black);">
+			                    <strong>Address Calculation:</strong> Base (0x60800000) + (Port × 0x8000 × 2)
+			                </div>
+			            </div>
+			        </div>
+			    </div>
 
-                        <div class="command-input-group">
-                            <input type="text" id="i2cCommandInput" class="form-control" placeholder="Enter I2C/I3C command..." disabled>
-                            <button id="sendI2cCmd" class="btn btn-primary" disabled>
-                                <span>📤</span> Send
-                            </button>
-                        </div>
+			    <div class="dashboard-grid">
+			        <!-- Command Interface Card -->
+			        <div class="card command-interface">
+			            <div class="card-header">
+			                <div class="card-title">
+			                    <div class="card-icon">⌨️</div>
+			                    Register Commands
+			                </div>
+			                <button class="btn btn-sm btn-outline" id="clearRegistersConsole">
+			                    <span>🗑️</span> Clear
+			                </button>
+			            </div>
 
-                        <div class="command-presets" id="i2cPresets">
-                            <div class="preset-btn" data-cmd="I2C_SCAN" data-desc="Scan I2C bus">
-                                <div class="preset-title">I2C Scan</div>
-                                <div class="preset-command">I2C_SCAN</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="I3C_STATUS" data-desc="I3C status">
-                                <div class="preset-title">I3C Status</div>
-                                <div class="preset-command">I3C_STATUS</div>
-                            </div>
-                        </div>
+			            <!-- Manual Command Input -->
+			            <div class="command-input-group">
+			                <input type="text" id="registersCommandInput" class="form-control" placeholder="Enter register command (mr/mw/dr/dp)..." disabled>
+			                <button id="sendRegistersCmd" class="btn btn-primary" disabled>
+			                    <span>📤</span> Send
+			                </button>
+			            </div>
 
-                        <div class="console-container" id="i2cConsole">
-                            <div class="console-entry command">
-                                <div class="console-timestamp">System Ready</div>
-                                <div class="console-content">I2C/I3C interface ready for commands.</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+			            <!-- Command Reference -->
+			            <div style="margin-bottom: 20px; padding: 15px; background: var(--light-gray); border-radius: 10px; font-size: 13px;">
+			                <div style="font-weight: 600; margin-bottom: 8px; color: var(--primary-red);">Command Syntax:</div>
+			                <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; font-family: monospace;">
+			                    <strong>mr &lt;addr&gt;</strong>
+			                    <span>Read 32-bit register</span>
+			                    <strong>mw &lt;addr&gt; &lt;data&gt;</strong>
+			                    <span>Write 32-bit register</span>
+			                    <strong>dr &lt;addr&gt; &lt;count&gt;</strong>
+			                    <span>Dump switch registers</span>
+			                    <strong>dp &lt;port&gt;</strong>
+			                    <span>Dump port registers</span>
+			                </div>
+			            </div>
+
+			            <!-- Preset Buttons -->
+			            <div class="command-presets" id="registersPresets">
+			                <div class="preset-btn" data-cmd="port_status" data-desc="Read port status register">
+			                    <div class="preset-title">📊 Port Status</div>
+			                    <div class="preset-command">mr (base+0x0)</div>
+			                </div>
+			                <div class="preset-btn" data-cmd="link_control" data-desc="Read link control register">
+			                    <div class="preset-title">🔗 Link Control</div>
+			                    <div class="preset-command">mr (base+0x10)</div>
+			                </div>
+			                <div class="preset-btn" data-cmd="port_dump" data-desc="Dump 32 port registers">
+			                    <div class="preset-title">📋 Port Dump</div>
+			                    <div class="preset-command">dr base 32</div>
+			                </div>
+			                <div class="preset-btn" data-cmd="port_config" data-desc="Dump all port configuration">
+			                    <div class="preset-title">⚙️ Full Port Config</div>
+			                    <div class="preset-command">dp &lt;port&gt;</div>
+			                </div>
+			            </div>
+
+			            <!-- Console Output -->
+			            <div class="console-container" id="registersConsole">
+			                <div class="console-entry command">
+			                    <div class="console-timestamp">System Ready</div>
+			                    <div class="console-content">Registers interface ready. Select a port to begin.</div>
+			                </div>
+			            </div>
+			        </div>
+
+			        <!-- Quick Reference Card -->
+			        <div class="card">
+			            <div class="card-header">
+			                <div class="card-title">
+			                    <div class="card-icon">📖</div>
+			                    PCIe 6.x Register Reference
+			                </div>
+			            </div>
+			            <div style="padding: 20px;">
+			                <div class="info-box" style="margin-bottom: 15px;">
+			                    <div style="font-weight: 600; margin-bottom: 10px; color: var(--primary-red);">Common Register Offsets</div>
+			                    <table style="width: 100%; font-size: 13px;">
+			                        <tr>
+			                            <td style="padding: 6px 0; font-family: monospace; color: var(--primary-red);">0x00</td>
+			                            <td style="padding: 6px 0;">Port Status & Control</td>
+			                        </tr>
+			                        <tr>
+			                            <td style="padding: 6px 0; font-family: monospace; color: var(--primary-red);">0x10</td>
+			                            <td style="padding: 6px 0;">Link Control Register</td>
+			                        </tr>
+			                        <tr>
+			                            <td style="padding: 6px 0; font-family: monospace; color: var(--primary-red);">0x20</td>
+			                            <td style="padding: 6px 0;">Link Training Status</td>
+			                        </tr>
+			                        <tr>
+			                            <td style="padding: 6px 0; font-family: monospace; color: var(--primary-red);">0x30</td>
+			                            <td style="padding: 6px 0;">Port Configuration</td>
+			                        </tr>
+			                        <tr>
+			                            <td style="padding: 6px 0; font-family: monospace; color: var(--primary-red);">0x40</td>
+			                            <td style="padding: 6px 0;">Error Status Register</td>
+			                        </tr>
+			                    </table>
+			                </div>
+
+			                <div class="info-box" style="margin-bottom: 15px;">
+			                    <div style="font-weight: 600; margin-bottom: 10px; color: var(--primary-red);">Address Ranges</div>
+			                    <div style="font-size: 13px; line-height: 1.8;">
+			                        <div><strong>Base Address:</strong> 0x60800000</div>
+			                        <div><strong>Port Offset:</strong> 0x8000 × 2 per port</div>
+			                        <div><strong>Valid Range:</strong> 0x60800000 - 0x609FFFFC</div>
+			                        <div><strong>Max Ports:</strong> 144 (0-144)</div>
+			                    </div>
+			                </div>
+
+			                <div class="info-box">
+			                    <div style="font-weight: 600; margin-bottom: 10px; color: var(--primary-red);">Usage Examples</div>
+			                    <div style="font-size: 13px; font-family: monospace; line-height: 2;">
+			                        <div style="background: rgba(0,0,0,0.05); padding: 8px; border-radius: 5px; margin-bottom: 5px;">
+			                            mr 0x60800000
+			                        </div>
+			                        <div style="background: rgba(0,0,0,0.05); padding: 8px; border-radius: 5px; margin-bottom: 5px;">
+			                            mw 0x60800000 0xFFFFFFFF
+			                        </div>
+			                        <div style="background: rgba(0,0,0,0.05); padding: 8px; border-radius: 5px; margin-bottom: 5px;">
+			                            dr 0x60800000 20
+			                        </div>
+			                        <div style="background: rgba(0,0,0,0.05); padding: 8px; border-radius: 5px;">
+			                            dp 32
+			                        </div>
+			                    </div>
+			                </div>
+			            </div>
+			        </div>
+			    </div>
+
+			    <!-- Register Value Parser Card -->
+			    <div class="card" style="margin-top: 20px;">
+			        <div class="card-header">
+			            <div class="card-title">
+			                <div class="card-icon">🔍</div>
+			                Register Value Decoder
+			            </div>
+			        </div>
+			        <div style="padding: 20px;">
+			            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+			                <div>
+			                    <label class="form-label">Hex Value</label>
+			                    <input type="text" id="regHexValue" class="form-control" placeholder="0x00000000" pattern="0x[0-9A-Fa-f]{1,8}">
+			                </div>
+			                <div>
+			                    <label class="form-label">Decimal Value</label>
+			                    <input type="text" id="regDecValue" class="form-control" placeholder="0" readonly>
+			                </div>
+			            </div>
+			            <div style="margin-top: 15px;">
+			                <label class="form-label">Binary Representation</label>
+			                <input type="text" id="regBinValue" class="form-control" style="font-family: monospace; font-size: 12px;" readonly>
+			            </div>
+			            <div style="margin-top: 15px; font-size: 13px; color: #6b7280;">
+			                Enter a hex value to see decimal and binary representations
+			            </div>
+			        </div>
+			    </div>
+			</div>
+
+			<script>
+			    // Update base address display when port changes
+			    document.addEventListener('DOMContentLoaded', () => {
+			        const portSelector = document.getElementById('regPortNumber');
+			        const baseAddrDisplay = document.getElementById('regBaseAddress');
+
+			        if (portSelector && baseAddrDisplay) {
+			            portSelector.addEventListener('change', () => {
+			                const port = parseInt(portSelector.value);
+			                const baseAddr = 0x60800000 + (port * 0x8000 * 2);
+			                baseAddrDisplay.textContent = `0x${baseAddr.toString(16).toUpperCase()}`;
+			            });
+			        }
+
+			        // Register value decoder
+			        const hexInput = document.getElementById('regHexValue');
+			        const decInput = document.getElementById('regDecValue');
+			        const binInput = document.getElementById('regBinValue');
+
+			        if (hexInput && decInput && binInput) {
+			            hexInput.addEventListener('input', (e) => {
+			                let value = e.target.value.replace(/[^0-9A-Fa-fx]/g, '');
+			                if (!value.startsWith('0x')) {
+			                    value = '0x' + value.replace('0x', '');
+			                }
+			                e.target.value = value;
+
+			                try {
+			                    const num = parseInt(value, 16);
+			                    if (!isNaN(num)) {
+			                        decInput.value = num;
+			                        binInput.value = num.toString(2).padStart(32, '0').match(/.{1,4}/g).join(' ');
+			                    }
+			                } catch (err) {
+			                    decInput.value = '';
+			                    binInput.value = '';
+			                }
+			            });
+			        }
+			    });
+			</script>
 
             <!-- Advanced Dashboard -->
             			<div id="advanced-dashboard" class="dashboard-content">
@@ -716,7 +913,7 @@
 
                 <!-- Current SSC Mode Display -->
                 <div class="current-mode-display">
-                    <div class="current-mode-label">Current SSC Mode</div>
+                    <div class="current-mode-label">Current SSC Clock Mode</div>
                     <div class="current-mode-value" id="currentSSCMode">--</div>
                 </div>
 
