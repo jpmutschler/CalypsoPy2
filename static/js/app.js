@@ -1073,40 +1073,156 @@ function setupEventHandlers() {
 // =============================================================================
 
 function setupSocketHandlers() {
+    // WebSocket connection established
     socket.on('connect', () => {
         console.log('Connected to CalypsoPy+ server');
         showNotification('Connected to CalypsoPy+ server', 'success');
+
+        // UPDATE: Set header status to show WebSocket is connected
+        // Use a generic "Server" label since no device is connected yet
+        const statusElement = document.getElementById('connectionStatus');
+        if (statusElement) {
+            statusElement.className = 'connection-status connected';
+            statusElement.innerHTML = `<div class="status-dot"></div><span>Connected to Server</span>`;
+        }
     });
 
+    // WebSocket disconnected from server
     socket.on('disconnect', () => {
         console.log('Disconnected from CalypsoPy+ server');
         showNotification('Disconnected from server', 'error');
+
+        // When WebSocket disconnects, also clear device connection
         updateConnectionStatus(false);
     });
 
+    // Device successfully connected
     socket.on('connection_result', (data) => {
-    const btn = document.getElementById('connectBtn');
-    btn.innerHTML = '<span>🔗</span> Connect Device';
-    btn.disabled = false;
+        const btn = document.getElementById('connectBtn');
+        btn.innerHTML = '<span>🔗</span> Connect Device';
+        btn.disabled = false;
 
-    if (data.success) {
-        updateConnectionStatus(true, data.connection_info.port);
-        showNotification(`Connected to ${data.connection_info.port}`, 'success');
+        if (data.success) {
+            // Update status to show connected device port
+            updateConnectionStatus(true, data.connection_info.port);
+            showNotification(`Connected to ${data.connection_info.port}`, 'success');
+
+            // Notify terminal dashboard
+            if (window.terminalDashboard) {
+                window.terminalDashboard.onConnectionChange(true, data.connection_info.port);
+            }
+
+            setTimeout(() => {
+                switchDashboard('device_info');
+                showNotification('Switched to Device Information - Loading system data...', 'info');
+            }, 1000);
+
+        } else {
+            showNotification(data.message, 'error');
+        }
+    });
+
+    // Device disconnected
+    socket.on('disconnection_result', (data) => {
+        const btn = document.getElementById('disconnectBtn');
+        btn.innerHTML = '<span>🔌</span> Disconnect';
+        btn.disabled = false;
+
+        // Clear device connection but keep WebSocket server connection status
+        updateConnectionStatus(false);
 
         // Notify terminal dashboard
         if (window.terminalDashboard) {
-            window.terminalDashboard.onConnectionChange(true, data.connection_info.port);
+            window.terminalDashboard.onConnectionChange(false, null);
         }
 
-        setTimeout(() => {
-            switchDashboard('device_info');
-            showNotification('Switched to Device Information - Loading system data...', 'info');
-        }, 1000);
+        if (data.success) {
+            showNotification(data.message, 'success');
 
-    } else {
-        showNotification(data.message, 'error');
-    }
-});
+            setTimeout(() => {
+                switchDashboard('connection');
+                showNotification('Disconnected - Please connect to a device to continue', 'info');
+            }, 1000);
+
+        } else {
+            showNotification(data.message, 'error');
+        }
+
+        // After device disconnect, show "Connected to Server" again
+        const statusElement = document.getElementById('connectionStatus');
+        if (statusElement && socket.connected) {
+            statusElement.className = 'connection-status connected';
+            statusElement.innerHTML = `<div class="status-dot"></div><span>Connected to Server</span>`;
+        }
+    });
+
+    // Rest of the socket handlers remain the same...
+    socket.on('command_result', (data) => {
+        // Handle terminal dashboard responses FIRST
+        if (data.dashboard === 'terminal' && window.terminalDashboard) {
+            window.terminalDashboard.handleCommandResult(data);
+            return;
+        }
+
+        // Handle errors dashboard responses
+        if (data.dashboard === 'errors' && window.errorsDashboard) {
+            window.errorsDashboard.handleCommandResult(data);
+        }
+
+        // Handle advanced dashboard responses
+        if (data.dashboard === 'advanced' && window.advancedDashboard) {
+            window.advancedDashboard.handleCommandResult(data);
+        }
+
+        const consoleId = `${data.dashboard || currentDashboard}Console`;
+
+        if (data.success) {
+            systemMetrics.successfulCommands++;
+            if (data.response_time_ms) {
+                systemMetrics.totalResponseTime += data.response_time_ms;
+                updateChart(data.response_time_ms);
+            }
+            if (data.from_cache) {
+                systemMetrics.cacheHits++;
+            }
+
+            const parsedData = data.data;
+            const cacheIndicator = data.from_cache ? ' [CACHED]' : '';
+
+            addConsoleEntry(consoleId, 'response',
+                `${parsedData.raw}${cacheIndicator}`,
+                parsedData.timestamp,
+                parsedData);
+
+            updateDashboardData(data);
+
+        } else {
+            addConsoleEntry(consoleId, 'error', data.message);
+            showNotification(data.message, 'error');
+        }
+
+        updateMetrics();
+    });
+
+    socket.on('system_status', (data) => {
+        const connectedPorts = Object.keys(data.connected_ports || {}).filter(port =>
+            data.connected_ports[port].connected
+        );
+
+        if (connectedPorts.length > 0 && !isConnected) {
+            updateConnectionStatus(true, connectedPorts[0]);
+        } else if (connectedPorts.length === 0 && isConnected) {
+            updateConnectionStatus(false);
+
+            // After clearing device connection, show server connection if WebSocket is still connected
+            const statusElement = document.getElementById('connectionStatus');
+            if (statusElement && socket.connected) {
+                statusElement.className = 'connection-status connected';
+                statusElement.innerHTML = `<div class="status-dot"></div><span>Connected to Server</span>`;
+            }
+        }
+    });
+}
 
 socket.on('disconnection_result', (data) => {
     const btn = document.getElementById('disconnectBtn');
@@ -1218,7 +1334,7 @@ socket.on('disconnection_result', (data) => {
             updateConnectionStatus(false);
         }
     });
-}
+
 
 // =============================================================================
 // MOBILE & RESPONSIVE FEATURES
