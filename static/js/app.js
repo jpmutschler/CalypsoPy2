@@ -1083,7 +1083,7 @@ function setupSocketHandlers() {
         const statusElement = document.getElementById('connectionStatus');
         if (statusElement) {
             statusElement.className = 'connection-status connected';
-            statusElement.innerHTML = `<div class="status-dot"></div><span>Connected to Server</span>`;
+            statusElement.innerHTML = `<div class="status-dot"></div><span>Connected</span>`;
         }
     });
 
