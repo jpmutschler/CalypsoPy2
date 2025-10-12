@@ -106,6 +106,7 @@ try:
     from .nvme_discovery import NVMeDiscovery
     from .link_training_time import LinkTrainingTimeMeasurement
     from .link_retrain_count import LinkRetrainCount
+    from .link_quality import LinkQualityTest
     from .sequential_read_performance import SequentialReadPerformanceTest
     from .sequential_write_performance import SequentialWritePerformanceTest
     from .random_iops_performance import RandomIOPSPerformanceTest
@@ -119,6 +120,7 @@ try:
         'NVMeDiscovery', 
         'LinkTrainingTimeMeasurement',
         'LinkRetrainCount',
+        'LinkQualityTest',
         'SequentialReadPerformanceTest',
         'SequentialWritePerformanceTest',
         'RandomIOPSPerformanceTest',

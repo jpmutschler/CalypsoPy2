@@ -16,20 +16,15 @@ from collections import defaultdict
 
 try:
     from .com_error_monitor import COMErrorMonitor, ErrorCounters
+    from .ltssm_monitor import LTSSMMonitor, LTSSMState, LTSSMTransition
 except ImportError:
     from com_error_monitor import COMErrorMonitor, ErrorCounters
+    from ltssm_monitor import LTSSMMonitor, LTSSMState, LTSSMTransition
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class LTSSMTransition:
-    """Represents a single LTSSM state transition"""
-    timestamp: float
-    device: str
-    from_state: str
-    to_state: str
-    duration_us: Optional[float] = None
+# LTSSMTransition is now imported from ltssm_monitor module
 
 
 class LinkTrainingTimeMeasurement:
@@ -504,6 +499,12 @@ class LinkTrainingTimeMeasurement:
                 'available': False,
                 'data': None,
                 'correlation': {}
+            },
+            'ltssm_monitoring': {
+                'enabled': True,
+                'available': False,
+                'data': None,
+                'correlation': {}
             }
         }
 
@@ -539,6 +540,26 @@ class LinkTrainingTimeMeasurement:
                     logger.warning(f"Error monitoring setup failed: {e}")
             elif monitor_errors:
                 result['warnings'].append("Atlas 3 error monitoring requested but CalypsoPy manager or port not provided")
+
+            # Initialize LTSSM monitoring for target device
+            ltssm_monitor = None
+            try:
+                # Use selected device or a default PCI address for LTSSM monitoring
+                device_path = selected_device or "0000:01:00.0"  # Default PCIe device
+                ltssm_monitor = LTSSMMonitor(device_path)
+                
+                # Start LTSSM monitoring
+                if ltssm_monitor.start_monitoring(
+                    sampling_interval=0.5  # Higher frequency for LTSSM state changes
+                ):
+                    result['ltssm_monitoring']['available'] = True
+                    logger.info(f"LTSSM monitoring started for device: {device_path}")
+                else:
+                    result['warnings'].append("Failed to start LTSSM monitoring")
+                    
+            except Exception as e:
+                result['warnings'].append(f"LTSSM monitoring setup failed: {str(e)}")
+                logger.warning(f"LTSSM monitoring setup failed: {e}")
 
             # Trigger device reset if requested
             if trigger_reset and selected_device:
@@ -640,15 +661,48 @@ class LinkTrainingTimeMeasurement:
                     result['warnings'].append(f"Error stopping monitoring: {str(e)}")
                     logger.warning(f"Error stopping monitoring: {e}")
 
+            # Stop LTSSM monitoring and correlate with link training events
+            if ltssm_monitor and ltssm_monitor.is_monitoring():
+                try:
+                    ltssm_data = ltssm_monitor.stop_monitoring()
+                    if ltssm_data:
+                        result['ltssm_monitoring']['data'] = ltssm_data.to_dict()
+                        
+                        # Correlate LTSSM state transitions with link training events
+                        ltssm_correlation = self._correlate_ltssm_with_events(ltssm_data, events)
+                        result['ltssm_monitoring']['correlation'] = ltssm_correlation
+                        
+                        # Add summary for easy access
+                        result['ltssm_monitoring']['summary'] = {
+                            'duration_seconds': ltssm_data.session_end - ltssm_data.session_start,
+                            'total_samples': ltssm_data.total_samples,
+                            'total_transitions': len(ltssm_data.transitions),
+                            'devices_monitored': len(ltssm_data.device_states) if ltssm_data.device_states else 0,
+                            'monitoring_successful': True
+                        }
+                        
+                        logger.info(f"LTSSM monitoring completed: {len(ltssm_data.transitions)} transitions detected")
+                    else:
+                        result['warnings'].append("LTSSM monitoring stopped but no data collected")
+                except Exception as e:
+                    result['warnings'].append(f"Error stopping LTSSM monitoring: {str(e)}")
+                    logger.warning(f"LTSSM monitoring stop failed: {e}")
+
         except Exception as e:
             logger.error(f"Link training measurement test failed: {e}")
             result['status'] = 'error'
             result['errors'].append(f"Exception during measurement: {str(e)}")
             
-            # Ensure error monitoring is stopped even on failure
+            # Ensure monitoring is stopped even on failure
             if error_monitor and error_monitor.is_monitoring():
                 try:
                     error_monitor.stop_monitoring()
+                except:
+                    pass
+            
+            if ltssm_monitor and ltssm_monitor.is_monitoring():
+                try:
+                    ltssm_monitor.stop_monitoring()
                 except:
                     pass
 
@@ -841,6 +895,154 @@ class LinkTrainingTimeMeasurement:
             'late_phase_errors': late_errors,
             'total_progression': late_errors - early_errors
         }
+    
+    def _correlate_ltssm_with_events(self, ltssm_data, events: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Correlate LTSSM state transitions with link training events
+        
+        Args:
+            ltssm_data: LTSSMMonitorResult from monitoring session
+            events: List of link training events from dmesg
+            
+        Returns:
+            Correlation analysis dictionary
+        """
+        correlation = {
+            'summary': {},
+            'state_transitions': [],
+            'training_sequences': [],
+            'state_timing': {},
+            'transition_correlation': {}
+        }
+        
+        try:
+            if not ltssm_data or not ltssm_data.transitions:
+                correlation['summary'] = {'status': 'no_ltssm_data', 'message': 'No LTSSM transitions recorded'}
+                return correlation
+            
+            # Organize transitions by device
+            device_transitions = {}
+            for transition in ltssm_data.transitions:
+                device = transition.device
+                if device not in device_transitions:
+                    device_transitions[device] = []
+                device_transitions[device].append(transition)
+            
+            # Analyze state transitions
+            total_transitions = len(ltssm_data.transitions)
+            training_related = 0
+            
+            for transition in ltssm_data.transitions:
+                # Check if this is a training-related state
+                is_training = transition.from_state in ['Detect', 'Polling', 'Configuration', 'Recovery'] or \
+                             transition.to_state in ['Detect', 'Polling', 'Configuration', 'Recovery']
+                
+                if is_training:
+                    training_related += 1
+                
+                correlation['state_transitions'].append({
+                    'timestamp': transition.timestamp,
+                    'device': transition.device,
+                    'from_state': transition.from_state,
+                    'to_state': transition.to_state,
+                    'is_training_related': is_training,
+                    'duration_ns': getattr(transition, 'duration_ns', None)
+                })
+            
+            # Find training sequences (Detect -> ... -> L0)
+            for device, transitions in device_transitions.items():
+                transitions.sort(key=lambda x: x.timestamp)
+                
+                current_sequence = []
+                for transition in transitions:
+                    if transition.from_state == 'Detect' or (current_sequence and 
+                        current_sequence[-1]['to_state'] in ['Detect', 'Polling', 'Configuration', 'Recovery']):
+                        current_sequence.append({
+                            'timestamp': transition.timestamp,
+                            'from_state': transition.from_state,
+                            'to_state': transition.to_state
+                        })
+                        
+                        # Check if sequence completed (reached L0)
+                        if transition.to_state == 'L0':
+                            if len(current_sequence) > 1:
+                                sequence_duration = (transition.timestamp - current_sequence[0]['timestamp']) / 1000000  # Convert to ms
+                                correlation['training_sequences'].append({
+                                    'device': device,
+                                    'start_time': current_sequence[0]['timestamp'],
+                                    'end_time': transition.timestamp,
+                                    'duration_ms': round(sequence_duration, 3),
+                                    'sequence': current_sequence.copy()
+                                })
+                            current_sequence = []
+                    else:
+                        current_sequence = []
+            
+            # Correlate with dmesg events
+            if events:
+                for event in events:
+                    event_time_ns = event['timestamp'] * 1000000000  # Convert to nanoseconds
+                    
+                    # Find LTSSM transitions within ±2 seconds
+                    nearby_transitions = []
+                    for transition in ltssm_data.transitions:
+                        time_diff_ns = abs(transition.timestamp - event_time_ns)
+                        if time_diff_ns <= 2000000000:  # 2 second window in nanoseconds
+                            nearby_transitions.append({
+                                'transition': {
+                                    'device': transition.device,
+                                    'from_state': transition.from_state,
+                                    'to_state': transition.to_state,
+                                    'timestamp': transition.timestamp
+                                },
+                                'time_offset_ms': round(time_diff_ns / 1000000, 3)
+                            })
+                    
+                    if nearby_transitions:
+                        correlation['transition_correlation'][f'event_{event["timestamp"]}'] = {
+                            'dmesg_event': event,
+                            'nearby_transitions': nearby_transitions,
+                            'correlation_strength': len(nearby_transitions)
+                        }
+            
+            # Calculate state timing statistics
+            state_durations = {}
+            for device, transitions in device_transitions.items():
+                for i in range(len(transitions) - 1):
+                    current = transitions[i]
+                    next_trans = transitions[i + 1]
+                    
+                    state = current.to_state
+                    duration_ms = (next_trans.timestamp - current.timestamp) / 1000000
+                    
+                    if state not in state_durations:
+                        state_durations[state] = []
+                    state_durations[state].append(duration_ms)
+            
+            # Calculate averages for each state
+            for state, durations in state_durations.items():
+                correlation['state_timing'][state] = {
+                    'avg_duration_ms': round(sum(durations) / len(durations), 3),
+                    'min_duration_ms': round(min(durations), 3),
+                    'max_duration_ms': round(max(durations), 3),
+                    'occurrence_count': len(durations)
+                }
+            
+            correlation['summary'] = {
+                'total_transitions': total_transitions,
+                'training_related_transitions': training_related,
+                'training_sequences_detected': len(correlation['training_sequences']),
+                'devices_with_transitions': len(device_transitions),
+                'correlated_events': len(correlation['transition_correlation']),
+                'monitoring_duration_ms': round((ltssm_data.session_end - ltssm_data.session_start) * 1000, 3),
+                'status': 'success'
+            }
+            
+        except Exception as e:
+            correlation['summary'] = {'status': 'correlation_error', 'message': f'Error during LTSSM correlation: {str(e)}'}
+            logger.warning(f"LTSSM correlation failed: {e}")
+        
+        return correlation
 
 
 if __name__ == '__main__':

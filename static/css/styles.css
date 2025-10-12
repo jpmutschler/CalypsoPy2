@@ -6663,3 +6663,190 @@ Testing Dashboard Styles
         min-width: auto;
     }
 }
+
+/* ================================
+   LTSSM State Monitoring Styles
+   ================================ */
+
+/* LTSSM State Timing Grid */
+.ltssm-state-timing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.ltssm-state-card {
+    background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 15px;
+    transition: all 0.2s ease;
+}
+
+.ltssm-state-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.ltssm-state-name {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--dark-black);
+    margin-bottom: 10px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+    border-radius: 6px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ltssm-state-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ltssm-timing-item {
+    font-size: 12px;
+    color: var(--secondary-gray);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 4px;
+}
+
+.ltssm-timing-item:first-child {
+    font-weight: 600;
+    color: var(--dark-black);
+}
+
+/* LTSSM Training Sequences */
+.ltssm-sequences-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.ltssm-sequence-card {
+    background: linear-gradient(145deg, #ffffff, #f8fafc);
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 15px;
+    border-left: 4px solid #3b82f6;
+    transition: all 0.2s ease;
+}
+
+.ltssm-sequence-card:hover {
+    border-left-color: var(--primary-red);
+    box-shadow: 0 4px 15px rgba(121, 0, 0, 0.1);
+}
+
+.ltssm-sequence-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ltssm-sequence-title {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--dark-black);
+}
+
+.ltssm-sequence-device {
+    font-size: 12px;
+    color: var(--secondary-gray);
+    font-family: 'Monaco', monospace;
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.ltssm-sequence-duration {
+    font-size: 12px;
+    font-weight: 600;
+    color: #3b82f6;
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid #93c5fd;
+}
+
+.ltssm-sequence-states {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding: 10px;
+    background: rgba(248, 250, 252, 0.8);
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.ltssm-state-step {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px;
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    color: var(--dark-black);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    transition: all 0.2s ease;
+}
+
+.ltssm-state-step:hover {
+    background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+    border-color: var(--primary-red);
+}
+
+.ltssm-state-arrow {
+    font-size: 14px;
+    color: var(--secondary-gray);
+    margin: 0 2px;
+    font-weight: 700;
+}
+
+/* LTSSM Responsive Design */
+@media (max-width: 1200px) {
+    .ltssm-state-timing-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+    }
+}
+
+@media (max-width: 768px) {
+    .ltssm-state-timing-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .ltssm-sequence-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+    
+    .ltssm-sequence-states {
+        justify-content: center;
+    }
+    
+    .ltssm-state-step {
+        font-size: 10px;
+        padding: 3px 6px;
+    }
+    
+    .ltssm-sequence-card {
+        padding: 12px;
+    }
+}

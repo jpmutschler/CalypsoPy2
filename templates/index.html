@@ -2221,52 +2221,66 @@
 				    </div>
 				</div>
 
-			    <!-- LTSSM State Tracking - Placeholder -->
-			    <div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="ltssm_state_tracking" data-category="link-quality" data-placeholder="true">
+			    <!-- PCIe Link Quality Assessment - COMPLETED TEST -->
+			    <div class="card test-card test-card-compact collapsed" data-test-id="link_quality" data-category="link-quality">
 			        <div class="card-header test-card-header">
 			            <div class="card-title">
-			                <div class="card-icon">🔄</div>
-			                <span>LTSSM State Tracking</span>
+			                <div class="card-icon">🔍</div>
+			                <span>PCIe Link Quality Assessment</span>
 			            </div>
 			            <div class="test-card-header-actions">
-			                <span class="placeholder-badge">Coming Soon</span>
+			                <button class="btn btn-primary btn-test-run-compact" onclick="testingDashboard.runTest('link_quality')">
+			                    <span>▶️</span> Run
+			                </button>
+			                <span class="test-status idle" id="link_qualityStatus">⏸️ Idle</span>
 			            </div>
 			        </div>
 			        <div class="test-card-body">
 			            <p class="test-description">
-			                Real-time monitoring of Link Training and Status State Machine transitions for debugging and validation of PCIe link behavior.
+			                Comprehensive link quality assessment through random resets, comprehensive monitoring, LTSSM tracking, and Atlas 3 error correlation to evaluate PCIe link stability and performance.
 			            </p>
 
 			            <div class="test-requirements">
 			                <h5>Test Validates:</h5>
 			                <ul>
-			                    <li>LTSSM state machine transitions</li>
-			                    <li>Recovery state frequency</li>
-			                    <li>L0/L1 power state transitions</li>
-			                    <li>Unexpected state changes</li>
-			                    <li>State dwell time analysis</li>
+			                    <li>Link reset resilience and recovery times</li>
+			                    <li>LTSSM state transition patterns</li>
+			                    <li>Atlas 3 switch error correlation</li>
+			                    <li>System monitoring (dmesg, pciutils, sysfs)</li>
+			                    <li>PCIe 6.x compliance under stress</li>
+			                    <li>Link quality grading (A-F scale)</li>
 			                </ul>
 			            </div>
 
 			            <div class="test-config-section">
-			                <h5>Test Options</h5>
-
-			                <div class="config-item">
-			                    <label for="ltssmTrackingMode">Tracking Mode</label>
-			                    <select id="ltssmTrackingMode" class="form-control">
-			                        <option value="continuous">Continuous Monitoring</option>
-			                        <option value="event_triggered">Event-Triggered</option>
-			                        <option value="snapshot">Single Snapshot</option>
-			                    </select>
-			                    <span class="config-help">Select LTSSM tracking mode</span>
-			                </div>
-
-			                <div class="config-item">
-			                    <label>
-			                        <input type="checkbox" id="ltssmLogTransitions">
-			                        Log All Transitions
-			                    </label>
-			                    <span class="config-help">Create detailed log of every state transition</span>
+			                <h5>Configuration Options:</h5>
+			                <div class="config-grid">
+			                    <div class="config-item">
+			                        <label for="link_quality_duration">Test Duration (minutes):</label>
+			                        <input type="number" id="link_quality_duration" value="5" min="1" max="30">
+			                    </div>
+			                    <div class="config-item">
+			                        <label for="link_quality_reset_freq">Reset Frequency (seconds):</label>
+			                        <input type="number" id="link_quality_reset_freq" value="30" min="10" max="300">
+			                    </div>
+			                    <div class="config-item">
+			                        <label for="link_quality_target_device">Target Device:</label>
+			                        <select id="link_quality_target_device">
+			                            <option value="">Auto-discover</option>
+			                        </select>
+			                    </div>
+			                    <div class="config-item">
+			                        <label>
+			                            <input type="checkbox" id="link_quality_enable_resets" checked>
+			                            Enable Random Resets
+			                        </label>
+			                    </div>
+			                    <div class="config-item">
+			                        <label>
+			                            <input type="checkbox" id="link_quality_monitor_errors" checked>
+			                            Monitor Atlas 3 Errors
+			                        </label>
+			                    </div>
 			                </div>
 			            </div>
 			        </div>

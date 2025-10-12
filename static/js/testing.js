@@ -357,6 +357,26 @@ class TestingDashboard {
             };
 
             console.log('Link Training options:', options);
+        } else if (testId === 'link_quality') {
+            const durationInput = document.getElementById('linkQualityDuration');
+            const resetFreqInput = document.getElementById('linkQualityResetFreq');
+            const targetDeviceSelect = document.getElementById('linkQualityTargetDevice');
+            const enableLtssm = document.getElementById('linkQualityEnableLtssm');
+            const enableAtlasErrors = document.getElementById('linkQualityEnableAtlasErrors');
+            const enablePerf = document.getElementById('linkQualityEnablePerf');
+            const resetMethodsInput = document.getElementById('linkQualityResetMethods');
+
+            options = {
+                duration_minutes: parseInt(durationInput?.value) || 5,
+                reset_frequency_seconds: parseInt(resetFreqInput?.value) || 30,
+                target_device: targetDeviceSelect?.value || null,
+                enable_ltssm_monitoring: enableLtssm?.checked || true,
+                enable_atlas_error_tracking: enableAtlasErrors?.checked || true,
+                enable_perf_monitoring: enablePerf?.checked || false,
+                reset_methods: resetMethodsInput?.value?.split(',').map(m => m.trim()).filter(m => m) || ['link_retrain', 'function_reset']
+            };
+
+            console.log('Link Quality options:', options);
         }
 
         // Send test request with options
@@ -371,7 +391,7 @@ class TestingDashboard {
         })
             .then(response => response.json())
             .then(result => {
-                this.handleTestComplete(testId, result);
+                this.handleTestResult(testId, result);
             })
             .catch(error => {
                 console.error(`Test ${testId} error:`, error);
@@ -593,6 +613,8 @@ class TestingDashboard {
             html += this.generatePCIeResultsHTML(result);
         } else if (testId === 'nvme_discovery') {
             html += this.generateNVMeResultsHTML(result);
+        } else if (testId === 'link_quality') {
+            html += this.generateLinkQualityResultsHTML(result);
         } else {
             html += this.generateGenericResultsHTML(result);
         }
@@ -785,6 +807,365 @@ class TestingDashboard {
             });
             html += '</div>';
             html += '</div>';
+        }
+
+        return html;
+    }
+
+    generateLinkQualityResultsHTML(result) {
+        let html = '';
+
+        // Link Quality Summary Section
+        if (result.summary) {
+            html += '<div class="results-section">';
+            html += '<h3>🔍 Link Quality Assessment Summary</h3>';
+            html += '<div class="results-stat-grid">';
+
+            // Quality Grade
+            if (result.summary.quality_grade) {
+                const gradeColor = result.summary.quality_grade <= 'B' ? '#22c55e' : 
+                                   result.summary.quality_grade <= 'D' ? '#f59e0b' : '#ef4444';
+                html += `<div class="results-stat-item">`;
+                html += `<span class="results-stat-value" style="color: ${gradeColor}; font-weight: 700; font-size: 24px;">${result.summary.quality_grade}</span>`;
+                html += `<span class="results-stat-label">Quality Grade</span>`;
+                html += `</div>`;
+            }
+
+            // Test Statistics
+            html += `<div class="results-stat-item">`;
+            html += `<span class="results-stat-value">${result.summary.total_reset_operations || 0}</span>`;
+            html += `<span class="results-stat-label">Reset Operations</span>`;
+            html += `</div>`;
+
+            html += `<div class="results-stat-item">`;
+            html += `<span class="results-stat-value">${result.summary.successful_recoveries || 0}</span>`;
+            html += `<span class="results-stat-label">Successful Recoveries</span>`;
+            html += `</div>`;
+
+            html += `<div class="results-stat-item">`;
+            html += `<span class="results-stat-value">${result.summary.quality_events_detected || 0}</span>`;
+            html += `<span class="results-stat-label">Quality Events</span>`;
+            html += `</div>`;
+
+            if (result.summary.avg_recovery_time_ms) {
+                html += `<div class="results-stat-item">`;
+                html += `<span class="results-stat-value">${result.summary.avg_recovery_time_ms}ms</span>`;
+                html += `<span class="results-stat-label">Avg Recovery Time</span>`;
+                html += `</div>`;
+            }
+
+            html += '</div>'; // results-stat-grid
+            html += '</div>'; // results-section
+        }
+
+        // Test Configuration
+        if (result.configuration) {
+            html += '<div class="results-section">';
+            html += '<h3>⚙️ Test Configuration</h3>';
+            html += '<div class="results-detail-grid">';
+
+            const config = result.configuration;
+            
+            html += `<div class="results-detail-item">`;
+            html += `<div class="results-detail-label">Test Duration</div>`;
+            html += `<div class="results-detail-value">${config.duration_minutes || 5} minutes</div>`;
+            html += `</div>`;
+
+            html += `<div class="results-detail-item">`;
+            html += `<div class="results-detail-label">Reset Frequency</div>`;
+            html += `<div class="results-detail-value">${config.reset_frequency_seconds || 30} seconds</div>`;
+            html += `</div>`;
+
+            if (config.target_device) {
+                html += `<div class="results-detail-item">`;
+                html += `<div class="results-detail-label">Target Device</div>`;
+                html += `<div class="results-detail-value">${config.target_device}</div>`;
+                html += `</div>`;
+            }
+
+            if (config.reset_methods && config.reset_methods.length > 0) {
+                html += `<div class="results-detail-item">`;
+                html += `<div class="results-detail-label">Reset Methods</div>`;
+                html += `<div class="results-detail-value">${config.reset_methods.join(', ')}</div>`;
+                html += `</div>`;
+            }
+
+            html += '</div>'; // results-detail-grid
+            html += '</div>'; // results-section
+        }
+
+        // Quality Events Timeline
+        if (result.quality_events && result.quality_events.length > 0) {
+            html += '<div class="results-section">';
+            html += '<h3>📊 Quality Events Timeline</h3>';
+            html += '<div class="event-timeline-container">';
+
+            // Show most recent 20 events
+            const displayEvents = result.quality_events.slice(-20);
+
+            displayEvents.forEach(event => {
+                const eventTypeClass = event.event_type.replace(/_/g, '-');
+                const severityColor = event.severity === 'critical' ? '#ef4444' :
+                                      event.severity === 'warning' ? '#f59e0b' : '#22c55e';
+
+                html += `<div class="event-timeline-item ${eventTypeClass}">`;
+                html += `<div class="event-timeline-time">${event.timestamp.toFixed(3)}s</div>`;
+                html += `<div class="event-timeline-device">${event.device || 'Unknown'}</div>`;
+                html += `<div class="event-timeline-type" style="color: ${severityColor};">${event.event_type.replace(/_/g, ' ').toUpperCase()}</div>`;
+                html += `<div class="event-timeline-message">${event.description || event.message}</div>`;
+                html += `</div>`;
+            });
+
+            if (result.quality_events.length > 20) {
+                html += `<div class="event-timeline-note">Showing most recent 20 of ${result.quality_events.length} quality events</div>`;
+            }
+
+            html += '</div>'; // event-timeline-container
+            html += '</div>'; // results-section
+        }
+
+        // LTSSM Monitoring Integration
+        if (result.ltssm_monitoring && result.ltssm_monitoring.available) {
+            html += '<div class="results-section">';
+            html += '<h3>🔄 LTSSM State Monitoring</h3>';
+            
+            const ltssm = result.ltssm_monitoring;
+            
+            html += '<div class="results-detail-grid">';
+            
+            html += `<div class="results-detail-item">`;
+            html += `<div class="results-detail-label">Total State Transitions</div>`;
+            html += `<div class="results-detail-value">${ltssm.total_transitions || 0}</div>`;
+            html += `</div>`;
+            
+            html += `<div class="results-detail-item">`;
+            html += `<div class="results-detail-label">Correlated Reset Events</div>`;
+            html += `<div class="results-detail-value">${ltssm.correlated_reset_events || 0}</div>`;
+            html += `</div>`;
+            
+            if (ltssm.quality_correlation && ltssm.quality_correlation.correlation_score !== undefined) {
+                const score = (ltssm.quality_correlation.correlation_score * 100).toFixed(1);
+                html += `<div class="results-detail-item">`;
+                html += `<div class="results-detail-label">Quality Correlation Score</div>`;
+                html += `<div class="results-detail-value">${score}%</div>`;
+                html += `</div>`;
+            }
+            
+            html += '</div>'; // results-detail-grid
+            html += '</div>'; // results-section
+        }
+
+        // Atlas 3 Error Correlation
+        if (result.atlas_error_tracking && result.atlas_error_tracking.available) {
+            html += '<div class="results-section">';
+            html += '<h3>🔧 Atlas 3 Error Correlation</h3>';
+            
+            const atlas = result.atlas_error_tracking;
+            
+            html += '<div class="results-detail-grid">';
+            
+            html += `<div class="results-detail-item">`;
+            html += `<div class="results-detail-label">Total Atlas Errors</div>`;
+            html += `<div class="results-detail-value">${atlas.total_errors || 0}</div>`;
+            html += `</div>`;
+            
+            html += `<div class="results-detail-item">`;
+            html += `<div class="results-detail-label">Correlated Errors</div>`;
+            html += `<div class="results-detail-value">${atlas.correlated_errors || 0}</div>`;
+            html += `</div>`;
+            
+            if (atlas.error_correlation_rate !== undefined) {
+                const rate = (atlas.error_correlation_rate * 100).toFixed(1);
+                html += `<div class="results-detail-item">`;
+                html += `<div class="results-detail-label">Error Correlation Rate</div>`;
+                html += `<div class="results-detail-value">${rate}%</div>`;
+                html += `</div>`;
+            }
+            
+            html += '</div>'; // results-detail-grid
+            
+            // Error Timeline
+            if (atlas.error_events && atlas.error_events.length > 0) {
+                html += '<h4>🚨 Atlas 3 Error Events</h4>';
+                html += '<div class="atlas-error-timeline">';
+                
+                atlas.error_events.slice(-10).forEach(error => {
+                    html += `<div class="atlas-error-item">`;
+                    html += `<div class="atlas-error-time">${error.timestamp.toFixed(3)}s</div>`;
+                    html += `<div class="atlas-error-type">${error.error_type}</div>`;
+                    html += `<div class="atlas-error-description">${error.description || error.message}</div>`;
+                    html += `</div>`;
+                });
+                
+                if (atlas.error_events.length > 10) {
+                    html += `<div class="atlas-error-note">Showing most recent 10 of ${atlas.error_events.length} error events</div>`;
+                }
+                
+                html += '</div>'; // atlas-error-timeline
+            }
+            
+            html += '</div>'; // results-section
+        }
+
+        // Quality Assessment Details
+        if (result.quality_assessment) {
+            const assessment = result.quality_assessment;
+            
+            html += '<div class="results-section">';
+            html += '<h3>📈 Quality Assessment Metrics</h3>';
+            html += '<div class="results-detail-grid">';
+            
+            if (assessment.reset_recovery_score !== undefined) {
+                html += `<div class="results-detail-item">`;
+                html += `<div class="results-detail-label">Reset Recovery Score</div>`;
+                html += `<div class="results-detail-value">${(assessment.reset_recovery_score * 100).toFixed(1)}%</div>`;
+                html += `</div>`;
+            }
+            
+            if (assessment.error_rate_score !== undefined) {
+                html += `<div class="results-detail-item">`;
+                html += `<div class="results-detail-label">Error Rate Score</div>`;
+                html += `<div class="results-detail-value">${(assessment.error_rate_score * 100).toFixed(1)}%</div>`;
+                html += `</div>`;
+            }
+            
+            if (assessment.stability_score !== undefined) {
+                html += `<div class="results-detail-item">`;
+                html += `<div class="results-detail-label">Link Stability Score</div>`;
+                html += `<div class="results-detail-value">${(assessment.stability_score * 100).toFixed(1)}%</div>`;
+                html += `</div>`;
+            }
+            
+            html += '</div>'; // results-detail-grid
+            
+            // Quality Recommendations
+            if (assessment.recommendations && assessment.recommendations.length > 0) {
+                html += '<h4>💡 Quality Recommendations</h4>';
+                html += '<ul class="quality-recommendations-list">';
+                assessment.recommendations.forEach(rec => {
+                    html += `<li>${rec}</li>`;
+                });
+                html += '</ul>';
+            }
+            
+            html += '</div>'; // results-section
+        }
+
+        // PCIe 6.x Specification Compliance
+        if (result.link_quality_assessment && result.link_quality_assessment.compliance_status) {
+            const compliance = result.link_quality_assessment.compliance_status;
+            
+            html += '<div class="results-section">';
+            html += '<h3>📋 PCIe 6.x Specification Compliance</h3>';
+            
+            // Overall Compliance Status
+            html += '<div class="compliance-summary">';
+            const complianceColor = compliance.overall_compliant ? '#22c55e' : '#ef4444';
+            const complianceIcon = compliance.overall_compliant ? '✅' : '❌';
+            html += `<div class="compliance-status" style="color: ${complianceColor};">`;
+            html += `${complianceIcon} Overall Compliance: ${compliance.overall_compliant ? 'COMPLIANT' : 'NON-COMPLIANT'}`;
+            html += `</div>`;
+            html += `<div class="compliance-score">Compliance Score: ${compliance.compliance_score}%</div>`;
+            html += '</div>';
+            
+            // Specification Requirements
+            if (compliance.spec_requirements) {
+                html += '<h4>📖 Specification Requirements</h4>';
+                html += '<div class="spec-requirements-grid">';
+                
+                Object.entries(compliance.spec_requirements).forEach(([category, requirement]) => {
+                    html += `<div class="spec-requirement-item">`;
+                    html += `<div class="spec-requirement-category">${category.replace(/_/g, ' ').toUpperCase()}</div>`;
+                    html += `<div class="spec-requirement-description">${requirement.description}</div>`;
+                    html += `</div>`;
+                });
+                
+                html += '</div>'; // spec-requirements-grid
+            }
+            
+            // Compliance Violations
+            if (compliance.violations && compliance.violations.length > 0) {
+                html += '<h4>⚠️ Compliance Violations</h4>';
+                html += '<div class="violations-list">';
+                
+                compliance.violations.forEach(violation => {
+                    const severityColor = violation.severity === 'high' ? '#ef4444' : '#f59e0b';
+                    const severityIcon = violation.severity === 'high' ? '🚨' : '⚠️';
+                    
+                    html += `<div class="violation-item" style="border-left: 4px solid ${severityColor};">`;
+                    html += `<div class="violation-header">`;
+                    html += `<span class="violation-severity" style="color: ${severityColor};">${severityIcon} ${violation.severity.toUpperCase()}</span>`;
+                    html += `<span class="violation-section">Section ${violation.section}</span>`;
+                    html += `</div>`;
+                    html += `<div class="violation-requirement">${violation.requirement}</div>`;
+                    html += `<div class="violation-details">`;
+                    html += `<span class="violation-spec">Spec: ${violation.specification}</span>`;
+                    html += `<span class="violation-actual">Actual: ${violation.actual}</span>`;
+                    html += `</div>`;
+                    html += `</div>`;
+                });
+                
+                html += '</div>'; // violations-list
+            }
+            
+            // Component Scores
+            if (compliance.detailed_analysis && compliance.detailed_analysis.component_scores) {
+                html += '<h4>📊 Component Compliance Scores</h4>';
+                html += '<div class="compliance-scores-grid">';
+                
+                Object.entries(compliance.detailed_analysis.component_scores).forEach(([component, score]) => {
+                    const scoreColor = score >= 90 ? '#22c55e' : score >= 70 ? '#f59e0b' : '#ef4444';
+                    html += `<div class="compliance-score-item">`;
+                    html += `<div class="compliance-score-label">${component.replace(/_/g, ' ').toUpperCase()}</div>`;
+                    html += `<div class="compliance-score-value" style="color: ${scoreColor};">${score.toFixed(1)}%</div>`;
+                    html += `</div>`;
+                });
+                
+                html += '</div>'; // compliance-scores-grid
+            }
+            
+            // Compliance Recommendations
+            if (compliance.recommendations && compliance.recommendations.length > 0) {
+                html += '<h4>💡 Compliance Recommendations</h4>';
+                html += '<ul class="compliance-recommendations-list">';
+                compliance.recommendations.forEach(rec => {
+                    html += `<li>${rec}</li>`;
+                });
+                html += '</ul>';
+            }
+            
+            // Detailed Analysis Summary
+            if (compliance.detailed_analysis) {
+                const analysis = compliance.detailed_analysis;
+                html += '<h4>🔍 Detailed Analysis</h4>';
+                html += '<div class="results-detail-grid">';
+                
+                html += `<div class="results-detail-item">`;
+                html += `<div class="results-detail-label">Total Violations</div>`;
+                html += `<div class="results-detail-value">${analysis.total_violations || 0}</div>`;
+                html += `</div>`;
+                
+                html += `<div class="results-detail-item">`;
+                html += `<div class="results-detail-label">High Severity Violations</div>`;
+                html += `<div class="results-detail-value">${analysis.high_severity_violations || 0}</div>`;
+                html += `</div>`;
+                
+                html += `<div class="results-detail-item">`;
+                html += `<div class="results-detail-label">Certification Ready</div>`;
+                html += `<div class="results-detail-value">${analysis.certification_ready ? 'Yes' : 'No'}</div>`;
+                html += `</div>`;
+                
+                if (analysis.specification_sections_tested) {
+                    html += `<div class="results-detail-item">`;
+                    html += `<div class="results-detail-label">Sections Tested</div>`;
+                    html += `<div class="results-detail-value">${analysis.specification_sections_tested.join(', ')}</div>`;
+                    html += `</div>`;
+                }
+                
+                html += '</div>'; // results-detail-grid
+            }
+            
+            html += '</div>'; // results-section
         }
 
         return html;
@@ -1096,6 +1477,123 @@ class TestingDashboard {
 	        html += '<h3>📈 Training Time Timeline</h3>';
 	        html += `<div id="linkTrainingTimeChart" style="width: 100%; height: 400px;"></div>`;
 	        html += '</div>';
+	    }
+
+	    // LTSSM Monitoring Section
+	    if (result.ltssm_monitoring && result.ltssm_monitoring.available && result.ltssm_monitoring.data) {
+	        html += '<div class="results-section">';
+	        html += '<h3>🔄 LTSSM State Monitoring</h3>';
+	        
+	        const ltssm = result.ltssm_monitoring;
+	        
+	        // LTSSM Summary Stats
+	        if (ltssm.summary) {
+	            html += '<div class="results-detail-grid">';
+	            
+	            html += `<div class="results-detail-item">`;
+	            html += `<div class="results-detail-label">Total Transitions</div>`;
+	            html += `<div class="results-detail-value">${ltssm.summary.total_transitions || 0}</div>`;
+	            html += `</div>`;
+	            
+	            html += `<div class="results-detail-item">`;
+	            html += `<div class="results-detail-label">Devices Monitored</div>`;
+	            html += `<div class="results-detail-value">${ltssm.summary.devices_monitored || 0}</div>`;
+	            html += `</div>`;
+	            
+	            html += `<div class="results-detail-item">`;
+	            html += `<div class="results-detail-label">Monitoring Duration</div>`;
+	            html += `<div class="results-detail-value">${(ltssm.summary.duration_seconds || 0).toFixed(2)}s</div>`;
+	            html += `</div>`;
+	            
+	            html += '</div>'; // results-detail-grid
+	        }
+	        
+	        // LTSSM Correlation Analysis
+	        if (ltssm.correlation && ltssm.correlation.summary) {
+	            const correlation = ltssm.correlation;
+	            
+	            html += '<h4>🔗 Event Correlation Analysis</h4>';
+	            html += '<div class="results-detail-grid">';
+	            
+	            if (correlation.summary.training_related_transitions !== undefined) {
+	                html += `<div class="results-detail-item">`;
+	                html += `<div class="results-detail-label">Training-Related Transitions</div>`;
+	                html += `<div class="results-detail-value">${correlation.summary.training_related_transitions}</div>`;
+	                html += `</div>`;
+	            }
+	            
+	            if (correlation.summary.training_sequences_detected !== undefined) {
+	                html += `<div class="results-detail-item">`;
+	                html += `<div class="results-detail-label">Training Sequences Detected</div>`;
+	                html += `<div class="results-detail-value">${correlation.summary.training_sequences_detected}</div>`;
+	                html += `</div>`;
+	            }
+	            
+	            if (correlation.summary.correlated_events !== undefined) {
+	                html += `<div class="results-detail-item">`;
+	                html += `<div class="results-detail-label">Correlated Events</div>`;
+	                html += `<div class="results-detail-value">${correlation.summary.correlated_events}</div>`;
+	                html += `</div>`;
+	            }
+	            
+	            html += '</div>'; // results-detail-grid
+	            
+	            // State Timing Statistics
+	            if (correlation.state_timing && Object.keys(correlation.state_timing).length > 0) {
+	                html += '<h5>📊 State Duration Statistics</h5>';
+	                html += '<div class="ltssm-state-timing-grid">';
+	                
+	                Object.entries(correlation.state_timing).forEach(([state, timing]) => {
+	                    html += `<div class="ltssm-state-card">`;
+	                    html += `<div class="ltssm-state-name">${state}</div>`;
+	                    html += `<div class="ltssm-state-stats">`;
+	                    html += `<div class="ltssm-timing-item">Avg: ${timing.avg_duration_ms}ms</div>`;
+	                    html += `<div class="ltssm-timing-item">Min: ${timing.min_duration_ms}ms</div>`;
+	                    html += `<div class="ltssm-timing-item">Max: ${timing.max_duration_ms}ms</div>`;
+	                    html += `<div class="ltssm-timing-item">Count: ${timing.occurrence_count}</div>`;
+	                    html += `</div>`;
+	                    html += `</div>`;
+	                });
+	                
+	                html += '</div>'; // ltssm-state-timing-grid
+	            }
+	            
+	            // Training Sequences
+	            if (correlation.training_sequences && correlation.training_sequences.length > 0) {
+	                html += '<h5>⏱️ LTSSM Training Sequences</h5>';
+	                html += '<div class="ltssm-sequences-container">';
+	                
+	                correlation.training_sequences.forEach((sequence, index) => {
+	                    html += `<div class="ltssm-sequence-card">`;
+	                    html += `<div class="ltssm-sequence-header">`;
+	                    html += `<span class="ltssm-sequence-title">Sequence #${index + 1}</span>`;
+	                    html += `<span class="ltssm-sequence-device">${sequence.device}</span>`;
+	                    html += `<span class="ltssm-sequence-duration">${sequence.duration_ms}ms</span>`;
+	                    html += `</div>`;
+	                    
+	                    if (sequence.sequence && sequence.sequence.length > 0) {
+	                        html += '<div class="ltssm-sequence-states">';
+	                        sequence.sequence.forEach((step, stepIndex) => {
+	                            const isLast = stepIndex === sequence.sequence.length - 1;
+	                            html += `<span class="ltssm-state-step">${step.from_state}</span>`;
+	                            if (!isLast) {
+	                                html += `<span class="ltssm-state-arrow">→</span>`;
+	                            } else {
+	                                html += `<span class="ltssm-state-arrow">→</span>`;
+	                                html += `<span class="ltssm-state-step">${step.to_state}</span>`;
+	                            }
+	                        });
+	                        html += '</div>';
+	                    }
+	                    
+	                    html += `</div>`;
+	                });
+	                
+	                html += '</div>'; // ltssm-sequences-container
+	            }
+	        }
+	        
+	        html += '</div>'; // results-section
 	    }
 
 	    // Event Timeline
@@ -1871,6 +2369,197 @@ class TestingDashboard {
 	    showNotification(`Link retrain results exported: ${csvFilename} and ${txtFilename}`, 'success');
 	}
 
+	/**
+	 * Export Link Quality Assessment results
+	 */
+	exportLinkQualityResults(result) {
+	    const timestamp = new Date().toLocaleString();
+	    const csvFilename = `CalypsoPy_LinkQuality_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`;
+	    const txtFilename = `CalypsoPy_LinkQuality_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.txt`;
+
+	    // Generate CSV Export for Quality Events
+	    let csvContent = 'Timestamp,Device,Event Type,Severity,Description,Reset Operation,LTSSM State,Atlas Error\n';
+
+	    if (result.quality_events) {
+	        result.quality_events.forEach(event => {
+	            csvContent += `${event.timestamp.toFixed(3)},`;
+	            csvContent += `"${event.device || 'Unknown'}",`;
+	            csvContent += `"${event.event_type}",`;
+	            csvContent += `"${event.severity || 'info'}",`;
+	            csvContent += `"${event.description || event.message || ''}",`;
+	            csvContent += `"${event.reset_operation || ''}",`;
+	            csvContent += `"${event.ltssm_state || ''}",`;
+	            csvContent += `"${event.atlas_error || ''}"\n`;
+	        });
+	    }
+
+	    // Generate Text Report
+	    let reportContent = '';
+	    reportContent += '='.repeat(80) + '\n';
+	    reportContent += 'CalypsoPy+ PCIe Link Quality Assessment Report\n';
+	    reportContent += 'Generated by Serial Cables Professional Interface\n';
+	    reportContent += '='.repeat(80) + '\n';
+	    reportContent += `Report Generated: ${timestamp}\n`;
+	    reportContent += `Test Status: ${result.status.toUpperCase()}\n`;
+	    reportContent += `Test Duration: ${result.duration_ms}ms\n`;
+	    reportContent += '\n';
+
+	    // Summary
+	    if (result.summary) {
+	        reportContent += 'LINK QUALITY SUMMARY\n';
+	        reportContent += '-'.repeat(80) + '\n';
+	        reportContent += `Quality Grade: ${result.summary.quality_grade || 'N/A'}\n`;
+	        reportContent += `Total Reset Operations: ${result.summary.total_reset_operations || 0}\n`;
+	        reportContent += `Successful Recoveries: ${result.summary.successful_recoveries || 0}\n`;
+	        reportContent += `Quality Events Detected: ${result.summary.quality_events_detected || 0}\n`;
+	        if (result.summary.avg_recovery_time_ms) {
+	            reportContent += `Average Recovery Time: ${result.summary.avg_recovery_time_ms}ms\n`;
+	        }
+	        reportContent += '\n';
+	    }
+
+	    // Test Configuration
+	    if (result.configuration) {
+	        reportContent += 'TEST CONFIGURATION\n';
+	        reportContent += '-'.repeat(80) + '\n';
+	        reportContent += `Duration: ${result.configuration.duration_minutes || 5} minutes\n`;
+	        reportContent += `Reset Frequency: ${result.configuration.reset_frequency_seconds || 30} seconds\n`;
+	        if (result.configuration.target_device) {
+	            reportContent += `Target Device: ${result.configuration.target_device}\n`;
+	        }
+	        if (result.configuration.reset_methods) {
+	            reportContent += `Reset Methods: ${result.configuration.reset_methods.join(', ')}\n`;
+	        }
+	        reportContent += `LTSSM Monitoring: ${result.configuration.enable_ltssm_monitoring ? 'Enabled' : 'Disabled'}\n`;
+	        reportContent += `Atlas Error Tracking: ${result.configuration.enable_atlas_error_tracking ? 'Enabled' : 'Disabled'}\n`;
+	        reportContent += `Performance Monitoring: ${result.configuration.enable_perf_monitoring ? 'Enabled' : 'Disabled'}\n`;
+	        reportContent += '\n';
+	    }
+
+	    // Quality Assessment
+	    if (result.quality_assessment) {
+	        reportContent += 'QUALITY ASSESSMENT METRICS\n';
+	        reportContent += '-'.repeat(80) + '\n';
+	        if (result.quality_assessment.reset_recovery_score !== undefined) {
+	            reportContent += `Reset Recovery Score: ${(result.quality_assessment.reset_recovery_score * 100).toFixed(1)}%\n`;
+	        }
+	        if (result.quality_assessment.error_rate_score !== undefined) {
+	            reportContent += `Error Rate Score: ${(result.quality_assessment.error_rate_score * 100).toFixed(1)}%\n`;
+	        }
+	        if (result.quality_assessment.stability_score !== undefined) {
+	            reportContent += `Link Stability Score: ${(result.quality_assessment.stability_score * 100).toFixed(1)}%\n`;
+	        }
+	        
+	        if (result.quality_assessment.recommendations && result.quality_assessment.recommendations.length > 0) {
+	            reportContent += '\nQuality Recommendations:\n';
+	            result.quality_assessment.recommendations.forEach(rec => {
+	                reportContent += `  - ${rec}\n`;
+	            });
+	        }
+	        reportContent += '\n';
+	    }
+
+	    // LTSSM Monitoring Results
+	    if (result.ltssm_monitoring && result.ltssm_monitoring.available) {
+	        reportContent += 'LTSSM STATE MONITORING\n';
+	        reportContent += '-'.repeat(80) + '\n';
+	        reportContent += `Total State Transitions: ${result.ltssm_monitoring.total_transitions || 0}\n`;
+	        reportContent += `Correlated Reset Events: ${result.ltssm_monitoring.correlated_reset_events || 0}\n`;
+	        if (result.ltssm_monitoring.quality_correlation && result.ltssm_monitoring.quality_correlation.correlation_score !== undefined) {
+	            reportContent += `Quality Correlation Score: ${(result.ltssm_monitoring.quality_correlation.correlation_score * 100).toFixed(1)}%\n`;
+	        }
+	        reportContent += '\n';
+	    }
+
+	    // Atlas 3 Error Correlation
+	    if (result.atlas_error_tracking && result.atlas_error_tracking.available) {
+	        reportContent += 'ATLAS 3 ERROR CORRELATION\n';
+	        reportContent += '-'.repeat(80) + '\n';
+	        reportContent += `Total Atlas Errors: ${result.atlas_error_tracking.total_errors || 0}\n`;
+	        reportContent += `Correlated Errors: ${result.atlas_error_tracking.correlated_errors || 0}\n`;
+	        if (result.atlas_error_tracking.error_correlation_rate !== undefined) {
+	            reportContent += `Error Correlation Rate: ${(result.atlas_error_tracking.error_correlation_rate * 100).toFixed(1)}%\n`;
+	        }
+	        reportContent += '\n';
+	    }
+
+	    // Quality Events Timeline
+	    if (result.quality_events && result.quality_events.length > 0) {
+	        reportContent += 'QUALITY EVENTS TIMELINE\n';
+	        reportContent += '-'.repeat(80) + '\n';
+	        reportContent += String.prototype.padEnd.call('Time', 12);
+	        reportContent += String.prototype.padEnd.call('Device', 20);
+	        reportContent += String.prototype.padEnd.call('Event Type', 25);
+	        reportContent += String.prototype.padEnd.call('Severity', 12);
+	        reportContent += 'Description\n';
+	        reportContent += '-'.repeat(80) + '\n';
+
+	        result.quality_events.slice(-50).forEach(event => {
+	            reportContent += String.prototype.padEnd.call(`${event.timestamp.toFixed(3)}s`, 12);
+	            reportContent += String.prototype.padEnd.call(event.device || 'Unknown', 20);
+	            reportContent += String.prototype.padEnd.call(event.event_type, 25);
+	            reportContent += String.prototype.padEnd.call(event.severity || 'info', 12);
+	            reportContent += `${event.description || event.message || ''}\n`;
+	        });
+
+	        if (result.quality_events.length > 50) {
+	            reportContent += `\nShowing most recent 50 of ${result.quality_events.length} quality events\n`;
+	        }
+	        reportContent += '\n';
+	    }
+
+	    // Warnings
+	    if (result.warnings && result.warnings.length > 0) {
+	        reportContent += 'WARNINGS\n';
+	        reportContent += '-'.repeat(80) + '\n';
+	        result.warnings.forEach(warning => {
+	            reportContent += `⚠️  ${warning}\n`;
+	        });
+	        reportContent += '\n';
+	    }
+
+	    // Errors
+	    if (result.errors && result.errors.length > 0) {
+	        reportContent += 'ERRORS\n';
+	        reportContent += '-'.repeat(80) + '\n';
+	        result.errors.forEach(error => {
+	            reportContent += `❌ ${error}\n`;
+	        });
+	        reportContent += '\n';
+	    }
+
+	    reportContent += '='.repeat(80) + '\n';
+	    reportContent += 'End of PCIe Link Quality Assessment Report\n';
+	    reportContent += 'Visit: https://serial-cables.com for more information\n';
+	    reportContent += '='.repeat(80) + '\n';
+
+	    // Create download for CSV
+	    const csvBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+	    const csvUrl = window.URL.createObjectURL(csvBlob);
+	    const csvLink = document.createElement('a');
+	    csvLink.href = csvUrl;
+	    csvLink.download = csvFilename;
+	    csvLink.style.display = 'none';
+	    document.body.appendChild(csvLink);
+	    csvLink.click();
+	    document.body.removeChild(csvLink);
+	    window.URL.revokeObjectURL(csvUrl);
+
+	    // Create download for text report
+	    const txtBlob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+	    const txtUrl = window.URL.createObjectURL(txtBlob);
+	    const txtLink = document.createElement('a');
+	    txtLink.href = txtUrl;
+	    txtLink.download = txtFilename;
+	    txtLink.style.display = 'none';
+	    document.body.appendChild(txtLink);
+	    txtLink.click();
+	    document.body.removeChild(txtLink);
+	    window.URL.revokeObjectURL(txtUrl);
+
+	    showNotification(`Link quality results exported: ${csvFilename} and ${txtFilename}`, 'success');
+	}
+
     /**
 	 * Show results in popup window with export/print options
 	 */
@@ -1989,6 +2678,8 @@ class TestingDashboard {
 	        this.exportLinkTrainingResults(result);
 	    } else if (testId === 'link_retrain_count') {
 	        this.exportLinkRetrainResults(result);
+	    } else if (testId === 'link_quality') {
+	        this.exportLinkQualityResults(result);
 	    } else if (testId === 'pcie_discovery') {
 	        this.exportPCIeDiscoveryResults(result);
 	    } else if (testId === 'nvme_discovery') {

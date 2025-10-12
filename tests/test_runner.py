@@ -17,6 +17,7 @@ try:
     from .nvme_discovery import NVMeDiscovery
     from .link_training_time import LinkTrainingTimeMeasurement
     from .link_retrain_count import LinkRetrainCount
+    from .link_quality import LinkQualityTest
     from .sequential_read_performance import SequentialReadPerformanceTest
     from .sequential_write_performance import SequentialWritePerformanceTest
     from .random_iops_performance import RandomIOPSPerformanceTest
@@ -26,6 +27,7 @@ except ImportError:
     from nvme_discovery import NVMeDiscovery
     from link_training_time import LinkTrainingTimeMeasurement
     from link_retrain_count import LinkRetrainCount
+    from link_quality import LinkQualityTest
     from sequential_read_performance import SequentialReadPerformanceTest
     from sequential_write_performance import SequentialWritePerformanceTest
     from random_iops_performance import RandomIOPSPerformanceTest
@@ -97,6 +99,14 @@ class TestRunner:
                 requires_root=True,
                 requires_nvme_cli=False,
                 requires_nvme_devices=True  # Only enabled after NVMe discovery
+            ),
+            'link_quality': TestSuite(
+                name='PCIe Link Quality Assessment',
+                description='Comprehensive link quality test with random resets, LTSSM monitoring, and error correlation with PCIe 6.x compliance validation',
+                test_class=LinkQualityTest,
+                requires_root=True,
+                requires_nvme_cli=False,
+                requires_nvme_devices=True  # Requires discovery tests to be completed first
             ),
             'sequential_read_performance': TestSuite(
                 name='Sequential Read Performance',
@@ -264,6 +274,9 @@ class TestRunner:
             if hasattr(test_instance, 'run_retrain_test'):
                 # Link Retrain Count test
                 result = test_instance.run_retrain_test(options or {})
+            elif hasattr(test_instance, 'run_link_quality_test'):
+                # Link Quality test
+                result = test_instance.run_link_quality_test(options or {})
             elif hasattr(test_instance, 'run_sequential_read_test'):
                 # Sequential Read Performance test
                 result = test_instance.run_sequential_read_test(options or {})
@@ -327,7 +340,7 @@ class TestRunner:
         )
 
         # Run tests in order: PCIe Discovery, NVMe Discovery, then conditional tests
-        test_order = ['pcie_discovery', 'nvme_discovery', 'link_training_time', 'link_retrain_count', 'sequential_read_performance', 'sequential_write_performance', 'random_iops_performance']
+        test_order = ['pcie_discovery', 'nvme_discovery', 'link_training_time', 'link_retrain_count', 'link_quality', 'sequential_read_performance', 'sequential_write_performance', 'random_iops_performance']
 
         for suite_id in test_order:
             if suite_id not in self.test_suites:

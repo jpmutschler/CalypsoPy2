@@ -20,8 +20,10 @@ import json
 
 try:
     from .com_error_monitor import COMErrorMonitor, ErrorCounters
+    from .ltssm_monitor import LTSSMMonitor, LTSSMState, LTSSMTransition
 except ImportError:
     from com_error_monitor import COMErrorMonitor, ErrorCounters
+    from ltssm_monitor import LTSSMMonitor, LTSSMState, LTSSMTransition
 
 logger = logging.getLogger(__name__)
 
@@ -348,10 +350,11 @@ class LinkRetrainCount:
         Returns:
             Result dictionary with timing and status
         """
+        start_timestamp = time.time()
         result = {
             'success': False,
             'pci_address': pci_address,
-            'start_time': time.time(),
+            'start_time': start_timestamp,
             'retrain_time_ms': 0,
             'training_detected': False,
             'training_completed': False,
@@ -448,6 +451,12 @@ class LinkRetrainCount:
             'errors': [],
             'error_monitoring': {
                 'enabled': monitor_errors,
+                'available': False,
+                'data': None,
+                'correlation': {}
+            },
+            'ltssm_monitoring': {
+                'enabled': True,
                 'available': False,
                 'data': None,
                 'correlation': {}
@@ -578,6 +587,26 @@ class LinkRetrainCount:
                 logger.warning(f"Error monitoring setup failed: {e}")
         elif monitor_errors:
             result['warnings'].append("Atlas 3 error monitoring requested but CalypsoPy manager or port not provided")
+
+        # Initialize LTSSM monitoring for retrain events
+        ltssm_monitor = None
+        try:
+            # Use first target device or a default PCI address for LTSSM monitoring
+            device_path = target_devices[0]['pci_address'] if target_devices else "0000:01:00.0"
+            ltssm_monitor = LTSSMMonitor(device_path)
+            
+            # Start LTSSM monitoring for retrain events
+            if ltssm_monitor.start_monitoring(
+                sampling_interval=0.1  # Very high frequency for retrain events
+            ):
+                result['ltssm_monitoring']['available'] = True
+                logger.info(f"LTSSM monitoring started for device: {device_path}")
+            else:
+                result['warnings'].append("Failed to start LTSSM monitoring")
+                
+        except Exception as e:
+            result['warnings'].append(f"LTSSM monitoring setup failed: {str(e)}")
+            logger.warning(f"LTSSM monitoring setup failed: {e}")
 
         # Get test parameters
         num_retrains = options.get('num_retrains', 5)
@@ -738,6 +767,33 @@ class LinkRetrainCount:
             except Exception as e:
                 result['warnings'].append(f"Error stopping monitoring: {str(e)}")
                 logger.warning(f"Error stopping monitoring: {e}")
+
+        # Stop LTSSM monitoring and correlate with retrain events
+        if ltssm_monitor and ltssm_monitor.is_monitoring():
+            try:
+                ltssm_data = ltssm_monitor.stop_monitoring()
+                if ltssm_data:
+                    result['ltssm_monitoring']['data'] = ltssm_data.to_dict()
+                    
+                    # Correlate LTSSM state transitions with retrain events
+                    ltssm_correlation = self._correlate_ltssm_with_retrains(ltssm_data, result['devices'])
+                    result['ltssm_monitoring']['correlation'] = ltssm_correlation
+                    
+                    # Add summary for easy access
+                    result['ltssm_monitoring']['summary'] = {
+                        'duration_seconds': ltssm_data.session_end - ltssm_data.session_start,
+                        'total_samples': ltssm_data.total_samples,
+                        'total_transitions': len(ltssm_data.transitions),
+                        'devices_monitored': len(ltssm_data.device_states) if ltssm_data.device_states else 0,
+                        'monitoring_successful': True
+                    }
+                    
+                    logger.info(f"LTSSM monitoring completed: {len(ltssm_data.transitions)} transitions detected")
+                else:
+                    result['warnings'].append("LTSSM monitoring stopped but no data collected")
+            except Exception as e:
+                result['warnings'].append(f"Error stopping LTSSM monitoring: {str(e)}")
+                logger.warning(f"LTSSM monitoring stop failed: {e}")
 
         # Determine overall status
         if len(compliance_issues) == 0 and failed_retrains == 0:
@@ -1039,6 +1095,214 @@ class LinkRetrainCount:
             'total_error_increases': total_errors,
             'retrain_windows_analyzed': len(retrain_windows)
         }
+    
+    def _correlate_ltssm_with_retrains(self, ltssm_data, devices: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Correlate LTSSM state transitions with link retrain events
+        
+        Args:
+            ltssm_data: LTSSMMonitorResult from monitoring session
+            devices: List of device test results with retrain events
+            
+        Returns:
+            Correlation analysis dictionary
+        """
+        correlation = {
+            'summary': {},
+            'state_transitions': [],
+            'retrain_sequences': [],
+            'state_timing': {},
+            'retrain_correlation': {},
+            'retrain_analysis': {}
+        }
+        
+        try:
+            if not ltssm_data or not ltssm_data.transitions:
+                correlation['summary'] = {'status': 'no_ltssm_data', 'message': 'No LTSSM transitions recorded'}
+                return correlation
+            
+            # Collect all retrain events with precise timing
+            all_retrain_events = []
+            total_retrains = 0
+            
+            for device in devices:
+                device_addr = device['pci_address']
+                for retrain in device.get('retrains', []):
+                    # Extract timing from the retrain event
+                    if 'start_time' in retrain or retrain.get('sequence'):
+                        # Estimate start time if not available
+                        start_time = retrain.get('start_time', time.time())
+                        duration_ms = retrain.get('time_ms', 0)
+                        
+                        all_retrain_events.append({
+                            'device': device_addr,
+                            'sequence': retrain.get('sequence', total_retrains + 1),
+                            'start_time': start_time,
+                            'duration_ms': duration_ms,
+                            'success': retrain.get('success', False),
+                            'training_detected': retrain.get('training_detected', False)
+                        })
+                        total_retrains += 1
+            
+            correlation['retrain_analysis'] = {
+                'total_retrains_performed': total_retrains,
+                'retrain_events': all_retrain_events,
+                'retrain_timespan_seconds': (max(r['start_time'] for r in all_retrain_events) - 
+                                           min(r['start_time'] for r in all_retrain_events)) if all_retrain_events else 0
+            }
+            
+            # Organize LTSSM transitions by device
+            device_transitions = {}
+            for transition in ltssm_data.transitions:
+                device = transition.device
+                if device not in device_transitions:
+                    device_transitions[device] = []
+                device_transitions[device].append(transition)
+            
+            # Analyze state transitions related to retrains
+            training_related_transitions = 0
+            retrain_related_transitions = 0
+            
+            for transition in ltssm_data.transitions:
+                # Check if this is a training-related state
+                is_training = transition.from_state in ['Detect', 'Polling', 'Configuration', 'Recovery'] or \
+                             transition.to_state in ['Detect', 'Polling', 'Configuration', 'Recovery']
+                
+                if is_training:
+                    training_related_transitions += 1
+                
+                # Check if this transition is near a retrain event
+                transition_time_seconds = transition.timestamp / 1000000000  # Convert from nanoseconds
+                
+                is_retrain_related = False
+                for retrain_event in all_retrain_events:
+                    if transition.device == retrain_event['device']:
+                        time_diff = abs(transition_time_seconds - retrain_event['start_time'])
+                        if time_diff <= 1.0:  # Within 1 second of retrain
+                            is_retrain_related = True
+                            break
+                
+                if is_retrain_related:
+                    retrain_related_transitions += 1
+                
+                correlation['state_transitions'].append({
+                    'timestamp': transition.timestamp,
+                    'device': transition.device,
+                    'from_state': transition.from_state,
+                    'to_state': transition.to_state,
+                    'is_training_related': is_training,
+                    'is_retrain_related': is_retrain_related,
+                    'duration_ns': getattr(transition, 'duration_ns', None)
+                })
+            
+            # Find retrain sequences (Recovery -> ... -> L0)
+            for device, transitions in device_transitions.items():
+                transitions.sort(key=lambda x: x.timestamp)
+                
+                current_sequence = []
+                for transition in transitions:
+                    # Look for retrain-triggered sequences starting with Recovery or going to Recovery
+                    if (transition.from_state in ['Recovery', 'Detect', 'Polling'] or 
+                        transition.to_state in ['Recovery', 'Detect', 'Polling']) or \
+                       (current_sequence and current_sequence[-1]['to_state'] in 
+                        ['Detect', 'Polling', 'Configuration', 'Recovery']):
+                        
+                        current_sequence.append({
+                            'timestamp': transition.timestamp,
+                            'from_state': transition.from_state,
+                            'to_state': transition.to_state
+                        })
+                        
+                        # Check if sequence completed (reached L0)
+                        if transition.to_state == 'L0':
+                            if len(current_sequence) > 1:
+                                sequence_duration = (transition.timestamp - current_sequence[0]['timestamp']) / 1000000  # Convert to ms
+                                
+                                # Find associated retrain event
+                                associated_retrain = None
+                                seq_start_time_seconds = current_sequence[0]['timestamp'] / 1000000000
+                                
+                                for retrain_event in all_retrain_events:
+                                    if (retrain_event['device'] == device and 
+                                        abs(seq_start_time_seconds - retrain_event['start_time']) <= 2.0):
+                                        associated_retrain = retrain_event
+                                        break
+                                
+                                correlation['retrain_sequences'].append({
+                                    'device': device,
+                                    'start_time': current_sequence[0]['timestamp'],
+                                    'end_time': transition.timestamp,
+                                    'duration_ms': round(sequence_duration, 3),
+                                    'sequence': current_sequence.copy(),
+                                    'associated_retrain': associated_retrain
+                                })
+                            current_sequence = []
+                    else:
+                        current_sequence = []
+            
+            # Calculate detailed correlation analysis
+            if all_retrain_events:
+                retrain_with_ltssm = 0
+                retrain_without_ltssm = 0
+                
+                for retrain_event in all_retrain_events:
+                    # Check if this retrain has associated LTSSM transitions
+                    has_ltssm_activity = any(
+                        t['device'] == retrain_event['device'] and t['is_retrain_related']
+                        for t in correlation['state_transitions']
+                    )
+                    
+                    if has_ltssm_activity:
+                        retrain_with_ltssm += 1
+                    else:
+                        retrain_without_ltssm += 1
+                
+                correlation['retrain_correlation'] = {
+                    'retrains_with_ltssm_activity': retrain_with_ltssm,
+                    'retrains_without_ltssm_activity': retrain_without_ltssm,
+                    'ltssm_correlation_percentage': (retrain_with_ltssm / total_retrains) * 100 if total_retrains > 0 else 0,
+                    'retrain_sequences_detected': len(correlation['retrain_sequences'])
+                }
+            
+            # Calculate state timing statistics
+            state_durations = {}
+            for device, transitions in device_transitions.items():
+                for i in range(len(transitions) - 1):
+                    current = transitions[i]
+                    next_trans = transitions[i + 1]
+                    
+                    state = current.to_state
+                    duration_ms = (next_trans.timestamp - current.timestamp) / 1000000
+                    
+                    if state not in state_durations:
+                        state_durations[state] = []
+                    state_durations[state].append(duration_ms)
+            
+            # Calculate averages for each state during retrain test
+            for state, durations in state_durations.items():
+                correlation['state_timing'][state] = {
+                    'avg_duration_ms': round(sum(durations) / len(durations), 3),
+                    'min_duration_ms': round(min(durations), 3),
+                    'max_duration_ms': round(max(durations), 3),
+                    'occurrence_count': len(durations)
+                }
+            
+            correlation['summary'] = {
+                'total_transitions': len(ltssm_data.transitions),
+                'training_related_transitions': training_related_transitions,
+                'retrain_related_transitions': retrain_related_transitions,
+                'retrain_sequences_detected': len(correlation['retrain_sequences']),
+                'devices_with_transitions': len(device_transitions),
+                'retrains_performed': total_retrains,
+                'monitoring_duration_ms': round((ltssm_data.session_end - ltssm_data.session_start) * 1000, 3),
+                'status': 'success'
+            }
+            
+        except Exception as e:
+            correlation['summary'] = {'status': 'correlation_error', 'message': f'Error during LTSSM correlation: {str(e)}'}
+            logger.warning(f"LTSSM correlation failed: {e}")
+        
+        return correlation
 
     def _calculate_std_dev(self, values: List[float]) -> float:
         """Calculate standard deviation"""

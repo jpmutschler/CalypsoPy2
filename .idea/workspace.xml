@@ -4,14 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fc3e30f9-c418-4920-a510-76a20644706b" name="Changes" comment="Server Connection Bug Formatting fixed">
+    <list default="true" id="fc3e30f9-c418-4920-a510-76a20644706b" name="Changes" comment="NVMe Performance Tests added. Link Training Error counter correlated into Link Quality tests, SMART data tracking during NVMe Performance Tests">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/css/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/static/css/styles.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/js/testing.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/js/testing.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/link_retrain_count.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/link_retrain_count.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/link_training_time.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/link_training_time.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/pcie_discovery.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/pcie_discovery.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/test_runner.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_runner.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -114,7 +114,7 @@
       <workItem from="1760010162295" duration="45864000" />
       <workItem from="1760134585928" duration="4339000" />
       <workItem from="1760211443157" duration="8418000" />
-      <workItem from="1760301266672" duration="4740000" />
+      <workItem from="1760301266672" duration="9048000" />
     </task>
     <task id="LOCAL-00001" summary="Initial Push of CalypsoPy+">
       <option name="closed" value="true" />
@@ -380,7 +380,15 @@
       <option name="project" value="LOCAL" />
       <updated>1760135597774</updated>
     </task>
-    <option name="localTasksCounter" value="34" />
+    <task id="LOCAL-00034" summary="NVMe Performance Tests added. Link Training Error counter correlated into Link Quality tests, SMART data tracking during NVMe Performance Tests">
+      <option name="closed" value="true" />
+      <created>1760306121481</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1760306121481</updated>
+    </task>
+    <option name="localTasksCounter" value="35" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -417,10 +425,11 @@
     <MESSAGE value="Link Retrain Test Added" />
     <MESSAGE value="Server Connection Bug Solved" />
     <MESSAGE value="Server Connection Bug Formatting fixed" />
-    <option name="LAST_COMMIT_MESSAGE" value="Server Connection Bug Formatting fixed" />
+    <MESSAGE value="NVMe Performance Tests added. Link Training Error counter correlated into Link Quality tests, SMART data tracking during NVMe Performance Tests" />
+    <option name="LAST_COMMIT_MESSAGE" value="NVMe Performance Tests added. Link Training Error counter correlated into Link Quality tests, SMART data tracking during NVMe Performance Tests" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/CalypsoPy_$start.coverage" NAME="start Coverage Results" MODIFIED="1760303884842" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/CalypsoPy_$start.coverage" NAME="start Coverage Results" MODIFIED="1760310518269" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/CalypsoPy_$COMportTest.coverage" NAME="COMportTest Coverage Results" MODIFIED="1758721173617" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
