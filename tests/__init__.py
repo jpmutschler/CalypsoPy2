@@ -1,12 +1,13 @@
 """
 CalypsoPy+ PCIe/NVMe Testing Module
-Phase 1: Link Quality & NVMe Discovery Tests
+Comprehensive PCIe/NVMe testing suite
 
 This module provides comprehensive testing capabilities for:
 - PCIe topology discovery and validation
 - NVMe device enumeration and health monitoring
 - Link training time measurement and LTSSM tracking
 - Link retrain count monitoring and PCIe 6.x compliance validation
+- Sequential read performance testing with fio
 - Atlas 3 switch configuration verification
 """
 
@@ -21,7 +22,10 @@ SUPPORTED_TESTS = [
     "pcie_discovery",
     "nvme_discovery",
     "link_training_time",
-    "link_retrain_count",  # NEW: Link Retrain Count test
+    "link_retrain_count",
+    "sequential_read_performance",  # NEW: Sequential Read Performance test
+    "sequential_write_performance", # NEW: Sequential Write Performance test
+    "random_iops_performance",      # NEW: Random IOPS Performance test
     "link_quality",
     "error_correlation"
 ]
@@ -94,3 +98,50 @@ def get_module_info():
         'supported_tests': SUPPORTED_TESTS,
         'permission_level': get_permission_level()
     }
+
+
+# Import main test classes for external use
+try:
+    from .pcie_discovery import PCIeDiscovery, NVMeDiscovery as PCIeNVMeDiscovery
+    from .nvme_discovery import NVMeDiscovery
+    from .link_training_time import LinkTrainingTimeMeasurement
+    from .link_retrain_count import LinkRetrainCount
+    from .sequential_read_performance import SequentialReadPerformanceTest
+    from .sequential_write_performance import SequentialWritePerformanceTest
+    from .random_iops_performance import RandomIOPSPerformanceTest
+    from .fio_utilities import FioUtilities
+    from .results_exporter import ResultsExporter
+    from .test_runner import TestRunner, TestSuite, TestRunResult
+    
+    # Export main classes
+    __all__ = [
+        'PCIeDiscovery',
+        'NVMeDiscovery', 
+        'LinkTrainingTimeMeasurement',
+        'LinkRetrainCount',
+        'SequentialReadPerformanceTest',
+        'SequentialWritePerformanceTest',
+        'RandomIOPSPerformanceTest',
+        'FioUtilities',
+        'ResultsExporter',
+        'TestRunner',
+        'TestSuite', 
+        'TestRunResult',
+        'TestStatus',
+        'PermissionLevel',
+        'get_permission_level',
+        'get_module_info',
+        'SUPPORTED_TESTS',
+        'TEST_SUITE_VERSION'
+    ]
+    
+except ImportError as e:
+    # In case some modules are missing during development
+    __all__ = [
+        'TestStatus',
+        'PermissionLevel', 
+        'get_permission_level',
+        'get_module_info',
+        'SUPPORTED_TESTS',
+        'TEST_SUITE_VERSION'
+    ]

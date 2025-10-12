@@ -10,9 +10,14 @@ import subprocess
 import re
 import time
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Callable
 from dataclasses import dataclass
 from collections import defaultdict
+
+try:
+    from .com_error_monitor import COMErrorMonitor, ErrorCounters
+except ImportError:
+    from com_error_monitor import COMErrorMonitor, ErrorCounters
 
 logger = logging.getLogger(__name__)
 
@@ -460,6 +465,10 @@ class LinkTrainingTimeMeasurement:
                 - trigger_reset: Boolean, trigger device reset before test
                 - trigger_hotplug: Boolean, trigger hot-plug before test
                 - wait_time: Seconds to wait after trigger (default: 3)
+                - calypso_manager: CalypsoPyManager instance for COM error monitoring (optional)
+                - com_port: COM port for error monitoring (optional)
+                - monitor_errors: Boolean, enable COM error monitoring (default: False)
+                - error_sampling_interval: Error sampling interval in seconds (default: 1.0)
 
         Returns:
             Comprehensive test results
@@ -471,6 +480,12 @@ class LinkTrainingTimeMeasurement:
         trigger_reset = options.get('trigger_reset', False)
         trigger_hotplug = options.get('trigger_hotplug', False)
         wait_time = options.get('wait_time', 3)
+        
+        # COM error monitoring options
+        monitor_errors = options.get('monitor_errors', False)
+        calypso_manager = options.get('calypso_manager')
+        com_port = options.get('com_port')
+        error_sampling_interval = options.get('error_sampling_interval', 1.0)
 
         result = {
             'test_name': 'Link Training Time Measurement',
@@ -483,7 +498,13 @@ class LinkTrainingTimeMeasurement:
             'events': [],
             'statistics': {},
             'summary': {},
-            'trigger_results': {}
+            'trigger_results': {},
+            'error_monitoring': {
+                'enabled': monitor_errors,
+                'available': False,
+                'data': None,
+                'correlation': {}
+            }
         }
 
         try:
@@ -497,6 +518,27 @@ class LinkTrainingTimeMeasurement:
 
             # Get timestamp before any triggers
             before_timestamp = time.time()
+            
+            # Initialize Atlas 3 PCIe error monitoring if requested
+            error_monitor = None
+            if monitor_errors and calypso_manager and com_port:
+                try:
+                    error_monitor = COMErrorMonitor(calypso_manager, com_port)
+                    
+                    # Start monitoring Atlas 3 link training errors in background
+                    if error_monitor.start_monitoring(
+                        sampling_interval=error_sampling_interval
+                    ):
+                        result['error_monitoring']['available'] = True
+                        logger.info(f"Atlas 3 error monitoring started on {com_port}")
+                    else:
+                        result['warnings'].append("Failed to start Atlas 3 error monitoring")
+                        
+                except Exception as e:
+                    result['warnings'].append(f"Atlas 3 error monitoring setup failed: {str(e)}")
+                    logger.warning(f"Error monitoring setup failed: {e}")
+            elif monitor_errors:
+                result['warnings'].append("Atlas 3 error monitoring requested but CalypsoPy manager or port not provided")
 
             # Trigger device reset if requested
             if trigger_reset and selected_device:
@@ -570,15 +612,235 @@ class LinkTrainingTimeMeasurement:
 
                 logger.info(f"Found {len(events)} link training events across {len(statistics['devices'])} devices")
 
+            # Stop error monitoring and correlate with link training events
+            if error_monitor and error_monitor.is_monitoring():
+                try:
+                    error_data = error_monitor.stop_monitoring()
+                    if error_data:
+                        result['error_monitoring']['data'] = error_data.to_dict()
+                        
+                        # Correlate error counter changes with link training events
+                        correlation = self._correlate_errors_with_events(error_data, events)
+                        result['error_monitoring']['correlation'] = correlation
+                        
+                        # Add summary for easy access
+                        result['error_monitoring']['summary'] = {
+                            'duration_seconds': error_data.session_end - error_data.session_start,
+                            'total_samples': error_data.total_samples,
+                            'error_changes_detected': sum(abs(delta) for delta in (error_data.error_deltas or {}).values()) > 0,
+                            'total_error_changes': sum(abs(delta) for delta in (error_data.error_deltas or {}).values()),
+                            'error_deltas': error_data.error_deltas,
+                            'monitoring_successful': True
+                        }
+                        
+                        logger.info(f"Error monitoring correlation: {correlation['summary']}")
+                    else:
+                        result['warnings'].append("Error monitoring stopped but no data collected")
+                except Exception as e:
+                    result['warnings'].append(f"Error stopping monitoring: {str(e)}")
+                    logger.warning(f"Error stopping monitoring: {e}")
+
         except Exception as e:
             logger.error(f"Link training measurement test failed: {e}")
             result['status'] = 'error'
             result['errors'].append(f"Exception during measurement: {str(e)}")
+            
+            # Ensure error monitoring is stopped even on failure
+            if error_monitor and error_monitor.is_monitoring():
+                try:
+                    error_monitor.stop_monitoring()
+                except:
+                    pass
 
         end_time = datetime.now()
         result['duration_ms'] = int((end_time - start_time).total_seconds() * 1000)
 
         return result
+    
+    def _correlate_errors_with_events(self, error_data, events: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Correlate Atlas 3 cumulative error counter changes with link training events
+        
+        Args:
+            error_data: ErrorMonitorResult from monitoring session
+            events: List of link training events from dmesg
+            
+        Returns:
+            Correlation analysis dictionary
+        """
+        correlation = {
+            'summary': {},
+            'error_timing': {},
+            'error_spikes': [],
+            'event_correlation': {},
+            'baseline_errors': {},
+            'cumulative_analysis': {}
+        }
+        
+        try:
+            if not error_data or not error_data.samples or len(error_data.samples) < 2:
+                correlation['summary'] = {'status': 'no_error_data', 'message': 'Insufficient error counter data'}
+                return correlation
+            
+            # Establish baseline from first sample (test start)
+            baseline = error_data.samples[0]
+            correlation['baseline_errors'] = {
+                'timestamp': baseline.timestamp,
+                'port_receive': baseline.port_receive,
+                'bad_tlp': baseline.bad_tlp,
+                'bad_dllp': baseline.bad_dllp,
+                'rec_diag': baseline.rec_diag
+            }
+            
+            # Calculate total error changes from baseline to final
+            final_sample = error_data.samples[-1]
+            total_error_changes = {
+                'port_receive': final_sample.port_receive - baseline.port_receive,
+                'bad_tlp': final_sample.bad_tlp - baseline.bad_tlp,
+                'bad_dllp': final_sample.bad_dllp - baseline.bad_dllp,
+                'rec_diag': final_sample.rec_diag - baseline.rec_diag
+            }
+            
+            total_new_errors = sum(max(0, delta) for delta in total_error_changes.values())
+            
+            correlation['summary'] = {
+                'total_new_errors': total_new_errors,
+                'error_changes_from_baseline': total_error_changes,
+                'monitoring_duration': error_data.session_end - error_data.session_start,
+                'samples_collected': error_data.total_samples,
+                'baseline_timestamp': baseline.timestamp
+            }
+            
+            # If we have new errors during the test, analyze timing
+            if total_new_errors > 0:
+                correlation['summary']['status'] = 'new_errors_detected'
+                correlation['summary']['message'] = f'Detected {total_new_errors} new errors during test'
+                
+                # Find error increments relative to baseline
+                for i, sample in enumerate(error_data.samples[1:], 1):  # Skip baseline
+                    # Calculate delta from baseline
+                    delta_from_baseline = {
+                        'port_receive': max(0, sample.port_receive - baseline.port_receive),
+                        'bad_tlp': max(0, sample.bad_tlp - baseline.bad_tlp),
+                        'bad_dllp': max(0, sample.bad_dllp - baseline.bad_dllp),
+                        'rec_diag': max(0, sample.rec_diag - baseline.rec_diag)
+                    }
+                    
+                    # Check if this sample shows any error increase from previous sample
+                    if i > 1:
+                        prev_sample = error_data.samples[i-1]
+                        sample_increment = {
+                            'port_receive': max(0, sample.port_receive - prev_sample.port_receive),
+                            'bad_tlp': max(0, sample.bad_tlp - prev_sample.bad_tlp),
+                            'bad_dllp': max(0, sample.bad_dllp - prev_sample.bad_dllp),
+                            'rec_diag': max(0, sample.rec_diag - prev_sample.rec_diag)
+                        }
+                        
+                        increment_total = sum(sample_increment.values())
+                        
+                        if increment_total > 0:
+                            spike = {
+                                'timestamp': sample.timestamp,
+                                'sample_index': i,
+                                'incremental_errors': sample_increment,
+                                'cumulative_from_baseline': delta_from_baseline,
+                                'increment_total': increment_total,
+                                'elapsed_since_start': sample.timestamp - baseline.timestamp
+                            }
+                            correlation['error_spikes'].append(spike)
+                
+                # Enhanced cumulative analysis
+                correlation['cumulative_analysis'] = {
+                    'peak_error_rate': self._calculate_peak_error_rate(error_data.samples, baseline),
+                    'error_progression': self._analyze_error_progression(error_data.samples, baseline),
+                    'error_timeline': [(sample.timestamp - baseline.timestamp, 
+                                      sum(max(0, getattr(sample, attr) - getattr(baseline, attr)) 
+                                          for attr in ['port_receive', 'bad_tlp', 'bad_dllp', 'rec_diag']))
+                                     for sample in error_data.samples]
+                }
+                
+                # Correlate error spikes with link training events
+                if correlation['error_spikes'] and events:
+                    for spike in correlation['error_spikes']:
+                        spike_time = spike['timestamp']
+                        
+                        # Find events within ±3 seconds of error spike (tighter window for precision)
+                        nearby_events = []
+                        for event in events:
+                            time_diff = abs(event['timestamp'] - spike_time)
+                            if time_diff <= 3.0:  # 3 second window
+                                nearby_events.append({
+                                    'event': event,
+                                    'time_offset': event['timestamp'] - spike_time,
+                                    'event_type': event.get('event_type', 'unknown')
+                                })
+                        
+                        if nearby_events:
+                            correlation['event_correlation'][f'spike_{spike_time}'] = {
+                                'error_spike': spike,
+                                'nearby_events': nearby_events,
+                                'correlation_strength': len(nearby_events)
+                            }
+            else:
+                correlation['summary']['status'] = 'no_new_errors'
+                correlation['summary']['message'] = 'No new errors detected during test (error counters remained stable)'
+                
+        except Exception as e:
+            correlation['summary'] = {'status': 'correlation_error', 'message': f'Error during correlation: {str(e)}'}
+            logger.warning(f"Error correlation failed: {e}")
+        
+        return correlation
+    
+    def _calculate_peak_error_rate(self, samples, baseline):
+        """Calculate the peak error rate (errors per second) during the test"""
+        if len(samples) < 3:
+            return 0.0
+            
+        max_rate = 0.0
+        for i in range(2, len(samples)):
+            prev_sample = samples[i-1]
+            curr_sample = samples[i]
+            time_diff = curr_sample.timestamp - prev_sample.timestamp
+            
+            if time_diff > 0:
+                error_diff = sum(max(0, getattr(curr_sample, attr) - getattr(prev_sample, attr))
+                               for attr in ['port_receive', 'bad_tlp', 'bad_dllp', 'rec_diag'])
+                rate = error_diff / time_diff
+                max_rate = max(max_rate, rate)
+        
+        return max_rate
+    
+    def _analyze_error_progression(self, samples, baseline):
+        """Analyze how errors progressed throughout the test"""
+        if len(samples) < 2:
+            return {'pattern': 'insufficient_data'}
+        
+        # Calculate error counts at different test phases
+        mid_point = len(samples) // 2
+        
+        early_errors = sum(max(0, getattr(samples[mid_point], attr) - getattr(baseline, attr))
+                          for attr in ['port_receive', 'bad_tlp', 'bad_dllp', 'rec_diag'])
+        
+        late_errors = sum(max(0, getattr(samples[-1], attr) - getattr(baseline, attr))
+                         for attr in ['port_receive', 'bad_tlp', 'bad_dllp', 'rec_diag'])
+        
+        if early_errors == 0 and late_errors == 0:
+            pattern = 'stable'
+        elif early_errors > 0 and late_errors == early_errors:
+            pattern = 'early_errors_then_stable'
+        elif early_errors == 0 and late_errors > 0:
+            pattern = 'late_errors'
+        elif late_errors > early_errors:
+            pattern = 'progressive_increase'
+        else:
+            pattern = 'variable'
+        
+        return {
+            'pattern': pattern,
+            'early_phase_errors': early_errors,
+            'late_phase_errors': late_errors,
+            'total_progression': late_errors - early_errors
+        }
 
 
 if __name__ == '__main__':

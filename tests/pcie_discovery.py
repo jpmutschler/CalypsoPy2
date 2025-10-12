@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-CalypsoPy+ NVMe Discovery Tests
-Discovers and validates NVMe devices downstream of Atlas 3 switch
+CalypsoPy+ PCIe Discovery Tests
+Discovers and validates Atlas 3 PCIe switch topology and NVMe devices
 """
 
 import os
@@ -457,3 +457,155 @@ if __name__ == '__main__':
         print(f"\nErrors:")
         for err in test_result['errors']:
             print(f"  - {err}")
+
+
+class PCIeDiscovery:
+    """
+    PCIe Discovery and Topology Validation
+    Discovers Atlas 3 PCIe switch topology
+    """
+
+    def __init__(self):
+        self.has_root = os.geteuid() == 0
+        self.has_sudo = self._check_sudo()
+        self.permission_level = 'root' if self.has_root else 'sudo' if self.has_sudo else 'user'
+        logger.info(f"PCIe Discovery initialized (permissions: {self.permission_level})")
+
+    def _check_sudo(self) -> bool:
+        """Check if sudo is available"""
+        if self.has_root:
+            return True
+        try:
+            result = subprocess.run(
+                ['sudo', '-n', 'true'],
+                capture_output=True,
+                timeout=1
+            )
+            return result.returncode == 0
+        except:
+            return False
+
+    def _run_command(self, cmd: List[str], use_sudo: bool = False) -> Optional[str]:
+        """Run command with appropriate permissions"""
+        try:
+            if use_sudo and not self.has_root and self.has_sudo:
+                cmd = ['sudo'] + cmd
+
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+
+            if result.returncode == 0:
+                return result.stdout
+            else:
+                logger.debug(f"Command failed: {' '.join(cmd)}: {result.stderr}")
+                return None
+
+        except subprocess.TimeoutExpired:
+            logger.error(f"Command timeout: {' '.join(cmd)}")
+            return None
+        except Exception as e:
+            logger.error(f"Command error: {' '.join(cmd)}: {e}")
+            return None
+
+    def discover_pcie_topology(self) -> Dict[str, Any]:
+        """Discover PCIe topology using lspci"""
+        topology = {
+            'bridges': [],
+            'endpoints': [],
+            'atlas3_devices': []
+        }
+
+        # Run lspci command
+        output = self._run_command(['lspci', '-vvv'], use_sudo=True)
+        if not output:
+            logger.warning("lspci command failed")
+            return topology
+
+        # Parse lspci output to find Atlas 3 devices
+        current_device = {}
+        for line in output.split('\n'):
+            if line and not line.startswith('\t') and not line.startswith(' '):
+                # New device line
+                if current_device:
+                    self._categorize_device(current_device, topology)
+                
+                # Parse device line like "03:00.0 PCI bridge: ..."
+                parts = line.split(' ', 2)
+                if len(parts) >= 3:
+                    current_device = {
+                        'address': parts[0],
+                        'type': parts[1],
+                        'description': parts[2] if len(parts) > 2 else '',
+                        'details': []
+                    }
+                else:
+                    current_device = {}
+            elif line.startswith('\t') and current_device:
+                # Device details
+                current_device['details'].append(line.strip())
+
+        # Process last device
+        if current_device:
+            self._categorize_device(current_device, topology)
+
+        return topology
+
+    def _categorize_device(self, device: Dict[str, Any], topology: Dict[str, Any]):
+        """Categorize a PCIe device"""
+        desc = device.get('description', '').lower()
+        
+        # Check if it's an Atlas 3 device (you may need to adjust the criteria)
+        if 'atlas' in desc or 'serial cables' in desc:
+            topology['atlas3_devices'].append(device)
+        elif 'bridge' in device.get('type', '').lower():
+            topology['bridges'].append(device)
+        else:
+            topology['endpoints'].append(device)
+
+    def run_discovery_test(self) -> Dict[str, Any]:
+        """
+        Run complete PCIe discovery test
+        Returns comprehensive test results
+        """
+        start_time = datetime.now()
+
+        result = {
+            'test_name': 'PCIe Discovery',
+            'status': 'pass',
+            'timestamp': start_time.isoformat(),
+            'permission_level': self.permission_level,
+            'warnings': [],
+            'errors': [],
+            'topology': {},
+            'summary': {}
+        }
+
+        try:
+            # Discover PCIe topology
+            topology = self.discover_pcie_topology()
+            result['topology'] = topology
+
+            # Summary
+            result['summary'] = {
+                'bridge_count': len(topology['bridges']),
+                'endpoint_count': len(topology['endpoints']),
+                'atlas3_device_count': len(topology['atlas3_devices'])
+            }
+
+            if not topology['atlas3_devices']:
+                result['warnings'].append("No Atlas 3 devices detected in PCIe topology")
+                result['status'] = 'warning'
+
+        except Exception as e:
+            logger.error(f"PCIe discovery test failed: {e}")
+            result['status'] = 'error'
+            result['errors'].append(f"Exception during discovery: {str(e)}")
+
+        end_time = datetime.now()
+        result['duration_ms'] = int((end_time - start_time).total_seconds() * 1000)
+
+        return result

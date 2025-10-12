@@ -17,12 +17,18 @@ try:
     from .nvme_discovery import NVMeDiscovery
     from .link_training_time import LinkTrainingTimeMeasurement
     from .link_retrain_count import LinkRetrainCount
+    from .sequential_read_performance import SequentialReadPerformanceTest
+    from .sequential_write_performance import SequentialWritePerformanceTest
+    from .random_iops_performance import RandomIOPSPerformanceTest
 except ImportError:
     # Handle direct execution
     from pcie_discovery import PCIeDiscovery
     from nvme_discovery import NVMeDiscovery
     from link_training_time import LinkTrainingTimeMeasurement
     from link_retrain_count import LinkRetrainCount
+    from sequential_read_performance import SequentialReadPerformanceTest
+    from sequential_write_performance import SequentialWritePerformanceTest
+    from random_iops_performance import RandomIOPSPerformanceTest
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +42,7 @@ class TestSuite:
     requires_root: bool = False
     requires_nvme_cli: bool = False
     requires_nvme_devices: bool = False  # Requires NVMe devices to be detected first
+    requires_fio: bool = False  # Requires fio for performance testing
 
 
 @dataclass
@@ -91,6 +98,33 @@ class TestRunner:
                 requires_nvme_cli=False,
                 requires_nvme_devices=True  # Only enabled after NVMe discovery
             ),
+            'sequential_read_performance': TestSuite(
+                name='Sequential Read Performance',
+                description='Measure NVMe sequential read performance using fio with PCIe 6.x compliance validation',
+                test_class=SequentialReadPerformanceTest,
+                requires_root=False,
+                requires_nvme_cli=False,
+                requires_nvme_devices=True,  # Only enabled after NVMe discovery
+                requires_fio=True  # Requires fio for performance testing
+            ),
+            'sequential_write_performance': TestSuite(
+                name='Sequential Write Performance',
+                description='Measure NVMe sequential write performance using fio with PCIe 6.x compliance validation',
+                test_class=SequentialWritePerformanceTest,
+                requires_root=False,
+                requires_nvme_cli=False,
+                requires_nvme_devices=True,  # Only enabled after NVMe discovery
+                requires_fio=True  # Requires fio for performance testing
+            ),
+            'random_iops_performance': TestSuite(
+                name='Random IOPS Performance',
+                description='Measure NVMe random IOPS performance using fio with PCIe 6.x compliance validation',
+                test_class=RandomIOPSPerformanceTest,
+                requires_root=False,
+                requires_nvme_cli=False,
+                requires_nvme_devices=True,  # Only enabled after NVMe discovery
+                requires_fio=True  # Requires fio for performance testing
+            ),
         }
 
         # Track if NVMe devices have been detected
@@ -136,6 +170,16 @@ class TestRunner:
         if suite.requires_nvme_devices and not self.nvme_devices_detected:
             return False, "NVMe devices must be detected first. Run NVMe Discovery test."
 
+        # Check if fio is required but not available
+        if suite.requires_fio:
+            try:
+                from .fio_utilities import FioUtilities
+                fio_utils = FioUtilities()
+                if not fio_utils.has_fio:
+                    return False, "fio not available. Install fio for performance testing."
+            except ImportError:
+                return False, "fio utilities module not available."
+
         return True, ""
 
     def list_available_tests(self) -> List[Dict[str, Any]]:
@@ -156,6 +200,7 @@ class TestRunner:
                 'requires_root': suite.requires_root,
                 'requires_nvme_cli': suite.requires_nvme_cli,
                 'requires_nvme_devices': suite.requires_nvme_devices,
+                'requires_fio': suite.requires_fio,
                 'available': is_available,
                 'unavailable_reason': reason if not is_available else None
             })
@@ -219,6 +264,15 @@ class TestRunner:
             if hasattr(test_instance, 'run_retrain_test'):
                 # Link Retrain Count test
                 result = test_instance.run_retrain_test(options or {})
+            elif hasattr(test_instance, 'run_sequential_read_test'):
+                # Sequential Read Performance test
+                result = test_instance.run_sequential_read_test(options or {})
+            elif hasattr(test_instance, 'run_sequential_write_test'):
+                # Sequential Write Performance test
+                result = test_instance.run_sequential_write_test(options or {})
+            elif hasattr(test_instance, 'run_random_iops_test'):
+                # Random IOPS Performance test
+                result = test_instance.run_random_iops_test(options or {})
             elif hasattr(test_instance, 'run_measurement_test'):
                 # For tests that support options (like link_training_time)
                 result = test_instance.run_measurement_test(options=options)
@@ -273,7 +327,7 @@ class TestRunner:
         )
 
         # Run tests in order: PCIe Discovery, NVMe Discovery, then conditional tests
-        test_order = ['pcie_discovery', 'nvme_discovery', 'link_training_time', 'link_retrain_count']
+        test_order = ['pcie_discovery', 'nvme_discovery', 'link_training_time', 'link_retrain_count', 'sequential_read_performance', 'sequential_write_performance', 'random_iops_performance']
 
         for suite_id in test_order:
             if suite_id not in self.test_suites:

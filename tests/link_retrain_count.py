@@ -18,6 +18,11 @@ from typing import Dict, List, Optional, Any, Tuple, Set
 from datetime import datetime
 import json
 
+try:
+    from .com_error_monitor import COMErrorMonitor, ErrorCounters
+except ImportError:
+    from com_error_monitor import COMErrorMonitor, ErrorCounters
+
 logger = logging.getLogger(__name__)
 
 
@@ -412,11 +417,21 @@ class LinkRetrainCount:
                 - delay_between_ms: Delay between retrains in ms (default: 100)
                 - discovered_devices: List of devices from NVMe/PCIe discovery (optional)
                 - filter_endpoints_only: Only test endpoint devices, not bridges (default: True)
+                - calypso_manager: CalypsoPyManager instance for Atlas 3 Switch error monitoring (optional)
+                - com_port: COM port for error monitoring (optional)
+                - monitor_errors: Boolean, enable COM error monitoring (default: False)
+                - error_sampling_interval: Error sampling interval in seconds (default: 1.0)
 
         Returns:
             Test result dictionary
         """
         start_time = time.time()
+        
+        # CalypsoPy+ error monitoring options
+        monitor_errors = options.get('monitor_errors', False)
+        calypso_manager = options.get('calypso_manager')
+        com_port = options.get('com_port')
+        error_sampling_interval = options.get('error_sampling_interval', 1.0)
 
         result = {
             'test_name': 'Link Retrain Count',
@@ -431,6 +446,12 @@ class LinkRetrainCount:
             'compliance': {},
             'warnings': [],
             'errors': [],
+            'error_monitoring': {
+                'enabled': monitor_errors,
+                'available': False,
+                'data': None,
+                'correlation': {}
+            },
             'filtered_info': {
                 'total_discovered': 0,
                 'atlas3_downstream': 0,
@@ -536,6 +557,27 @@ class LinkRetrainCount:
         logger.info(f"Testing {len(target_devices)} Atlas 3 downstream endpoint device(s)")
         if excluded_devices:
             logger.info(f"Excluded {len(excluded_devices)} device(s) from testing")
+
+        # Initialize Atlas 3 PCIe error monitoring if requested
+        error_monitor = None
+        if monitor_errors and calypso_manager and com_port:
+            try:
+                error_monitor = COMErrorMonitor(calypso_manager, com_port)
+                
+                # Start monitoring Atlas 3 link training errors in background
+                if error_monitor.start_monitoring(
+                    sampling_interval=error_sampling_interval
+                ):
+                    result['error_monitoring']['available'] = True
+                    logger.info(f"Atlas 3 error monitoring started on {com_port}")
+                else:
+                    result['warnings'].append("Failed to start Atlas 3 error monitoring")
+                    
+            except Exception as e:
+                result['warnings'].append(f"Atlas 3 error monitoring setup failed: {str(e)}")
+                logger.warning(f"Error monitoring setup failed: {e}")
+        elif monitor_errors:
+            result['warnings'].append("Atlas 3 error monitoring requested but CalypsoPy manager or port not provided")
 
         # Get test parameters
         num_retrains = options.get('num_retrains', 5)
@@ -669,6 +711,34 @@ class LinkRetrainCount:
             'issues': compliance_issues
         }
 
+        # Stop error monitoring and correlate with retrain events
+        if error_monitor and error_monitor.is_monitoring():
+            try:
+                error_data = error_monitor.stop_monitoring()
+                if error_data:
+                    result['error_monitoring']['data'] = error_data.to_dict()
+                    
+                    # Correlate error counter changes with retrain events
+                    correlation = self._correlate_errors_with_retrains(error_data, result['devices'])
+                    result['error_monitoring']['correlation'] = correlation
+                    
+                    # Add summary for easy access
+                    result['error_monitoring']['summary'] = {
+                        'duration_seconds': error_data.session_end - error_data.session_start,
+                        'total_samples': error_data.total_samples,
+                        'error_changes_detected': sum(abs(delta) for delta in (error_data.error_deltas or {}).values()) > 0,
+                        'total_error_changes': sum(abs(delta) for delta in (error_data.error_deltas or {}).values()),
+                        'error_deltas': error_data.error_deltas,
+                        'monitoring_successful': True
+                    }
+                    
+                    logger.info(f"Error monitoring correlation: {correlation['summary']}")
+                else:
+                    result['warnings'].append("Error monitoring stopped but no data collected")
+            except Exception as e:
+                result['warnings'].append(f"Error stopping monitoring: {str(e)}")
+                logger.warning(f"Error stopping monitoring: {e}")
+
         # Determine overall status
         if len(compliance_issues) == 0 and failed_retrains == 0:
             result['status'] = 'pass'
@@ -680,6 +750,295 @@ class LinkRetrainCount:
         result['duration_ms'] = int((time.time() - start_time) * 1000)
 
         return result
+
+    def _correlate_errors_with_retrains(self, error_data, devices: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Correlate Atlas 3 cumulative error counter changes with link retrain events
+        
+        Args:
+            error_data: ErrorMonitorResult from monitoring session
+            devices: List of device test results with retrain events
+            
+        Returns:
+            Correlation analysis dictionary
+        """
+        correlation = {
+            'summary': {},
+            'error_timing': {},
+            'error_spikes': [],
+            'retrain_correlation': {},
+            'baseline_errors': {},
+            'cumulative_analysis': {},
+            'retrain_analysis': {}
+        }
+        
+        try:
+            if not error_data or not error_data.samples or len(error_data.samples) < 2:
+                correlation['summary'] = {'status': 'no_error_data', 'message': 'Insufficient error counter data'}
+                return correlation
+            
+            # Establish baseline from first sample (test start)
+            baseline = error_data.samples[0]
+            correlation['baseline_errors'] = {
+                'timestamp': baseline.timestamp,
+                'port_receive': baseline.port_receive,
+                'bad_tlp': baseline.bad_tlp,
+                'bad_dllp': baseline.bad_dllp,
+                'rec_diag': baseline.rec_diag
+            }
+            
+            # Calculate total error changes from baseline to final
+            final_sample = error_data.samples[-1]
+            total_error_changes = {
+                'port_receive': final_sample.port_receive - baseline.port_receive,
+                'bad_tlp': final_sample.bad_tlp - baseline.bad_tlp,
+                'bad_dllp': final_sample.bad_dllp - baseline.bad_dllp,
+                'rec_diag': final_sample.rec_diag - baseline.rec_diag
+            }
+            
+            total_new_errors = sum(max(0, delta) for delta in total_error_changes.values())
+            
+            # Collect all retrain timestamps for analysis
+            all_retrain_times = []
+            total_retrains = 0
+            for device in devices:
+                for retrain in device.get('retrains', []):
+                    if retrain.get('start_time', 0) > 0:
+                        all_retrain_times.append({
+                            'timestamp': retrain['start_time'],
+                            'device': device['pci_address'],
+                            'retrain_number': retrain.get('retrain_number', 0),
+                            'duration_ms': retrain.get('duration_ms', 0)
+                        })
+                        total_retrains += 1
+            
+            correlation['retrain_analysis'] = {
+                'total_retrains_performed': total_retrains,
+                'retrain_timestamps': all_retrain_times,
+                'retrain_timespan_seconds': (max(r['timestamp'] for r in all_retrain_times) - 
+                                           min(r['timestamp'] for r in all_retrain_times)) if all_retrain_times else 0
+            }
+            
+            correlation['summary'] = {
+                'total_new_errors': total_new_errors,
+                'error_changes_from_baseline': total_error_changes,
+                'monitoring_duration': error_data.session_end - error_data.session_start,
+                'samples_collected': error_data.total_samples,
+                'baseline_timestamp': baseline.timestamp,
+                'retrains_performed': total_retrains,
+                'errors_per_retrain': total_new_errors / total_retrains if total_retrains > 0 else 0
+            }
+            
+            # If we have new errors during the test, analyze timing
+            if total_new_errors > 0:
+                correlation['summary']['status'] = 'new_errors_detected'
+                correlation['summary']['message'] = f'Detected {total_new_errors} new errors during {total_retrains} retrains'
+                
+                # Find error increments relative to baseline and correlate with retrains
+                for i, sample in enumerate(error_data.samples[1:], 1):  # Skip baseline
+                    # Calculate delta from baseline
+                    delta_from_baseline = {
+                        'port_receive': max(0, sample.port_receive - baseline.port_receive),
+                        'bad_tlp': max(0, sample.bad_tlp - baseline.bad_tlp),
+                        'bad_dllp': max(0, sample.bad_dllp - baseline.bad_dllp),
+                        'rec_diag': max(0, sample.rec_diag - baseline.rec_diag)
+                    }
+                    
+                    # Check if this sample shows any error increase from previous sample
+                    if i > 1:
+                        prev_sample = error_data.samples[i-1]
+                        sample_increment = {
+                            'port_receive': max(0, sample.port_receive - prev_sample.port_receive),
+                            'bad_tlp': max(0, sample.bad_tlp - prev_sample.bad_tlp),
+                            'bad_dllp': max(0, sample.bad_dllp - prev_sample.bad_dllp),
+                            'rec_diag': max(0, sample.rec_diag - prev_sample.rec_diag)
+                        }
+                        
+                        increment_total = sum(sample_increment.values())
+                        
+                        if increment_total > 0:
+                            # Find nearby retrains for this error spike
+                            nearby_retrains = []
+                            for retrain_event in all_retrain_times:
+                                time_diff = abs(retrain_event['timestamp'] - sample.timestamp)
+                                if time_diff <= 2.0:  # 2 second window for retrain correlation
+                                    nearby_retrains.append({
+                                        'retrain': retrain_event,
+                                        'time_offset': retrain_event['timestamp'] - sample.timestamp
+                                    })
+                            
+                            spike = {
+                                'timestamp': sample.timestamp,
+                                'sample_index': i,
+                                'incremental_errors': sample_increment,
+                                'cumulative_from_baseline': delta_from_baseline,
+                                'increment_total': increment_total,
+                                'elapsed_since_start': sample.timestamp - baseline.timestamp,
+                                'nearby_retrains': nearby_retrains,
+                                'retrain_correlation_strength': len(nearby_retrains)
+                            }
+                            correlation['error_spikes'].append(spike)
+                
+                # Enhanced cumulative analysis for retrain scenarios
+                correlation['cumulative_analysis'] = {
+                    'peak_error_rate': self._calculate_peak_error_rate_retrain(error_data.samples, baseline),
+                    'error_progression': self._analyze_error_progression_retrain(error_data.samples, baseline, all_retrain_times),
+                    'error_timeline': [(sample.timestamp - baseline.timestamp, 
+                                      sum(max(0, getattr(sample, attr) - getattr(baseline, attr)) 
+                                          for attr in ['port_receive', 'bad_tlp', 'bad_dllp', 'rec_diag']))
+                                     for sample in error_data.samples],
+                    'retrain_vs_error_correlation': self._calculate_retrain_error_correlation(
+                        error_data.samples, baseline, all_retrain_times)
+                }
+                
+                # Create detailed retrain correlation analysis
+                retrain_correlated_spikes = [spike for spike in correlation['error_spikes'] 
+                                           if spike['retrain_correlation_strength'] > 0]
+                
+                if retrain_correlated_spikes:
+                    correlation['retrain_correlation'] = {
+                        'correlated_error_spikes': len(retrain_correlated_spikes),
+                        'total_error_spikes': len(correlation['error_spikes']),
+                        'correlation_percentage': (len(retrain_correlated_spikes) / len(correlation['error_spikes'])) * 100,
+                        'spike_details': retrain_correlated_spikes
+                    }
+                else:
+                    correlation['retrain_correlation'] = {
+                        'correlated_error_spikes': 0,
+                        'total_error_spikes': len(correlation['error_spikes']),
+                        'correlation_percentage': 0,
+                        'message': 'No temporal correlation found between error spikes and retrain events'
+                    }
+            else:
+                correlation['summary']['status'] = 'no_new_errors'
+                correlation['summary']['message'] = f'No new errors detected during {total_retrains} retrains (error counters remained stable)'
+                
+        except Exception as e:
+            correlation['summary'] = {'status': 'correlation_error', 'message': f'Error during correlation: {str(e)}'}
+            logger.warning(f"Error correlation failed: {e}")
+        
+        return correlation
+    
+    def _calculate_peak_error_rate_retrain(self, samples, baseline):
+        """Calculate the peak error rate (errors per second) during retrain test"""
+        if len(samples) < 3:
+            return 0.0
+            
+        max_rate = 0.0
+        for i in range(2, len(samples)):
+            prev_sample = samples[i-1]
+            curr_sample = samples[i]
+            time_diff = curr_sample.timestamp - prev_sample.timestamp
+            
+            if time_diff > 0:
+                error_diff = sum(max(0, getattr(curr_sample, attr) - getattr(prev_sample, attr))
+                               for attr in ['port_receive', 'bad_tlp', 'bad_dllp', 'rec_diag'])
+                rate = error_diff / time_diff
+                max_rate = max(max_rate, rate)
+        
+        return max_rate
+    
+    def _analyze_error_progression_retrain(self, samples, baseline, retrain_times):
+        """Analyze how errors progressed throughout the retrain test"""
+        if len(samples) < 2:
+            return {'pattern': 'insufficient_data'}
+        
+        # Divide the test into phases based on retrain activity
+        if not retrain_times:
+            return {'pattern': 'no_retrains'}
+        
+        test_start = baseline.timestamp
+        test_end = samples[-1].timestamp
+        
+        # Find errors in different phases
+        pre_retrain_errors = 0
+        during_retrain_errors = 0
+        post_retrain_errors = 0
+        
+        first_retrain = min(r['timestamp'] for r in retrain_times)
+        last_retrain = max(r['timestamp'] for r in retrain_times)
+        
+        for sample in samples:
+            errors_from_baseline = sum(max(0, getattr(sample, attr) - getattr(baseline, attr))
+                                     for attr in ['port_receive', 'bad_tlp', 'bad_dllp', 'rec_diag'])
+            
+            if sample.timestamp < first_retrain:
+                pre_retrain_errors = max(pre_retrain_errors, errors_from_baseline)
+            elif sample.timestamp <= last_retrain + 2.0:  # Include 2s buffer after last retrain
+                during_retrain_errors = max(during_retrain_errors, errors_from_baseline)
+            else:
+                post_retrain_errors = max(post_retrain_errors, errors_from_baseline)
+        
+        # Determine pattern
+        if pre_retrain_errors == 0 and during_retrain_errors == 0 and post_retrain_errors == 0:
+            pattern = 'stable_no_errors'
+        elif pre_retrain_errors == 0 and during_retrain_errors > 0:
+            pattern = 'errors_during_retrains'
+        elif during_retrain_errors > pre_retrain_errors:
+            pattern = 'errors_increased_with_retrains'
+        elif post_retrain_errors > during_retrain_errors:
+            pattern = 'errors_after_retrains'
+        else:
+            pattern = 'variable_error_pattern'
+        
+        return {
+            'pattern': pattern,
+            'pre_retrain_errors': pre_retrain_errors,
+            'during_retrain_errors': during_retrain_errors,
+            'post_retrain_errors': post_retrain_errors,
+            'error_increase_during_retrains': during_retrain_errors - pre_retrain_errors,
+            'retrain_timespan_seconds': last_retrain - first_retrain if retrain_times else 0
+        }
+    
+    def _calculate_retrain_error_correlation(self, samples, baseline, retrain_times):
+        """Calculate statistical correlation between retrain events and error increases"""
+        if not retrain_times or len(samples) < 3:
+            return {'correlation': 'insufficient_data'}
+        
+        # Create time windows around each retrain (±2 seconds)
+        retrain_windows = []
+        for retrain in retrain_times:
+            start_window = retrain['timestamp'] - 2.0
+            end_window = retrain['timestamp'] + 2.0
+            retrain_windows.append((start_window, end_window, retrain))
+        
+        # Count error increases inside vs outside retrain windows
+        errors_in_windows = 0
+        errors_outside_windows = 0
+        
+        for i in range(1, len(samples)):
+            prev_sample = samples[i-1]
+            curr_sample = samples[i]
+            
+            # Check for error increase
+            error_increase = sum(max(0, getattr(curr_sample, attr) - getattr(prev_sample, attr))
+                               for attr in ['port_receive', 'bad_tlp', 'bad_dllp', 'rec_diag'])
+            
+            if error_increase > 0:
+                # Check if this sample is within any retrain window
+                in_window = any(start <= curr_sample.timestamp <= end 
+                              for start, end, _ in retrain_windows)
+                
+                if in_window:
+                    errors_in_windows += error_increase
+                else:
+                    errors_outside_windows += error_increase
+        
+        total_errors = errors_in_windows + errors_outside_windows
+        
+        if total_errors == 0:
+            return {'correlation': 'no_errors_detected'}
+        
+        correlation_strength = errors_in_windows / total_errors if total_errors > 0 else 0
+        
+        return {
+            'correlation': 'strong' if correlation_strength > 0.7 else 'moderate' if correlation_strength > 0.4 else 'weak',
+            'correlation_strength': correlation_strength,
+            'errors_during_retrains': errors_in_windows,
+            'errors_outside_retrains': errors_outside_windows,
+            'total_error_increases': total_errors,
+            'retrain_windows_analyzed': len(retrain_windows)
+        }
 
     def _calculate_std_dev(self, values: List[float]) -> float:
         """Calculate standard deviation"""

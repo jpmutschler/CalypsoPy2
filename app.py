@@ -1104,15 +1104,670 @@ def get_link_retrain_devices():
         logger.error(f"Error getting link retrain devices: {e}")
         return jsonify({'error': str(e)}), 500
 
+
+@app.route('/api/tests/sequential_read/devices')
+def get_sequential_read_devices():
+    """Get list of available NVMe devices for sequential read performance test"""
+    if not TESTING_AVAILABLE:
+        return jsonify({'error': 'Testing modules not available'}), 503
+
+    try:
+        # Check if fio is available
+        from tests.fio_utilities import FioUtilities
+        fio_utils = FioUtilities()
+        
+        if not fio_utils.has_fio:
+            return jsonify({
+                'available_devices': [],
+                'error': 'fio not available. Install fio for performance testing.',
+                'fio_info': fio_utils.check_fio_availability()
+            }), 400
+
+        # Get discovered devices from test runner
+        available_devices = []
+        
+        if test_runner.nvme_devices_detected and test_runner.discovered_nvme_devices:
+            for controller in test_runner.discovered_nvme_devices:
+                if controller.get('device'):
+                    device_info = {
+                        'device': controller.get('device', 'Unknown'),
+                        'device_path': f"/dev/{controller.get('device', 'nvme0n1')}",
+                        'model': controller.get('model', 'Unknown'),
+                        'vendor': controller.get('vendor', 'Unknown'),
+                        'size': controller.get('size', 'Unknown'),
+                        'pci_address': controller.get('pci_address', 'Unknown'),
+                        'namespace': controller.get('namespace', 'Unknown')
+                    }
+                    available_devices.append(device_info)
+
+        if not available_devices:
+            return jsonify({
+                'available_devices': [],
+                'error': 'No NVMe devices detected. Run NVMe Discovery test first.',
+                'fio_info': fio_utils.check_fio_availability()
+            }), 400
+
+        logger.info(f"Sequential Read Performance: {len(available_devices)} devices available")
+
+        return jsonify({
+            'available_devices': available_devices,
+            'fio_info': fio_utils.check_fio_availability(),
+            'default_runtime': 60,
+            'runtime_options': [30, 60, 120, 300, 600]  # Common test durations
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting sequential read devices: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/tests/sequential_read/run', methods=['POST'])
+def run_sequential_read_test():
+    """Run sequential read performance test with real-time monitoring"""
+    if not TESTING_AVAILABLE:
+        return jsonify({'error': 'Testing modules not available'}), 503
+
+    try:
+        data = request.get_json()
+        
+        device = data.get('device')
+        runtime_seconds = data.get('runtime_seconds', 60)
+        block_size = data.get('block_size', '128k')
+        queue_depth = data.get('queue_depth', 32)
+        
+        if not device:
+            return jsonify({'error': 'device required'}), 400
+        
+        logger.info(f"Running sequential read performance test on {device} for {runtime_seconds}s")
+        
+        # Prepare test options
+        options = {
+            'device': device,
+            'runtime_seconds': runtime_seconds,
+            'block_size': block_size,
+            'queue_depth': queue_depth,
+            'discovered_devices': test_runner.discovered_nvme_devices
+        }
+        
+        # Run test
+        result = test_runner.run_test_suite('sequential_read_performance', options=options)
+        
+        return jsonify(result)
+
+    except Exception as e:
+        logger.error(f"Error running sequential read test: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# WebSocket handlers for real-time performance monitoring
+@socketio.on('start_sequential_read_test')
+def handle_start_sequential_read_test(data):
+    """WebSocket handler for running sequential read test with real-time updates"""
+    if not TESTING_AVAILABLE:
+        emit('performance_test_error', {'message': 'Testing modules not available'})
+        return
+
+    device = data.get('device')
+    runtime_seconds = data.get('runtime_seconds', 60)
+    block_size = data.get('block_size', '128k')
+    queue_depth = data.get('queue_depth', 32)
+
+    if not device:
+        emit('performance_test_error', {'message': 'device required'})
+        return
+
+    logger.info(f"WebSocket: Running sequential read test on {device}")
+
+    # Progress callback for test progress
+    def progress_callback(update):
+        emit('performance_test_progress', update)
+
+    # Real-time callback for performance metrics
+    def real_time_callback(update):
+        emit('performance_test_realtime', update)
+
+    try:
+        from tests.sequential_read_performance import SequentialReadPerformanceTest
+        
+        test_instance = SequentialReadPerformanceTest()
+        
+        # Run test with real-time callbacks
+        result = test_instance.run_performance_test(
+            device=device,
+            runtime_seconds=runtime_seconds,
+            block_size=block_size,
+            queue_depth=queue_depth,
+            discovered_devices=test_runner.discovered_nvme_devices,
+            progress_callback=progress_callback,
+            real_time_callback=real_time_callback
+        )
+        
+        # Convert result to dict format
+        result_dict = {
+            'test_name': result.test_name,
+            'status': result.status,
+            'device': result.device,
+            'performance_metrics': {
+                'throughput_mbps': result.throughput_mbps,
+                'iops': result.iops,
+                'avg_latency_us': result.avg_latency_us,
+                'p95_latency_us': result.p95_latency_us,
+                'p99_latency_us': result.p99_latency_us,
+                'cpu_utilization': result.cpu_utilization,
+                'throughput_efficiency': result.throughput_efficiency
+            },
+            'compliance': {
+                'status': result.compliance_status,
+                'detected_pcie_gen': result.detected_pcie_gen,
+                'detected_pcie_lanes': result.detected_pcie_lanes,
+                'expected_min_throughput': result.expected_min_throughput,
+                'validations': result.validations
+            },
+            'configuration': {
+                'block_size': result.block_size,
+                'queue_depth': result.queue_depth,
+                'runtime_seconds': result.runtime_seconds
+            },
+            'duration_seconds': result.duration_seconds,
+            'warnings': result.warnings,
+            'errors': result.errors
+        }
+        
+        emit('performance_test_complete', result_dict)
+
+    except Exception as e:
+        logger.error(f"WebSocket sequential read test error: {e}")
+        emit('performance_test_error', {'message': str(e)})
+
+
+@socketio.on('stop_sequential_read_test')
+def handle_stop_sequential_read_test(data):
+    """WebSocket handler for stopping sequential read test"""
+    try:
+        # Implementation would depend on test instance management
+        # For now, emit a stop acknowledgment
+        emit('performance_test_stopped', {'message': 'Test stop requested'})
+        logger.info("Sequential read test stop requested")
+        
+    except Exception as e:
+        logger.error(f"Error stopping sequential read test: {e}")
+        emit('performance_test_error', {'message': f'Error stopping test: {str(e)}'})
+
+
+@app.route('/api/tests/sequential_read/export', methods=['POST'])
+def export_sequential_read_results():
+    """Export sequential read test results to various formats"""
+    if not TESTING_AVAILABLE:
+        return jsonify({'error': 'Testing modules not available'}), 503
+
+    try:
+        data = request.get_json()
+        
+        results = data.get('results')
+        export_format = data.get('format', 'csv').lower()
+        
+        if not results:
+            return jsonify({'error': 'results data required'}), 400
+        
+        if export_format not in ['csv', 'html', 'pdf']:
+            return jsonify({'error': 'format must be csv, html, or pdf'}), 400
+        
+        # Import and use results exporter
+        from tests.results_exporter import ResultsExporter
+        exporter = ResultsExporter()
+        
+        # Generate filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        device_name = results.get('device', 'unknown').replace('/', '_').replace('\\', '_')
+        filename = f"sequential_read_{device_name}_{timestamp}.{export_format}"
+        output_path = os.path.join('logs', filename)
+        
+        # Ensure logs directory exists
+        os.makedirs('logs', exist_ok=True)
+        
+        # Export results
+        success = exporter.export_results(results, export_format, output_path)
+        
+        if success:
+            # Return file for download
+            from flask import send_file
+            return send_file(
+                output_path,
+                as_attachment=True,
+                download_name=filename,
+                mimetype=f'application/{export_format}' if export_format == 'pdf' else f'text/{export_format}'
+            )
+        else:
+            return jsonify({'error': 'Export failed'}), 500
+            
+    except Exception as e:
+        logger.error(f"Error exporting results: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/tests/sequential_read/export_formats')
+def get_export_formats():
+    """Get available export formats and their capabilities"""
+    try:
+        from tests.results_exporter import ResultsExporter
+        exporter = ResultsExporter()
+        
+        formats = {
+            'csv': {
+                'name': 'CSV (Comma Separated Values)',
+                'description': 'Tabular data format compatible with Excel and other spreadsheet applications',
+                'available': True,
+                'extension': 'csv'
+            },
+            'html': {
+                'name': 'HTML Report',
+                'description': 'Interactive web report with charts and detailed analysis',
+                'available': True,
+                'extension': 'html'
+            },
+            'pdf': {
+                'name': 'PDF Report',
+                'description': 'Professional PDF report with charts and compliance analysis',
+                'available': exporter.has_reportlab,
+                'extension': 'pdf',
+                'note': 'Requires reportlab package' if not exporter.has_reportlab else None
+            }
+        }
+        
+        return jsonify({
+            'formats': formats,
+            'matplotlib_available': exporter.has_matplotlib,
+            'reportlab_available': exporter.has_reportlab
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting export formats: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# Sequential Write Performance Test API Endpoints
+@app.route('/api/tests/sequential_write/devices')
+def get_sequential_write_devices():
+    """Get list of available NVMe devices for sequential write performance test"""
+    if not TESTING_AVAILABLE:
+        return jsonify({'error': 'Testing modules not available'}), 503
+
+    try:
+        # Get available NVMe devices from test runner
+        test_runner = TestRunner()
+        
+        # Check if NVMe discovery has been run
+        available_tests = test_runner.list_available_tests()
+        sequential_write_test = next(
+            (test for test in available_tests if test['id'] == 'sequential_write_performance'), 
+            None
+        )
+        
+        if not sequential_write_test or not sequential_write_test['available']:
+            return jsonify({
+                'devices': [],
+                'available': False,
+                'reason': sequential_write_test['unavailable_reason'] if sequential_write_test else 'Test not found'
+            })
+        
+        # If devices are available, return them
+        devices = []
+        for device in test_runner.discovered_nvme_devices:
+            devices.append({
+                'device': device.get('device', 'unknown'),
+                'model': device.get('model', 'Unknown Model'),
+                'vendor': device.get('vendor', 'Unknown Vendor'),
+                'size': device.get('size', 'Unknown Size'),
+                'path': f"/dev/{device.get('device', 'nvme0n1')}"
+            })
+        
+        return jsonify({
+            'devices': devices,
+            'available': True,
+            'count': len(devices)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting sequential write devices: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/tests/sequential_write/run', methods=['POST'])
+def run_sequential_write_test():
+    """Run sequential write performance test with real-time monitoring"""
+    if not TESTING_AVAILABLE:
+        return jsonify({'error': 'Testing modules not available'}), 503
+
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No test configuration provided'}), 400
+        
+        # Extract test configuration
+        options = {
+            'device': data.get('device', '/dev/nvme0n1'),
+            'runtime_seconds': data.get('runtime_seconds', 60),
+            'block_size': data.get('block_size', '128k'),
+            'queue_depth': data.get('queue_depth', 32)
+        }
+        
+        test_runner = TestRunner()
+        
+        # Run test
+        result = test_runner.run_test_suite('sequential_write_performance', options=options)
+        
+        return jsonify(result)
+
+    except Exception as e:
+        logger.error(f"Error running sequential write test: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# WebSocket handlers for real-time sequential write monitoring
+@socketio.on('start_sequential_write_test')
+def handle_start_sequential_write_test(data):
+    """WebSocket handler for running sequential write test with real-time updates"""
+    if not TESTING_AVAILABLE:
+        emit('performance_test_error', {'message': 'Testing modules not available'})
+        return
+
+    def progress_callback(update):
+        emit('sequential_write_progress', update)
+    
+    def real_time_callback(metrics):
+        emit('sequential_write_metrics', metrics)
+    
+    try:
+        from tests.sequential_write_performance import SequentialWritePerformanceTest
+        
+        test_instance = SequentialWritePerformanceTest()
+        
+        # Run test with real-time callbacks
+        result = test_instance.run_performance_test(
+            device=data.get('device', '/dev/nvme0n1'),
+            runtime_seconds=data.get('runtime_seconds', 60),
+            block_size=data.get('block_size', '128k'),
+            queue_depth=data.get('queue_depth', 32),
+            discovered_devices=data.get('discovered_devices', []),
+            progress_callback=progress_callback,
+            real_time_callback=real_time_callback
+        )
+        
+        emit('sequential_write_complete', {
+            'status': 'completed',
+            'result': {
+                'test_name': result.test_name,
+                'status': result.status,
+                'device': result.device,
+                'throughput_mbps': result.throughput_mbps,
+                'iops': result.iops,
+                'avg_latency_us': result.avg_latency_us,
+                'cpu_utilization': result.cpu_utilization,
+                'compliance_status': result.compliance_status,
+                'duration_seconds': result.duration_seconds,
+                'warnings': result.warnings,
+                'errors': result.errors
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in sequential write WebSocket test: {e}")
+        emit('performance_test_error', {'message': str(e)})
+
+
+@socketio.on('stop_sequential_write_test')
+def handle_stop_sequential_write_test(data):
+    """WebSocket handler for stopping sequential write test"""
+    try:
+        emit('performance_test_stopped', {'message': 'Sequential write test stop requested'})
+    except Exception as e:
+        logger.error(f"Error stopping sequential write test: {e}")
+
+
+@app.route('/api/tests/sequential_write/export', methods=['POST'])
+def export_sequential_write_results():
+    """Export sequential write test results to various formats"""
+    if not TESTING_AVAILABLE:
+        return jsonify({'error': 'Testing modules not available'}), 503
+
+    try:
+        data = request.get_json()
+        if not data or 'results' not in data:
+            return jsonify({'error': 'No test results provided'}), 400
+        
+        results = data['results']
+        export_format = data.get('format', 'csv').lower()
+        
+        # Generate filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        device_name = results.get('device', 'unknown').replace('/', '_').replace('\\', '_')
+        filename = f"sequential_write_{device_name}_{timestamp}.{export_format}"
+        output_path = os.path.join('logs', filename)
+        
+        # Ensure logs directory exists
+        os.makedirs('logs', exist_ok=True)
+        
+        from tests.results_exporter import ResultsExporter
+        exporter = ResultsExporter()
+        
+        # Export results
+        success = exporter.export_results(results, output_path, export_format)
+        
+        if success and os.path.exists(output_path):
+            return jsonify({
+                'success': True,
+                'filename': filename,
+                'path': output_path,
+                'format': export_format
+            })
+        else:
+            return jsonify({'error': 'Failed to export results'}), 500
+        
+    except Exception as e:
+        logger.error(f"Error exporting sequential write results: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# Random IOPS Performance Test API Endpoints
+@app.route('/api/tests/random_iops/devices')
+def get_random_iops_devices():
+    """Get list of available NVMe devices for random IOPS performance test"""
+    if not TESTING_AVAILABLE:
+        return jsonify({'error': 'Testing modules not available'}), 503
+
+    try:
+        # Get available NVMe devices from test runner
+        test_runner = TestRunner()
+        
+        # Check if NVMe discovery has been run
+        available_tests = test_runner.list_available_tests()
+        random_iops_test = next(
+            (test for test in available_tests if test['id'] == 'random_iops_performance'), 
+            None
+        )
+        
+        if not random_iops_test or not random_iops_test['available']:
+            return jsonify({
+                'devices': [],
+                'available': False,
+                'reason': random_iops_test['unavailable_reason'] if random_iops_test else 'Test not found'
+            })
+        
+        # If devices are available, return them
+        devices = []
+        for device in test_runner.discovered_nvme_devices:
+            devices.append({
+                'device': device.get('device', 'unknown'),
+                'model': device.get('model', 'Unknown Model'),
+                'vendor': device.get('vendor', 'Unknown Vendor'),
+                'size': device.get('size', 'Unknown Size'),
+                'path': f"/dev/{device.get('device', 'nvme0n1')}"
+            })
+        
+        return jsonify({
+            'devices': devices,
+            'available': True,
+            'count': len(devices)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting random IOPS devices: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/tests/random_iops/run', methods=['POST'])
+def run_random_iops_test():
+    """Run random IOPS performance test with real-time monitoring"""
+    if not TESTING_AVAILABLE:
+        return jsonify({'error': 'Testing modules not available'}), 503
+
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No test configuration provided'}), 400
+        
+        # Extract test configuration
+        options = {
+            'device': data.get('device', '/dev/nvme0n1'),
+            'runtime_seconds': data.get('runtime_seconds', 60),
+            'block_size': data.get('block_size', '4k'),
+            'queue_depth': data.get('queue_depth', 64),
+            'workload_type': data.get('workload_type', 'randread'),
+            'read_write_ratio': data.get('read_write_ratio', '100:0')
+        }
+        
+        test_runner = TestRunner()
+        
+        # Run test
+        result = test_runner.run_test_suite('random_iops_performance', options=options)
+        
+        return jsonify(result)
+
+    except Exception as e:
+        logger.error(f"Error running random IOPS test: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# WebSocket handlers for real-time random IOPS monitoring
+@socketio.on('start_random_iops_test')
+def handle_start_random_iops_test(data):
+    """WebSocket handler for running random IOPS test with real-time updates"""
+    if not TESTING_AVAILABLE:
+        emit('performance_test_error', {'message': 'Testing modules not available'})
+        return
+
+    def progress_callback(update):
+        emit('random_iops_progress', update)
+    
+    def real_time_callback(metrics):
+        emit('random_iops_metrics', metrics)
+    
+    try:
+        from tests.random_iops_performance import RandomIOPSPerformanceTest
+        
+        test_instance = RandomIOPSPerformanceTest()
+        
+        # Run test with real-time callbacks
+        result = test_instance.run_performance_test(
+            device=data.get('device', '/dev/nvme0n1'),
+            runtime_seconds=data.get('runtime_seconds', 60),
+            block_size=data.get('block_size', '4k'),
+            queue_depth=data.get('queue_depth', 64),
+            workload_type=data.get('workload_type', 'randread'),
+            read_write_ratio=data.get('read_write_ratio', '100:0'),
+            discovered_devices=data.get('discovered_devices', []),
+            progress_callback=progress_callback,
+            real_time_callback=real_time_callback
+        )
+        
+        emit('random_iops_complete', {
+            'status': 'completed',
+            'result': {
+                'test_name': result.test_name,
+                'status': result.status,
+                'device': result.device,
+                'workload_type': result.workload_type,
+                'read_iops': result.read_iops,
+                'write_iops': result.write_iops,
+                'total_iops': result.total_iops,
+                'read_avg_latency_us': result.read_avg_latency_us,
+                'write_avg_latency_us': result.write_avg_latency_us,
+                'cpu_utilization': result.cpu_utilization,
+                'compliance_status': result.compliance_status,
+                'duration_seconds': result.duration_seconds,
+                'warnings': result.warnings,
+                'errors': result.errors
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in random IOPS WebSocket test: {e}")
+        emit('performance_test_error', {'message': str(e)})
+
+
+@socketio.on('stop_random_iops_test')
+def handle_stop_random_iops_test(data):
+    """WebSocket handler for stopping random IOPS test"""
+    try:
+        emit('performance_test_stopped', {'message': 'Random IOPS test stop requested'})
+    except Exception as e:
+        logger.error(f"Error stopping random IOPS test: {e}")
+
+
+@app.route('/api/tests/random_iops/export', methods=['POST'])
+def export_random_iops_results():
+    """Export random IOPS test results to various formats"""
+    if not TESTING_AVAILABLE:
+        return jsonify({'error': 'Testing modules not available'}), 503
+
+    try:
+        data = request.get_json()
+        if not data or 'results' not in data:
+            return jsonify({'error': 'No test results provided'}), 400
+        
+        results = data['results']
+        export_format = data.get('format', 'csv').lower()
+        
+        # Generate filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        device_name = results.get('device', 'unknown').replace('/', '_').replace('\\', '_')
+        workload = results.get('workload_type', 'randread')
+        filename = f"random_iops_{workload}_{device_name}_{timestamp}.{export_format}"
+        output_path = os.path.join('logs', filename)
+        
+        # Ensure logs directory exists
+        os.makedirs('logs', exist_ok=True)
+        
+        from tests.results_exporter import ResultsExporter
+        exporter = ResultsExporter()
+        
+        # Export results
+        success = exporter.export_results(results, output_path, export_format)
+        
+        if success and os.path.exists(output_path):
+            return jsonify({
+                'success': True,
+                'filename': filename,
+                'path': output_path,
+                'format': export_format
+            })
+        else:
+            return jsonify({'error': 'Failed to export results'}), 500
+        
+    except Exception as e:
+        logger.error(f"Error exporting random IOPS results: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     os.makedirs('logs', exist_ok=True)
 
-    print("🚀 CalypsoPy+ by Serial Cables")
+    print("CalypsoPy+ by Serial Cables")
     print("Serial Cables Gen6 PCIe Atlas 3 Host Card Development Interface")
     print("=" * 50)
-    print("🌐 Web Interface: http://localhost:5000")
-    print("📊 Dashboards: Device Info, Link Status, Bifurcation, I2C/I3C, Advanced, Resets, Firmware")
-    print("📡 Link Status: PCIe port monitoring with showport command")
+    print("Web Interface: http://localhost:5000")
+    print("Dashboards: Device Info, Link Status, Bifurcation, I2C/I3C, Advanced, Resets, Firmware")
+    print("Link Status: PCIe port monitoring with showport command")
     print("=" * 50)
 
     socketio.run(
