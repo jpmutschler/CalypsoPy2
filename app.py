@@ -398,21 +398,30 @@ class CalypsoPyManager:
                             last_activity = time.time()
                             
                             # Log each chunk received for debugging
-                            logger.debug(f"Received chunk: {repr(chunk)}")
+                            logger.debug(f"Received chunk ({len(chunk)} bytes): {repr(chunk)}")
 
                             full_response = ''.join(response_parts)
                             
-                            # Check for cmd> prompt (case insensitive)
-                            if 'cmd>' in full_response.lower():
-                                logger.info(f"Found cmd> prompt, breaking response loop")
+                            # More flexible termination detection for your device
+                            # Check if response seems complete based on patterns
+                            response_lower = full_response.lower()
+                            
+                            # Check for cmd> prompt anywhere in response (your device shows this at start and end)
+                            if 'cmd>' in response_lower:
+                                # If we see cmd> and have substantial content, likely complete
+                                if len(full_response.strip()) > 50:  # Ensure we have actual content
+                                    logger.info(f"Found cmd> prompt with content, response appears complete")
+                                    break
+                            
+                            # Also check other termination patterns
+                            elif any(term in response_lower for term in ['ok\r', 'error\r', 'done\r']):
+                                logger.info(f"Found standard termination pattern")
                                 break
-                            # Also check other common termination patterns
-                            elif any(term in full_response.lower() for term in ['ok\r', 'error\r', 'done\r']):
-                                logger.info(f"Found termination pattern, breaking response loop")
-                                break
+                                
                         else:
-                            if time.time() - last_activity > 0.5:
-                                logger.debug(f"No activity for 0.5s, breaking response loop")
+                            # Increased timeout since your device sends a lot of data
+                            if time.time() - last_activity > 2.0:  # Increased from 0.5 to 2.0 seconds
+                                logger.debug(f"No activity for 2.0s, breaking response loop")
                                 break
                             time.sleep(0.01)
 
