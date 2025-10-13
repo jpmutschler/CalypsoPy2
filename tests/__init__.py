@@ -26,6 +26,9 @@ SUPPORTED_TESTS = [
     "sequential_read_performance",  # NEW: Sequential Read Performance test
     "sequential_write_performance", # NEW: Sequential Write Performance test
     "random_iops_performance",      # NEW: Random IOPS Performance test
+    "nvme_namespace_validation",    # NEW: NVMe Namespace Validation test
+    "nvme_command_set_validation",  # NEW: NVMe Command Set Validation test
+    "nvme_identify_validation",     # NEW: NVMe Identify Structure Validation test
     "link_quality",
     "error_correlation"
 ]
@@ -110,6 +113,9 @@ try:
     from .sequential_read_performance import SequentialReadPerformanceTest
     from .sequential_write_performance import SequentialWritePerformanceTest
     from .random_iops_performance import RandomIOPSPerformanceTest
+    from .namespace_validation import NamespaceValidationTest
+    from .command_set_validation import CommandSetValidationTest
+    from .identify_structure_validation import IdentifyStructureValidationTest
     from .fio_utilities import FioUtilities
     from .results_exporter import ResultsExporter
     from .test_runner import TestRunner, TestSuite, TestRunResult
@@ -124,6 +130,9 @@ try:
         'SequentialReadPerformanceTest',
         'SequentialWritePerformanceTest',
         'RandomIOPSPerformanceTest',
+        'NamespaceValidationTest',
+        'CommandSetValidationTest',
+        'IdentifyStructureValidationTest',
         'FioUtilities',
         'ResultsExporter',
         'TestRunner',

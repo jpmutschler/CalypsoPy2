@@ -20,9 +20,9 @@ blinker==1.9.0
 dnspython==2.8.0
 PyYAML==6.0.2
 
-# Optional - Enhanced Export Capabilities (Uncomment if needed)
-# matplotlib==3.7.0  # For generating performance charts
-# reportlab==4.0.0   # For PDF report generation
+# Optional - Enhanced Export Capabilities
+matplotlib==3.7.0  # For generating performance charts
+reportlab==4.0.0   # For PDF report generation
 
 # Optional - Testing Utilities (Uncomment if needed)
 # pytest==7.4.0      # For running unit tests

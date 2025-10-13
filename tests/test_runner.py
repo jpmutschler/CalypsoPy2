@@ -21,6 +21,9 @@ try:
     from .sequential_read_performance import SequentialReadPerformanceTest
     from .sequential_write_performance import SequentialWritePerformanceTest
     from .random_iops_performance import RandomIOPSPerformanceTest
+    from .namespace_validation import NamespaceValidationTest
+    from .command_set_validation import CommandSetValidationTest
+    from .identify_structure_validation import IdentifyStructureValidationTest
 except ImportError:
     # Handle direct execution
     from pcie_discovery import PCIeDiscovery
@@ -31,6 +34,9 @@ except ImportError:
     from sequential_read_performance import SequentialReadPerformanceTest
     from sequential_write_performance import SequentialWritePerformanceTest
     from random_iops_performance import RandomIOPSPerformanceTest
+    from namespace_validation import NamespaceValidationTest
+    from command_set_validation import CommandSetValidationTest
+    from identify_structure_validation import IdentifyStructureValidationTest
 
 logger = logging.getLogger(__name__)
 
@@ -134,6 +140,30 @@ class TestRunner:
                 requires_nvme_cli=False,
                 requires_nvme_devices=True,  # Only enabled after NVMe discovery
                 requires_fio=True  # Requires fio for performance testing
+            ),
+            'nvme_namespace_validation': TestSuite(
+                name='NVMe Namespace Validation',
+                description='Validate NVMe namespace configuration and capacity allocation against NVMe 2.x Base Specification',
+                test_class=NamespaceValidationTest,
+                requires_root=False,
+                requires_nvme_cli=True,
+                requires_nvme_devices=True  # Only enabled after NVMe discovery
+            ),
+            'nvme_command_set_validation': TestSuite(
+                name='NVMe Command Set Validation',
+                description='Test NVMe administrative and I/O command set compliance per NVMe 2.x specification',
+                test_class=CommandSetValidationTest,
+                requires_root=False,
+                requires_nvme_cli=True,
+                requires_nvme_devices=True  # Only enabled after NVMe discovery
+            ),
+            'nvme_identify_validation': TestSuite(
+                name='NVMe Identify Structure Validation',
+                description='Verify NVMe Identify Controller and Namespace structures for NVMe 2.x spec compliance',
+                test_class=IdentifyStructureValidationTest,
+                requires_root=False,
+                requires_nvme_cli=True,
+                requires_nvme_devices=True  # Only enabled after NVMe discovery
             ),
         }
 
@@ -286,6 +316,15 @@ class TestRunner:
             elif hasattr(test_instance, 'run_random_iops_test'):
                 # Random IOPS Performance test
                 result = test_instance.run_random_iops_test(options or {})
+            elif hasattr(test_instance, 'validate_namespace'):
+                # Namespace Validation test
+                result = test_instance.validate_namespace(options or {})
+            elif hasattr(test_instance, 'validate_command_set'):
+                # Command Set Validation test
+                result = test_instance.validate_command_set(options or {})
+            elif hasattr(test_instance, 'validate_identify_structures'):
+                # Identify Structure Validation test
+                result = test_instance.validate_identify_structures(options or {})
             elif hasattr(test_instance, 'run_measurement_test'):
                 # For tests that support options (like link_training_time)
                 result = test_instance.run_measurement_test(options=options)
@@ -340,7 +379,7 @@ class TestRunner:
         )
 
         # Run tests in order: PCIe Discovery, NVMe Discovery, then conditional tests
-        test_order = ['pcie_discovery', 'nvme_discovery', 'link_training_time', 'link_retrain_count', 'link_quality', 'sequential_read_performance', 'sequential_write_performance', 'random_iops_performance']
+        test_order = ['pcie_discovery', 'nvme_discovery', 'link_training_time', 'link_retrain_count', 'link_quality', 'nvme_namespace_validation', 'nvme_command_set_validation', 'nvme_identify_validation', 'sequential_read_performance', 'sequential_write_performance', 'random_iops_performance']
 
         for suite_id in test_order:
             if suite_id not in self.test_suites:

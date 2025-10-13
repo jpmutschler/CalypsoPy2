@@ -4,10 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fc3e30f9-c418-4920-a510-76a20644706b" name="Changes" comment="LTSSM State Tracking and Link Quality Test added">
+    <list default="true" id="fc3e30f9-c418-4920-a510-76a20644706b" name="Changes" comment="Updated Python library requirements">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/js/testing.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/js/testing.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_runner.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_runner.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -109,7 +112,8 @@
       <workItem from="1760010162295" duration="45864000" />
       <workItem from="1760134585928" duration="4339000" />
       <workItem from="1760211443157" duration="8418000" />
-      <workItem from="1760301266672" duration="12317000" />
+      <workItem from="1760301266672" duration="13596000" />
+      <workItem from="1760352666716" duration="9010000" />
     </task>
     <task id="LOCAL-00001" summary="Initial Push of CalypsoPy+">
       <option name="closed" value="true" />
@@ -391,7 +395,15 @@
       <option name="project" value="LOCAL" />
       <updated>1760310931539</updated>
     </task>
-    <option name="localTasksCounter" value="36" />
+    <task id="LOCAL-00036" summary="Updated Python library requirements">
+      <option name="closed" value="true" />
+      <created>1760314240196</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1760314240196</updated>
+    </task>
+    <option name="localTasksCounter" value="37" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -430,10 +442,11 @@
     <MESSAGE value="Server Connection Bug Formatting fixed" />
     <MESSAGE value="NVMe Performance Tests added. Link Training Error counter correlated into Link Quality tests, SMART data tracking during NVMe Performance Tests" />
     <MESSAGE value="LTSSM State Tracking and Link Quality Test added" />
-    <option name="LAST_COMMIT_MESSAGE" value="LTSSM State Tracking and Link Quality Test added" />
+    <MESSAGE value="Updated Python library requirements" />
+    <option name="LAST_COMMIT_MESSAGE" value="Updated Python library requirements" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/CalypsoPy_$start.coverage" NAME="start Coverage Results" MODIFIED="1760313864834" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/CalypsoPy_$start.coverage" NAME="start Coverage Results" MODIFIED="1760362062315" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/CalypsoPy_$COMportTest.coverage" NAME="COMportTest Coverage Results" MODIFIED="1758721173617" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

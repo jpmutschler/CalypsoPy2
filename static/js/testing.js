@@ -377,6 +377,41 @@ class TestingDashboard {
             };
 
             console.log('Link Quality options:', options);
+        } else if (testId === 'nvme_namespace_validation') {
+            const targetDeviceSelect = document.getElementById('nvmeNamespaceSelect');
+            const validateFormat = document.getElementById('nvmeValidateFormat');
+
+            options = {
+                target_device: targetDeviceSelect?.value || 'all',
+                validate_format: validateFormat?.checked || true,
+                verbose: false
+            };
+
+            console.log('NVMe Namespace Validation options:', options);
+        } else if (testId === 'nvme_command_set_validation') {
+            const targetDeviceSelect = document.getElementById('nvmeCommandTargetDevice');
+            const testMode = document.getElementById('nvmeCommandTestMode');
+            const testErrors = document.getElementById('nvmeTestErrorConditions');
+
+            options = {
+                target_device: targetDeviceSelect?.value || 'all',
+                test_mode: testMode?.value || 'basic',
+                test_error_conditions: testErrors?.checked || false
+            };
+
+            console.log('NVMe Command Set Validation options:', options);
+        } else if (testId === 'nvme_identify_validation') {
+            const targetDeviceSelect = document.getElementById('nvmeIdentifyTargetDevice');
+            const verbose = document.getElementById('nvmeIdentifyVerbose');
+            const checkVendor = document.getElementById('nvmeIdentifyCheckVendor');
+
+            options = {
+                target_device: targetDeviceSelect?.value || 'all',
+                verbose: verbose?.checked || false,
+                check_vendor_fields: checkVendor?.checked || false
+            };
+
+            console.log('NVMe Identify Validation options:', options);
         }
 
         // Send test request with options
@@ -500,8 +535,19 @@ class TestingDashboard {
 
         this.updateTestStatus(testId, result.status);
 
-        // Open results in new window instead of inline display
-        this.openResultsWindow(testId, result);
+        // Open results in pop-out window with export capabilities
+        if (['nvme_namespace_validation', 'nvme_command_set_validation', 'nvme_identify_validation'].includes(testId)) {
+            // Use the new ResultsWindow for NVMe validation tests
+            if (window.ResultsWindow) {
+                window.ResultsWindow.openResultsWindow(result.test_name || testId, result, testId);
+            } else {
+                // Fallback to old method
+                this.openResultsWindow(testId, result);
+            }
+        } else {
+            // Use existing results display for other tests
+            this.openResultsWindow(testId, result);
+        }
 
         const statusText = this.getStatusText(result.status);
         showNotification(`${result.test_name}: ${statusText}`,

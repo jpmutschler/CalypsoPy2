@@ -1893,21 +1893,32 @@
 			        </div>
 			    </div>
 
-			    <!-- Permission Notice -->
+			    <!-- PCIe/NVMe Testing Information -->
 			    <div class="info-banner">
 			        <div class="info-icon">ℹ️</div>
 			        <div class="info-content">
-			            <strong>Testing Requirements:</strong>
-			            Some tests require sudo/root permissions for full functionality.
-			            Tests will run with available permissions and note any limitations.
-                    </div>
-                    <div>
-                        <strong>Required Utilities on Host Server:</strong>
-                        <ul>
-                            <li><code>pciutils</code> for inspecting and manipulating PCI device configurations: <code>sudo apt install pciutils</code></li>
-                            <li><code>nvme-cli</code> for comprehensive NVMe testing: <code>sudo apt install nvme-cli</code></li>
-                            <li><code>fio</code> for NVMe benchmarking: <code>sudo apt install fio</code></li>
-                        </ul>
+			            <!-- Testing Requirements Section -->
+			            <div>
+			                <strong>Testing Requirements:</strong>
+			                <p>Some tests require sudo/root permissions for full functionality. Tests will run with available permissions and note any limitations.</p>
+			            </div>
+			            
+			            <!-- Required Utilities Section -->
+			            <div>
+			                <strong>Required Utilities on Host Server:</strong>
+			                <ul>
+			                    <li><code>pciutils</code> for inspecting and manipulating PCI device configurations: <code>sudo apt install pciutils</code></li>
+			                    <li><code>nvme-cli</code> for comprehensive NVMe testing: <code>sudo apt install nvme-cli</code></li>
+			                    <li><code>fio</code> for NVMe benchmarking: <code>sudo apt install fio</code></li>
+                                <li>Please check the requirements-optional.txt for additional host utilities to improve reporting functionalities.</li>
+			                </ul>
+			            </div>
+			            
+			            <!-- Targeted Device Filtering Section -->
+			            <div>
+			                <strong>Targeted Device Filtering:</strong>
+			                <p>All PCIe/NVMe tests automatically filter to test only Atlas 3 downstream endpoint devices for system safety and stability. Bridges, switches, and the Atlas 3 itself are excluded from testing.</p>
+			            </div>
 			        </div>
 			    </div>
 
@@ -2042,9 +2053,6 @@
 			                <span>Link Training Time</span>
 			            </div>
 			            <div class="test-card-header-actions">
-			                <button class="btn btn-primary btn-test-run-compact" onclick="testingDashboard.runTest('link_training_time')">
-			                    <span>▶️</span> Run
-			                </button>
 			                <span class="test-status idle" id="link_training_timeStatus">⏸️ Idle</span>
 			            </div>
 			        </div>
@@ -2073,17 +2081,6 @@
 			            <!-- Test Configuration Options -->
 			            <div class="test-config-section" id="linkTrainingConfig" style="display: block;">
 			                <h5>Test Options</h5>
-
-			                <!-- Device Filtering Info Box -->
-			                <div class="info-box" style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px; margin-bottom: 15px;">
-			                    <div style="display: flex; align-items: start; gap: 10px;">
-			                        <span style="font-size: 20px;">ℹ️</span>
-			                        <div style="font-size: 13px; color: #1e40af;">
-			                            <strong>Device Filtering:</strong> This test automatically filters devices to only test <strong>endpoint devices downstream of Atlas 3 switch</strong>.
-			                            Bridges, switches, and the Atlas 3 itself are excluded to prevent system instability.
-			                        </div>
-			                    </div>
-			                </div>
 
 			                <div class="config-item">
 			                    <label for="linkTrainingDeviceSelect">Target Device</label>
@@ -2142,17 +2139,13 @@
 				            <span>Link Retrain Count</span>
 				        </div>
 				        <div class="test-card-header-actions">
-				            <button class="btn btn-primary btn-test-run-compact" onclick="testingDashboard.runTest('link_retrain_count')">
-				                <span>▶️</span> Run
-				            </button>
 				            <span class="test-status idle" id="link_retrain_countStatus">⏸️ Idle</span>
 				        </div>
 				    </div>
 
 				    <div class="test-card-body">
 				        <p class="test-description">
-				            Monitors PCIe Link Control register for retrain attempts on <strong>Atlas 3 downstream endpoint devices only</strong>.
-				            Validates compliance with PCIe 6.x specification.
+				            Monitors PCIe Link Control register for retrain attempts and validates compliance with PCIe 6.x specification.
 				        </p>
 
 				        <div class="test-requirements">
@@ -2177,17 +2170,6 @@
 				        <!-- Test Configuration Options -->
 				        <div class="test-config-section" id="linkRetrainConfig" style="display: block;">
 				            <h5>Test Options</h5>
-
-				            <!-- Device Filtering Info Box -->
-				            <div class="info-box" style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px; margin-bottom: 15px;">
-				                <div style="display: flex; align-items: start; gap: 10px;">
-				                    <span style="font-size: 20px;">ℹ️</span>
-				                    <div style="font-size: 13px; color: #1e40af;">
-				                        <strong>Device Filtering:</strong> This test automatically filters devices to only test <strong>endpoint devices downstream of Atlas 3 switch</strong>.
-				                        Bridges, switches, and the Atlas 3 itself are excluded to prevent system instability.
-				                    </div>
-				                </div>
-				            </div>
 
 				            <!-- Device Selection -->
 				            <div class="config-item">
@@ -2261,9 +2243,6 @@
 			                <span>PCIe Link Quality Assessment</span>
 			            </div>
 			            <div class="test-card-header-actions">
-			                <button class="btn btn-primary btn-test-run-compact" onclick="testingDashboard.runTest('link_quality')">
-			                    <span>▶️</span> Run
-			                </button>
 			                <span class="test-status idle" id="link_qualityStatus">⏸️ Idle</span>
 			            </div>
 			        </div>
@@ -2280,23 +2259,13 @@
 			                    <li>Atlas 3 switch error correlation</li>
 			                    <li>System monitoring (dmesg, pciutils, sysfs)</li>
 			                    <li>PCIe 6.x compliance under stress</li>
-			                    <li>Link quality grading (A-F scale)</li>
+			                    <li>Link quality grading (1-25 scale)</li>
 			                </ul>
 			            </div>
 
 			            <div class="test-config-section">
 			                <h5>Configuration Options:</h5>
 
-			                <!-- Device Filtering Info Box -->
-			                <div class="info-box" style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px; margin-bottom: 15px;">
-			                    <div style="display: flex; align-items: start; gap: 10px;">
-			                        <span style="font-size: 20px;">ℹ️</span>
-			                        <div style="font-size: 13px; color: #1e40af;">
-			                            <strong>Device Filtering:</strong> This test automatically filters devices to only test <strong>endpoint devices downstream of Atlas 3 switch</strong>.
-			                            Bridges, switches, and the Atlas 3 itself are excluded to prevent system instability.
-			                        </div>
-			                    </div>
-			                </div>
 
 			                <!-- Device Selection -->
 			                <div class="config-item">
@@ -2353,6 +2322,12 @@
 			                    </div>
 			                </div>
 			            </div>
+			            
+			            <div class="test-actions">
+			                <button class="btn btn-primary btn-test-run" id="runLinkQualityBtn" onclick="testingDashboard.runTest('link_quality')">
+			                    <span>▶️</span> Run Test
+			                </button>
+			            </div>
 			        </div>
 			    </div>
 
@@ -2360,14 +2335,17 @@
 			         NVME VALIDATION CATEGORY
 			         ======================================== -->
 
-			    <div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="nvme_namespace_validation" data-category="nvme-validation" data-placeholder="true">
+			    <div class="card test-card test-card-compact nvme-namespace-validation collapsed" data-test-id="nvme_namespace_validation" data-category="nvme-validation">
 			        <div class="card-header test-card-header">
 			            <div class="card-title">
 			                <div class="card-icon">📦</div>
 			                <span>Namespace Validation</span>
 			            </div>
 			            <div class="test-card-header-actions">
-			                <span class="placeholder-badge">Coming Soon</span>
+			                <span class="test-status-badge" id="namespaceValidationStatus">Ready</span>
+			                <button class="btn-icon" title="Expand/Collapse" onclick="toggleTestCard(this)">
+			                    <span class="expand-icon">📋</span>
+			                </button>
 			            </div>
 			        </div>
 			        <div class="test-card-body">
@@ -2390,11 +2368,11 @@
 			                <h5>Test Options</h5>
 
 			                <div class="config-item">
-			                    <label for="nvmeNamespaceSelect">Target Namespace</label>
+			                    <label for="nvmeNamespaceSelect">Target Device</label>
 			                    <select id="nvmeNamespaceSelect" class="form-control">
-			                        <option value="all">All Namespaces</option>
+			                        <option value="all">All Atlas 3 Downstream Devices</option>
 			                    </select>
-			                    <span class="config-help">Select namespace to validate</span>
+			                    <span class="config-help">Select device to validate (only Atlas 3 downstream devices shown)</span>
 			                </div>
 
 			                <div class="config-item">
@@ -2405,17 +2383,26 @@
 			                    <span class="config-help">Check LBA format and metadata configuration</span>
 			                </div>
 			            </div>
+
+			            <div class="test-actions">
+			                <button class="btn btn-primary btn-test-run" id="runNamespaceValidationBtn" onclick="testingDashboard.runTest('nvme_namespace_validation')">
+			                    <span>▶️</span> Run Test
+			                </button>
+			            </div>
 			        </div>
 			    </div>
 
-			    <div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="nvme_command_set_validation" data-category="nvme-validation" data-placeholder="true">
+			    <div class="card test-card test-card-compact nvme-command-validation collapsed" data-test-id="nvme_command_set_validation" data-category="nvme-validation">
 			        <div class="card-header test-card-header">
 			            <div class="card-title">
 			                <div class="card-icon">⚙️</div>
 			                <span>Command Set Validation</span>
 			            </div>
 			            <div class="test-card-header-actions">
-			                <span class="placeholder-badge">Coming Soon</span>
+			                <span class="test-status-badge" id="commandSetValidationStatus">Ready</span>
+			                <button class="btn-icon" title="Expand/Collapse" onclick="toggleTestCard(this)">
+			                    <span class="expand-icon">📋</span>
+			                </button>
 			            </div>
 			        </div>
 			        <div class="test-card-body">
@@ -2438,13 +2425,21 @@
 			                <h5>Test Options</h5>
 
 			                <div class="config-item">
+			                    <label for="nvmeCommandTargetDevice">Target Device</label>
+			                    <select id="nvmeCommandTargetDevice" class="form-control">
+			                        <option value="all">All Atlas 3 Downstream Controllers</option>
+			                    </select>
+			                    <span class="config-help">Select controller to test (only Atlas 3 downstream devices shown)</span>
+			                </div>
+
+			                <div class="config-item">
 			                    <label for="nvmeCommandTestMode">Test Mode</label>
 			                    <select id="nvmeCommandTestMode" class="form-control">
-			                        <option value="basic">Basic Commands Only</option>
+			                        <option value="basic">Basic Commands Only (Safe)</option>
 			                        <option value="extended">Extended Command Set</option>
-			                        <option value="comprehensive">Comprehensive (All Commands)</option>
+			                        <option value="comprehensive">Comprehensive (All Safe Commands)</option>
 			                    </select>
-			                    <span class="config-help">Select command test coverage level</span>
+			                    <span class="config-help">Select command test coverage level - all tests are non-destructive</span>
 			                </div>
 
 			                <div class="config-item">
@@ -2455,17 +2450,26 @@
 			                    <span class="config-help">Include error injection and recovery testing</span>
 			                </div>
 			            </div>
+
+			            <div class="test-actions">
+			                <button class="btn btn-primary btn-test-run" id="runCommandSetValidationBtn" onclick="testingDashboard.runTest('nvme_command_set_validation')">
+			                    <span>▶️</span> Run Test
+			                </button>
+			            </div>
 			        </div>
 			    </div>
 
-			    <div class="card test-card test-card-compact test-card-placeholder collapsed" data-test-id="nvme_identify_validation" data-category="nvme-validation" data-placeholder="true">
+			    <div class="card test-card test-card-compact nvme-identify-validation collapsed" data-test-id="nvme_identify_validation" data-category="nvme-validation">
 			        <div class="card-header test-card-header">
 			            <div class="card-title">
 			                <div class="card-icon">🆔</div>
 			                <span>Identify Structure Validation</span>
 			            </div>
 			            <div class="test-card-header-actions">
-			                <span class="placeholder-badge">Coming Soon</span>
+			                <span class="test-status-badge" id="identifyValidationStatus">Ready</span>
+			                <button class="btn-icon" title="Expand/Collapse" onclick="toggleTestCard(this)">
+			                    <span class="expand-icon">📋</span>
+			                </button>
 			            </div>
 			        </div>
 			        <div class="test-card-body">
@@ -2488,11 +2492,19 @@
 			                <h5>Test Options</h5>
 
 			                <div class="config-item">
+			                    <label for="nvmeIdentifyTargetDevice">Target Device</label>
+			                    <select id="nvmeIdentifyTargetDevice" class="form-control">
+			                        <option value="all">All Atlas 3 Downstream Controllers</option>
+			                    </select>
+			                    <span class="config-help">Select controller to validate (only Atlas 3 downstream devices shown)</span>
+			                </div>
+
+			                <div class="config-item">
 			                    <label>
 			                        <input type="checkbox" id="nvmeIdentifyVerbose">
 			                        Verbose Output
 			                    </label>
-			                    <span class="config-help">Show all identify structure fields and values</span>
+			                    <span class="config-help">Show detailed field analysis and values</span>
 			                </div>
 
 			                <div class="config-item">
@@ -2502,6 +2514,12 @@
 			                    </label>
 			                    <span class="config-help">Include vendor-specific field validation</span>
 			                </div>
+			            </div>
+
+			            <div class="test-actions">
+			                <button class="btn btn-primary btn-test-run" id="runIdentifyValidationBtn" onclick="testingDashboard.runTest('nvme_identify_validation')">
+			                    <span>▶️</span> Run Test
+			                </button>
 			            </div>
 			        </div>
 			    </div>
@@ -2532,16 +2550,6 @@
 			            <div class="test-config-section">
 			                <h5>Test Configuration</h5>
 
-			                <!-- Device Filtering Info Box -->
-			                <div class="info-box" style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px; margin-bottom: 15px;">
-			                    <div style="display: flex; align-items: start; gap: 10px;">
-			                        <span style="font-size: 20px;">ℹ️</span>
-			                        <div style="font-size: 13px; color: #1e40af;">
-			                            <strong>Device Filtering:</strong> This test automatically filters devices to only test <strong>endpoint devices downstream of Atlas 3 switch</strong>.
-			                            Bridges, switches, and the Atlas 3 itself are excluded to prevent system instability.
-			                        </div>
-			                    </div>
-			                </div>
 
 			                <!-- Filter Options -->
 			                <div class="config-group">
@@ -2712,16 +2720,6 @@
 			            <div class="test-config-section test-config-write">
 			                <h5>Test Configuration</h5>
 			                
-			                <!-- Device Filtering Info Box -->
-			                <div class="info-box" style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px; margin-bottom: 15px;">
-			                    <div style="display: flex; align-items: start; gap: 10px;">
-			                        <span style="font-size: 20px;">ℹ️</span>
-			                        <div style="font-size: 13px; color: #1e40af;">
-			                            <strong>Device Filtering:</strong> This test automatically filters devices to only test <strong>endpoint devices downstream of Atlas 3 switch</strong>.
-			                            Bridges, switches, and the Atlas 3 itself are excluded to prevent system instability.
-			                        </div>
-			                    </div>
-			                </div>
 			                
 			                <div class="config-item">
 			                    <label for="seqWriteDeviceSelect">Target Device</label>
@@ -2749,13 +2747,6 @@
 			                </div>
 			                
 			                <div class="config-grid">
-			                    <div class="config-group">
-			                        <label for="deviceSelectWrite">Target Device:</label>
-			                        <select id="deviceSelectWrite" class="form-control">
-			                            <option value="">Loading devices...</option>
-			                        </select>
-			                        <div id="selectedDeviceInfoWrite" class="device-info" style="display: none;"></div>
-			                    </div>
 			                    <div class="config-group">
 			                        <label for="runtimeSecondsWrite">Test Duration:</label>
 			                        <select id="runtimeSecondsWrite" class="form-control">
@@ -2900,16 +2891,6 @@
 			            <div class="test-config-section test-config-iops">
 			                <h5>Test Configuration</h5>
 			                
-			                <!-- Device Filtering Info Box -->
-			                <div class="info-box" style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px; margin-bottom: 15px;">
-			                    <div style="display: flex; align-items: start; gap: 10px;">
-			                        <span style="font-size: 20px;">ℹ️</span>
-			                        <div style="font-size: 13px; color: #1e40af;">
-			                            <strong>Device Filtering:</strong> This test automatically filters devices to only test <strong>endpoint devices downstream of Atlas 3 switch</strong>.
-			                            Bridges, switches, and the Atlas 3 itself are excluded to prevent system instability.
-			                        </div>
-			                    </div>
-			                </div>
 			                
 			                <div class="config-item">
 			                    <label for="randomIOPSDeviceSelect">Target Device</label>
@@ -2937,13 +2918,6 @@
 			                </div>
 			                
 			                <div class="config-grid">
-			                    <div class="config-group">
-			                        <label for="deviceSelectIOPS">Target Device:</label>
-			                        <select id="deviceSelectIOPS" class="form-control">
-			                            <option value="">Loading devices...</option>
-			                        </select>
-			                        <div id="selectedDeviceInfoIOPS" class="device-info" style="display: none;"></div>
-			                    </div>
 			                    <div class="config-group">
 			                        <label for="runtimeSecondsIOPS">Test Duration:</label>
 			                        <select id="runtimeSecondsIOPS" class="form-control">
@@ -4194,7 +4168,6 @@
                                             <li>Atlas 3 switch enumeration</li>
                                             <li>Downstream device discovery</li>
                                             <li>Link capability assessment</li>
-                                            <li>Device filtering (Atlas 3 endpoints only)</li>
                                         </ul>
                                     </div>
                                     
@@ -4785,6 +4758,8 @@ export_results --format csv
     <script src="{{ url_for('static', filename='js/advanced.js') }}"></script>
     <!-- Device Filtering Utility Module -->
     <script src="{{ url_for('static', filename='js/device_filtering.js') }}"></script>
+    <!-- Results Window Module -->
+    <script src="{{ url_for('static', filename='js/results_window.js') }}"></script>
     <!-- Testing & Topology Visualization Modules -->
     <script src="{{ url_for('static', filename='js/testing.js') }}"></script>
     <script src="{{ url_for('static', filename='js/topology_visualizer.js') }}"></script>
