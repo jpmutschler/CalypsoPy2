@@ -27,14 +27,32 @@ from tests.link_retrain_count import LinkRetrainCount
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'tests'))
 
 # Configure logging
-logging.basicConfig(
-    level=logging.DEBUG,  # Changed to DEBUG for more detailed logging
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('logs/calypso_py.log'),
-        logging.StreamHandler()
-    ]
-)
+# Ensure logs directory exists with proper permissions
+try:
+    os.makedirs('logs', exist_ok=True)
+    # Try to create a test file to check permissions
+    test_log_path = os.path.join('logs', 'calypso_py.log')
+    with open(test_log_path, 'a') as f:
+        pass  # Just test if we can write
+    
+    logging.basicConfig(
+        level=logging.DEBUG,  # Changed to DEBUG for more detailed logging
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(test_log_path),
+            logging.StreamHandler()
+        ]
+    )
+except (PermissionError, OSError) as e:
+    # Fall back to console-only logging if file logging fails
+    print(f"Warning: Cannot create log file ({e}), using console logging only")
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.StreamHandler()
+        ]
+    )
 logger = logging.getLogger(__name__)
 
 try:
