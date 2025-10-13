@@ -328,6 +328,14 @@ class CalypsoPyManager:
                 self.connections[port] = ser
                 self.command_history[port] = deque(maxlen=self.max_history)
 
+                # Give device time to send initial prompt and read it
+                time.sleep(0.5)  # Wait for device to send initial prompt
+                if ser.in_waiting:
+                    initial_response = ser.read(ser.in_waiting).decode('utf-8', errors='ignore')
+                    logger.info(f"Device sent initial response: {repr(initial_response)}")
+                else:
+                    logger.info("No initial response from device")
+
                 logger.info(f"Connected to {port} with standard settings (115200-8-N-1)")
                 return {
                     'success': True,
