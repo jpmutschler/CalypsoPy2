@@ -1,0 +1,68 @@
+# Optional Host System Requirements
+# These are system utilities that need to be installed via package manager
+# Not installable via pip
+
+# ============================================
+# Linux/Ubuntu Installation Commands
+# ============================================
+
+# PCIe Testing Requirements:
+# sudo apt update
+# sudo apt install pciutils      # Provides lspci, setpci commands
+# sudo apt install nvme-cli      # NVMe management and testing
+# sudo apt install fio           # Flexible I/O tester for benchmarking
+
+# Additional Utilities:
+# sudo apt install dmidecode     # System hardware information
+# sudo apt install smartmontools # SMART monitoring tools
+# sudo apt install sysstat       # System performance tools (iostat, mpstat)
+
+# ============================================
+# Windows Installation (via Chocolatey)
+# ============================================
+
+# Install Chocolatey first: https://chocolatey.org/install
+# Then run these commands in Admin PowerShell:
+
+# choco install pciutils
+# choco install nvme-cli  
+# choco install fio
+
+# ============================================
+# macOS Installation (via Homebrew)
+# ============================================
+
+# Install Homebrew first: https://brew.sh
+# Then run:
+
+# brew install pciutils
+# brew install nvme-cli
+# brew install fio
+
+# ============================================
+# Python Package Requirements for Testing
+# ============================================
+
+# If running performance tests with enhanced features:
+psutil==5.9.0          # System and process utilities
+pandas==2.1.0          # Data analysis for test results
+numpy==1.26.0          # Numerical computing
+plotly==5.17.0         # Interactive charts (alternative to matplotlib)
+
+# ============================================
+# Verification Commands
+# ============================================
+
+# After installation, verify tools are available:
+# lspci --version       # Should show pciutils version
+# nvme --version        # Should show nvme-cli version  
+# fio --version         # Should show fio version
+
+# ============================================
+# Notes
+# ============================================
+
+# 1. Root/sudo access required for most PCIe operations
+# 2. Some tests will have reduced functionality without these tools
+# 3. The application will detect and report missing utilities
+# 4. Performance tests require fio for accurate benchmarking
