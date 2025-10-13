@@ -353,6 +353,33 @@ class CalypsoPyManager:
                     logger.info(f"Device sent initial response: {repr(initial_response)}")
                 else:
                     logger.info("No initial response from device")
+                
+                # Test basic communication with a simple command
+                logger.info("Testing basic communication...")
+                ser.reset_input_buffer()
+                ser.reset_output_buffer()
+                
+                # Try just sending a carriage return first
+                ser.write(b'\r')
+                ser.flush()
+                time.sleep(0.2)
+                
+                if ser.in_waiting:
+                    test_response = ser.read(ser.in_waiting).decode('utf-8', errors='ignore')
+                    logger.info(f"Device responded to CR: {repr(test_response)}")
+                else:
+                    logger.warning("Device did not respond to carriage return")
+                    
+                    # Try with different line endings
+                    ser.write(b'\n')
+                    ser.flush()
+                    time.sleep(0.2)
+                    
+                    if ser.in_waiting:
+                        test_response = ser.read(ser.in_waiting).decode('utf-8', errors='ignore')
+                        logger.info(f"Device responded to LF: {repr(test_response)}")
+                    else:
+                        logger.warning("Device did not respond to LF either")
 
                 logger.info(f"Connected to {port} with standard settings (115200-8-N-1)")
                 return {
