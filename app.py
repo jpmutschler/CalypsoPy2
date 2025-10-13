@@ -28,7 +28,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'tests'))
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,  # Changed to DEBUG for more detailed logging
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler('logs/calypso_py.log'),
@@ -380,22 +380,44 @@ class CalypsoPyManager:
 
                     response_parts = []
                     last_activity = time.time()
+                    
+                    logger.info(f"Sending command '{command}' to device...")
 
                     while time.time() - start_time < ser.timeout * 2:
                         if ser.in_waiting:
                             chunk = ser.read(ser.in_waiting).decode('utf-8', errors='ignore')
                             response_parts.append(chunk)
                             last_activity = time.time()
+                            
+                            # Log each chunk received for debugging
+                            logger.debug(f"Received chunk: {repr(chunk)}")
 
                             full_response = ''.join(response_parts)
-                            if any(term in full_response.lower() for term in ['ok\r', 'error\r', 'done\r', 'cmd>']):
+                            
+                            # Check for cmd> prompt (case insensitive)
+                            if 'cmd>' in full_response.lower():
+                                logger.info(f"Found cmd> prompt, breaking response loop")
+                                break
+                            # Also check other common termination patterns
+                            elif any(term in full_response.lower() for term in ['ok\r', 'error\r', 'done\r']):
+                                logger.info(f"Found termination pattern, breaking response loop")
                                 break
                         else:
                             if time.time() - last_activity > 0.5:
+                                logger.debug(f"No activity for 0.5s, breaking response loop")
                                 break
                             time.sleep(0.01)
 
                     raw_response = ''.join(response_parts).strip()
+                    
+                    # Enhanced logging for debugging
+                    logger.info(f"Command '{command}' completed in {(time.time() - start_time):.2f}s")
+                    logger.info(f"Response length: {len(raw_response)} characters")
+                    if raw_response:
+                        logger.info(f"Response preview: {raw_response[:200]}...")
+                        logger.debug(f"Full raw response: {repr(raw_response)}")
+                    else:
+                        logger.warning(f"Empty response received for command '{command}'")
 
                 response_time = (time.time() - start_time) * 1000
 
