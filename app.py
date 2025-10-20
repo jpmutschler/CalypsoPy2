@@ -22,6 +22,7 @@ import os
 import sys
 from tests.link_training_time import LinkTrainingTimeMeasurement
 from tests.link_retrain_count import LinkRetrainCount
+from atlas3_parser import Atlas3Parser
 
 # Add tests directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'tests'))
@@ -36,7 +37,7 @@ try:
         pass  # Just test if we can write
     
     logging.basicConfig(
-        level=logging.DEBUG,  # Changed to DEBUG for more detailed logging
+        level=logging.INFO,  # Changed back to INFO
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
             logging.FileHandler(test_log_path),
@@ -243,8 +244,9 @@ class HardwareResponseParser:
             'status': 'success'
         }
 
-        # Handle showport command
+        # Handle showport command - Now handled by Atlas3Parser, this is fallback only
         if command.lower() == 'showport' or dashboard == 'link_status':
+            logger.warning("Using fallback parser for showport command - Atlas3Parser should handle this")
             showport_data = HardwareResponseParser.parse_showport_response(raw_response)
             parsed_data['parsed'] = showport_data
             parsed_data['type'] = 'showport_response'
@@ -271,6 +273,7 @@ class CalypsoPyManager:
         self.command_history: Dict[str, deque] = {}
         self.dashboard_states: Dict[str, Dict] = {}
         self.max_history = 200
+        self.atlas3_parser = Atlas3Parser()  # Initialize the professional parser
 
         # Initialize dashboard states
         dashboards = ['device_info', 'link_status', 'bifurcation', 'i2c', 'advanced', 'resets', 'firmware']
@@ -331,6 +334,23 @@ class CalypsoPyManager:
                 return {'success': True, 'message': f'Already connected to {port}'}
 
             try:
+                # Enhanced Windows COM port handling
+                logger.info(f"Attempting to connect to {port}...")
+                
+                # Check if port exists and get detailed info
+                available_ports = serial.tools.list_ports.comports()
+                target_port = None
+                for p in available_ports:
+                    if p.device == port:
+                        target_port = p
+                        break
+                
+                if target_port:
+                    logger.info(f"Port {port} found: {target_port.description}")
+                    logger.info(f"Hardware ID: {target_port.hwid}")
+                else:
+                    logger.warning(f"Port {port} not found in available ports")
+                
                 ser = serial.Serial(
                     port=port,
                     baudrate=115200,
@@ -340,7 +360,8 @@ class CalypsoPyManager:
                     bytesize=serial.EIGHTBITS,
                     rtscts=False,
                     dsrdtr=False,
-                    xonxoff=False
+                    xonxoff=False,
+                    exclusive=True  # Windows: try to get exclusive access
                 )
 
                 self.connections[port] = ser
@@ -353,33 +374,6 @@ class CalypsoPyManager:
                     logger.info(f"Device sent initial response: {repr(initial_response)}")
                 else:
                     logger.info("No initial response from device")
-                
-                # Test basic communication with a simple command
-                logger.info("Testing basic communication...")
-                ser.reset_input_buffer()
-                ser.reset_output_buffer()
-                
-                # Try just sending a carriage return first
-                ser.write(b'\r')
-                ser.flush()
-                time.sleep(0.2)
-                
-                if ser.in_waiting:
-                    test_response = ser.read(ser.in_waiting).decode('utf-8', errors='ignore')
-                    logger.info(f"Device responded to CR: {repr(test_response)}")
-                else:
-                    logger.warning("Device did not respond to carriage return")
-                    
-                    # Try with different line endings
-                    ser.write(b'\n')
-                    ser.flush()
-                    time.sleep(0.2)
-                    
-                    if ser.in_waiting:
-                        test_response = ser.read(ser.in_waiting).decode('utf-8', errors='ignore')
-                        logger.info(f"Device responded to LF: {repr(test_response)}")
-                    else:
-                        logger.warning("Device did not respond to LF either")
 
                 logger.info(f"Connected to {port} with standard settings (115200-8-N-1)")
                 return {
@@ -421,9 +415,8 @@ class CalypsoPyManager:
                 # Handle special commands (simulation for development without hardware)
                 if dashboard == 'bifurcation' or command.lower() in ['showmode', 'getconfig', 'checkstatus']:
                     raw_response = self._simulate_bifurcation_response(command)
-                elif command.lower() == 'showport':
-                    raw_response = self._simulate_showport_response()
                 else:
+                    # Send all other commands (including showport) to actual hardware
                     ser.reset_input_buffer()
                     ser.reset_output_buffer()
 
@@ -486,25 +479,20 @@ class CalypsoPyManager:
                 if not raw_response:
                     return {'success': False, 'message': 'No response received from device'}
 
-                parsed_data = HardwareResponseParser.parse_response(raw_response, command, dashboard)
-
-                # Add parsing for register commands
-                parsed_data = {'raw': raw_response}
-                if dashboard == 'registers':
-                    cmd_lower = command.lower().strip()
-                    if any(cmd_lower.startswith(cmd) for cmd in ['mr ', 'mw ', 'dr ', 'dp ']):
-                        try:
-                            parsed_data = self._parse_register_command(raw_response, command)
-                            logger.info(f"Parsed register command: {parsed_data.get('operation', 'unknown')}")
-                        except Exception as e:
-                            logger.error(f"Error parsing register command: {e}")
-                            parsed_data = {'raw': raw_response, 'parse_error': str(e)}
+                # Use the professional Atlas3Parser for all command parsing
+                try:
+                    parsed_data = self.atlas3_parser.parse_command_response(command, raw_response)
+                    logger.info(f"Successfully parsed command '{command}' using Atlas3Parser")
+                except Exception as e:
+                    logger.error(f"Atlas3Parser error for command '{command}': {e}")
+                    # Fallback to original parser
+                    parsed_data = HardwareResponseParser.parse_response(raw_response, command, dashboard)
 
                 response = {
                     'success': True,
                     'data': {
                         'raw': raw_response,
-                        'parsed': parsed_data,  # ADD parsed data
+                        'parsed': parsed_data,
                         'command': command,
                         'timestamp': datetime.now().isoformat(),
                         'response_time_ms': response_time,

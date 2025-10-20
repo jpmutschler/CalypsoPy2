@@ -300,29 +300,44 @@
                         </div>
                     </div>
 
-                    <!-- Current Status -->
+                    <!-- Power Consumption -->
                     <div class="card">
                         <div class="card-header">
                             <div class="card-title">
                                 <div class="card-icon">🔋</div>
-                                Current Status
+                                Power Consumption
                             </div>
                         </div>
 
-                        <div class="current-display">
-                            <div class="current-item">
-                                <div class="current-label">Board Current</div>
-                                <div class="current-value" id="boardCurrent">-- mA</div>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <label class="info-label">Power Voltage</label>
+                                <span class="info-value" id="powerVoltage">-- V</span>
+                            </div>
+                            <div class="info-item">
+                                <label class="info-label">Load Current</label>
+                                <span class="info-value" id="boardCurrent">-- mA</span>
+                            </div>
+                            <div class="info-item">
+                                <label class="info-label">Load Power</label>
+                                <span class="info-value" id="loadPower">-- W</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Port Configuration -->
-                    <div class="card">
+                    <div class="card" style="grid-column: span 2;">
                         <div class="card-header">
                             <div class="card-title">
                                 <div class="card-icon">🔌</div>
                                 Port Configuration
+                            </div>
+                        </div>
+
+                        <div class="info-grid" style="margin-bottom: 15px;">
+                            <div class="info-item">
+                                <label class="info-label">Atlas3 Version</label>
+                                <span class="info-value" id="atlas3Version">--</span>
                             </div>
                         </div>
 
@@ -331,75 +346,41 @@
                         </div>
                     </div>
 
-                    <!-- Error Status -->
+                    <!-- Clock & Spread Status -->
                     <div class="card">
                         <div class="card-header">
                             <div class="card-title">
-                                <div class="card-icon">⚠️</div>
-                                Error Status
+                                <div class="card-icon">🕐</div>
+                                Clock & Spread Status
                             </div>
                         </div>
 
-                        <div class="error-grid" id="errorGrid">
-                            <!-- Error items will be populated dynamically -->
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <label class="info-label">Clock Outputs</label>
+                                <span class="info-value" id="clockStatus">--</span>
+                            </div>
+                            <div class="info-item">
+                                <label class="info-label">Spread Spectrum</label>
+                                <span class="info-value" id="spreadStatus">--</span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Command Interface -->
-                    <div class="card command-interface">
+                    <!-- BIST Results -->
+                    <div class="card">
                         <div class="card-header">
                             <div class="card-title">
-                                <div class="card-icon">💬</div>
-                                Device Commands
-                            </div>
-                            <div class="card-actions">
-                                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--secondary-gray);">
-                                    <input type="checkbox" id="useCacheDevice" checked> Use cache
-                                </label>
+                                <div class="card-icon">🔧</div>
+                                BIST Results
                             </div>
                         </div>
 
-                        <div class="command-input-group">
-                            <input type="text" id="deviceCommandInput" class="form-control" placeholder="Enter custom command..." disabled>
-                            <button id="sendDeviceCmd" class="btn btn-primary" disabled>
-                                <span>📤</span> Send
-                            </button>
-                        </div>
-
-                        <div class="command-presets" id="devicePresets">
-                            <div class="preset-btn" data-cmd="sysinfo" data-desc="System information">
-                                <div class="preset-title">System Info</div>
-                                <div class="preset-command">sysinfo</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="version" data-desc="Firmware version">
-                                <div class="preset-title">Version Info</div>
-                                <div class="preset-command">version</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="temp" data-desc="Temperature readings">
-                                <div class="preset-title">Temperature</div>
-                                <div class="preset-command">temp</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="voltage" data-desc="Voltage readings">
-                                <div class="preset-title">Voltage</div>
-                                <div class="preset-command">voltage</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="current" data-desc="Current readings">
-                                <div class="preset-title">Current</div>
-                                <div class="preset-command">current</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="status" data-desc="Overall status">
-                                <div class="preset-title">Status</div>
-                                <div class="preset-command">status</div>
-                            </div>
-                        </div>
-
-                        <div class="console-container" id="deviceConsole">
-                            <div class="console-entry command">
-                                <div class="console-timestamp">System Ready</div>
-                                <div class="console-content">CalypsoPy+ Device Info Dashboard initialized. Connect to a device to view system information.</div>
-                            </div>
+                        <div class="bist-grid" id="bistGrid">
+                            <!-- BIST items will be populated dynamically -->
                         </div>
                     </div>
+
                 </div>
             </div>
 
@@ -439,69 +420,88 @@
                     </div>
                 </div>
 
-                <div class="dashboard-grid">
-                    <!-- Port Status Grid -->
-                    <div class="card" style="grid-column: span 2;">
-                        <div class="card-header">
-                            <div class="card-title">
-                                <div class="card-icon">📡</div>
-                                PCIe Port Status
-                            </div>
+                <!-- Atlas 3 Host Card Physical Layout - Full Width -->
+                <div class="card physical-layout-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon">🗂️</div>
+                            Atlas 3 Host Card Physical Layout
                         </div>
-
-                        <div class="port-status-grid" id="portStatusGrid">
-                            <div class="port-status-loading">
-                                <div class="loading"></div>
-                                <p>Connect to a device and run 'showport' to view port status</p>
-                            </div>
+                        <div class="card-actions">
+                            <span class="atlas3-version" id="atlas3VersionDisplay">--</span>
                         </div>
                     </div>
 
-                    <!-- Command Interface -->
-                    <div class="card command-interface" style="grid-column: span 2;">
-                        <div class="card-header">
-                            <div class="card-title">
-                                <div class="card-icon">💬</div>
-                                Link Status Commands
+                    <div class="atlas3-card-layout">
+                        <!-- Host Card Image -->
+                        <div class="card-image-container">
+                            <img src="{{ url_for('static', filename='hostcard.png') }}" alt="Atlas 3 Host Card" class="hostcard-image" id="hostcardImage">
+                            
+                            <!-- Port Location Overlays -->
+                            <div class="port-overlay gold-finger" id="goldFingerOverlay" data-location="gold_finger">
+                                <div class="port-overlay-label">Gold Finger (GF)<br><span class="port-range">Ports 0-32</span></div>
+                                <div class="port-status-indicator" id="goldFingerIndicator"></div>
+                                <div class="connected-devices" id="goldFingerDevices"></div>
                             </div>
-                            <div class="card-actions">
-                                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--secondary-gray);">
-                                    <input type="checkbox" id="useCacheLinkStatus" checked> Use cache
-                                </label>
+                            
+                            <div class="port-overlay straddle-mount" id="straddleMountOverlay" data-location="straddle_mount">
+                                <div class="port-overlay-label">Straddle Mount<br><span class="port-range">Ports 80-95</span></div>
+                                <div class="port-status-indicator" id="straddleMountIndicator"></div>
+                                <div class="connected-devices" id="straddleMountDevices"></div>
+                            </div>
+                            
+                            <div class="port-overlay upper-left-mcio" id="upperLeftMcioOverlay" data-location="upper_left_mcio">
+                                <div class="port-overlay-label">UL MCIO<br><span class="port-range">Ports 112-119</span></div>
+                                <div class="port-status-indicator" id="upperLeftMcioIndicator"></div>
+                                <div class="connected-devices" id="upperLeftMcioDevices"></div>
+                            </div>
+                            
+                            <div class="port-overlay lower-left-mcio" id="lowerLeftMcioOverlay" data-location="lower_left_mcio">
+                                <div class="port-overlay-label">LL MCIO<br><span class="port-range">Ports 120-127</span></div>
+                                <div class="port-status-indicator" id="lowerLeftMcioIndicator"></div>
+                                <div class="connected-devices" id="lowerLeftMcioDevices"></div>
+                            </div>
+                            
+                            <div class="port-overlay upper-right-mcio" id="upperRightMcioOverlay" data-location="upper_right_mcio">
+                                <div class="port-overlay-label">UR MCIO<br><span class="port-range">Ports 128-135</span></div>
+                                <div class="port-status-indicator" id="upperRightMcioIndicator"></div>
+                                <div class="connected-devices" id="upperRightMcioDevices"></div>
+                            </div>
+                            
+                            <div class="port-overlay lower-right-mcio" id="lowerRightMcioOverlay" data-location="lower_right_mcio">
+                                <div class="port-overlay-label">LR MCIO<br><span class="port-range">Ports 136-143</span></div>
+                                <div class="port-status-indicator" id="lowerRightMcioIndicator"></div>
+                                <div class="connected-devices" id="lowerRightMcioDevices"></div>
                             </div>
                         </div>
+                        
+                        <!-- Loading State -->
+                        <div class="port-status-loading" id="portStatusLoading">
+                            <div class="loading"></div>
+                            <p>Connect to a device and run 'showport' to view port status</p>
+                        </div>
+                    </div>
+                </div>
 
-                        <div class="command-input-group">
-                            <input type="text" id="linkCommandInput" class="form-control" placeholder="Enter link status command..." disabled>
-                            <button id="sendLinkCmd" class="btn btn-primary" disabled>
-                                <span>📤</span> Send
+                <!-- Port Groups Detailed View - Below Physical Layout -->
+                <div class="card port-groups-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon">📋</div>
+                            Port Groups Detailed Status
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn btn-sm btn-outline" id="expandAllPortGroups">
+                                <span>📂</span> Expand All
                             </button>
                         </div>
+                    </div>
 
-                        <div class="command-presets" id="linkPresets">
-                            <div class="preset-btn" data-cmd="showport" data-desc="Display port status and lane configurations">
-                                <div class="preset-title">Show Ports</div>
-                                <div class="preset-command">showport</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="linkinfo" data-desc="Link information details">
-                                <div class="preset-title">Link Info</div>
-                                <div class="preset-command">linkinfo</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="portstatus" data-desc="Detailed port status">
-                                <div class="preset-title">Port Status</div>
-                                <div class="preset-command">portstatus</div>
-                            </div>
-                            <div class="preset-btn" data-cmd="bandwidth" data-desc="Bandwidth utilization">
-                                <div class="preset-title">Bandwidth</div>
-                                <div class="preset-command">bandwidth</div>
-                            </div>
-                        </div>
-
-                        <div class="console-container" id="linkConsole">
-                            <div class="console-entry command">
-                                <div class="console-timestamp">System Ready</div>
-                                <div class="console-content">Link Status monitoring ready. Execute 'showport' to view PCIe port connections.</div>
-                            </div>
+                    <div class="port-groups-container" id="portGroupsContainer">
+                        <!-- Port groups will be populated dynamically -->
+                        <div class="port-groups-loading">
+                            <div class="loading"></div>
+                            <p>Waiting for port data...</p>
                         </div>
                     </div>
                 </div>
@@ -697,69 +697,6 @@
 			    </div>
 
 			    <div class="dashboard-grid">
-			        <!-- Command Interface Card -->
-			        <div class="card command-interface">
-			            <div class="card-header">
-			                <div class="card-title">
-			                    <div class="card-icon">⌨️</div>
-			                    Register Commands
-			                </div>
-			                <button class="btn btn-sm btn-outline" id="clearRegistersConsole">
-			                    <span>🗑️</span> Clear
-			                </button>
-			            </div>
-
-			            <!-- Manual Command Input -->
-			            <div class="command-input-group">
-			                <input type="text" id="registersCommandInput" class="form-control" placeholder="Enter register command (mr/mw/dr/dp)..." disabled>
-			                <button id="sendRegistersCmd" class="btn btn-primary" disabled>
-			                    <span>📤</span> Send
-			                </button>
-			            </div>
-
-			            <!-- Command Reference -->
-			            <div style="margin-bottom: 20px; padding: 15px; background: var(--light-gray); border-radius: 10px; font-size: 13px;">
-			                <div style="font-weight: 600; margin-bottom: 8px; color: var(--primary-red);">Command Syntax:</div>
-			                <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; font-family: monospace;">
-			                    <strong>mr &lt;addr&gt;</strong>
-			                    <span>Read 32-bit register</span>
-			                    <strong>mw &lt;addr&gt; &lt;data&gt;</strong>
-			                    <span>Write 32-bit register</span>
-			                    <strong>dr &lt;addr&gt; &lt;count&gt;</strong>
-			                    <span>Dump switch registers</span>
-			                    <strong>dp &lt;port&gt;</strong>
-			                    <span>Dump port registers</span>
-			                </div>
-			            </div>
-
-			            <!-- Preset Buttons -->
-			            <div class="command-presets" id="registersPresets">
-			                <div class="preset-btn" data-cmd="port_status" data-desc="Read port status register">
-			                    <div class="preset-title">📊 Port Status</div>
-			                    <div class="preset-command">mr (base+0x0)</div>
-			                </div>
-			                <div class="preset-btn" data-cmd="link_control" data-desc="Read link control register">
-			                    <div class="preset-title">🔗 Link Control</div>
-			                    <div class="preset-command">mr (base+0x10)</div>
-			                </div>
-			                <div class="preset-btn" data-cmd="port_dump" data-desc="Dump 32 port registers">
-			                    <div class="preset-title">📋 Port Dump</div>
-			                    <div class="preset-command">dr base 32</div>
-			                </div>
-			                <div class="preset-btn" data-cmd="port_config" data-desc="Dump all port configuration">
-			                    <div class="preset-title">⚙️ Full Port Config</div>
-			                    <div class="preset-command">dp &lt;port&gt;</div>
-			                </div>
-			            </div>
-
-			            <!-- Console Output -->
-			            <div class="console-container" id="registersConsole">
-			                <div class="console-entry command">
-			                    <div class="console-timestamp">System Ready</div>
-			                    <div class="console-content">Registers interface ready. Select a port to begin.</div>
-			                </div>
-			            </div>
-			        </div>
 
 			        <!-- Quick Reference Card -->
 			        <div class="card">
@@ -3782,968 +3719,6 @@
                 </div>
             </div>
 
-            <!-- User's Manual Dashboard -->
-            <div id="user-manual-dashboard" class="dashboard" style="display: none;">
-                <div class="dashboard-header">
-                    <h2>📚 User's Manual</h2>
-                    <div class="manual-search-container">
-                        <input type="text" id="manual-search" placeholder="Search manual..." class="manual-search-input">
-                        <button id="clear-search" class="manual-clear-btn">✕</button>
-                    </div>
-                </div>
-                
-                <div class="manual-container">
-                    <!-- Table of Contents Sidebar -->
-                    <div class="manual-toc">
-                        <h3>Table of Contents</h3>
-                        <ul class="toc-list">
-                            <li><a href="#getting-started" class="toc-link">Getting Started</a></li>
-                            <li><a href="#connection-setup" class="toc-link">Connection Setup</a></li>
-                            <li><a href="#device-information" class="toc-link">Device Information</a></li>
-                            <li><a href="#link-status" class="toc-link">Link Status</a></li>
-                            <li><a href="#bifurcation" class="toc-link">Bifurcation</a></li>
-                            <li><a href="#registers" class="toc-link">Registers</a></li>
-                            <li><a href="#firmware-updates" class="toc-link">Firmware Updates</a></li>
-                            <li><a href="#testing-suite" class="toc-link">Testing Suite</a></li>
-                            <li><a href="#analytics" class="toc-link">Analytics</a></li>
-                            <li><a href="#terminal" class="toc-link">Terminal</a></li>
-                            <li><a href="#troubleshooting" class="toc-link">Troubleshooting</a></li>
-                            <li><a href="#advanced-features" class="toc-link">Advanced Features</a></li>
-                        </ul>
-                    </div>
-                    
-                    <!-- Manual Content -->
-                    <div class="manual-content">
-                        <!-- Getting Started Section -->
-                        <section id="getting-started" class="manual-section">
-                            <h2>Getting Started</h2>
-                            <div class="section-content">
-                                <h3>Welcome to CalypsoPy+</h3>
-                                <p>CalypsoPy+ is a professional PCIe hardware development interface designed for working with Serial Cables Gen6 PCIe Atlas 3 Host Cards. This comprehensive platform provides real-time hardware monitoring, firmware updates, and extensive testing capabilities through an intuitive web interface.</p>
-                                
-                                <h4>Quick Start Checklist</h4>
-                                <ul>
-                                    <li>✅ Ensure your Atlas 3 Host Card is properly connected</li>
-                                    <li>✅ Verify serial cable connection (115200-8-N-1)</li>
-                                    <li>✅ Launch CalypsoPy+ server</li>
-                                    <li>✅ Open web interface at http://localhost:5000</li>
-                                    <li>✅ Establish connection via Connection dashboard</li>
-                                </ul>
-                                
-                                <div class="screenshot-placeholder">
-                                    <p>📷 Screenshot Placeholder: Main Dashboard Overview</p>
-                                    <em>This will show the main CalypsoPy+ interface with all dashboard options visible</em>
-                                </div>
-                                
-                                <h4>System Requirements</h4>
-                                <div class="info-box">
-                                    <strong>Minimum Requirements:</strong>
-                                    <ul>
-                                        <li>Python 3.8+</li>
-                                        <li>Flask 3.0.0</li>
-                                        <li>Modern web browser (Chrome, Firefox, Safari, Edge)</li>
-                                        <li>Serial port access</li>
-                                    </ul>
-                                    
-                                    <strong>Enhanced Features:</strong>
-                                    <ul>
-                                        <li>Root/Administrator privileges (for PCIe testing)</li>
-                                        <li>pciutils, nvme-cli, fio (for comprehensive testing)</li>
-                                        <li>matplotlib, reportlab (for advanced reporting)</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </section>
-
-                        <!-- Connection Setup Section -->
-                        <section id="connection-setup" class="manual-section">
-                            <h2>Connection Setup</h2>
-                            <div class="section-content">
-                                <h3>Establishing Device Connection</h3>
-                                <p>The Connection dashboard is your gateway to communicating with Atlas 3 Host Cards. Proper connection setup is essential for all other operations.</p>
-                                
-                                <h4>Connection Parameters</h4>
-                                <table class="manual-table">
-                                    <tr><th>Parameter</th><th>Value</th><th>Description</th></tr>
-                                    <tr><td>Baud Rate</td><td>115200</td><td>Serial communication speed</td></tr>
-                                    <tr><td>Data Bits</td><td>8</td><td>Character size</td></tr>
-                                    <tr><td>Parity</td><td>None</td><td>Error checking method</td></tr>
-                                    <tr><td>Stop Bits</td><td>1</td><td>End of character marker</td></tr>
-                                    <tr><td>Timeout</td><td>2 seconds</td><td>Command response timeout</td></tr>
-                                </table>
-                                
-                                <div class="screenshot-placeholder">
-                                    <p>📷 Screenshot Placeholder: Connection Dashboard</p>
-                                    <em>Show the connection interface with port selection and connection status</em>
-                                </div>
-                                
-                                <h4>Connection Status Indicators</h4>
-                                <ul>
-                                    <li><span class="status-indicator connected">🟢</span> <strong>Connected:</strong> Active communication established</li>
-                                    <li><span class="status-indicator disconnected">🔴</span> <strong>Disconnected:</strong> No communication available</li>
-                                    <li><span class="status-indicator connecting">🟡</span> <strong>Connecting:</strong> Attempting to establish connection</li>
-                                </ul>
-                                
-                                <div class="warning-box">
-                                    <strong>⚠️ Important:</strong> Always ensure proper grounding and verify device compatibility before connecting. Incorrect connections may damage hardware.
-                                </div>
-                            </div>
-                        </section>
-
-                        <!-- Device Information Section -->
-                        <section id="device-information" class="manual-section">
-                            <h2>Device Information</h2>
-                            <div class="section-content">
-                                <h3>Hardware Overview Dashboard</h3>
-                                <p>The Device Information dashboard provides comprehensive details about your connected Atlas 3 Host Card, including hardware specifications, firmware versions, and operational status.</p>
-                                
-                                <h4>Information Categories</h4>
-                                <div class="expandable-section">
-                                    <h5>📋 System Information</h5>
-                                    <ul>
-                                        <li><strong>Device Model:</strong> Atlas 3 Host Card identification</li>
-                                        <li><strong>Serial Number:</strong> Unique device identifier</li>
-                                        <li><strong>Hardware Revision:</strong> Board version information</li>
-                                        <li><strong>Manufacturing Date:</strong> Production timestamp</li>
-                                    </ul>
-                                </div>
-                                
-                                <div class="expandable-section">
-                                    <h5>🔧 Firmware Information</h5>
-                                    <ul>
-                                        <li><strong>MCU Firmware:</strong> Microcontroller firmware version</li>
-                                        <li><strong>SBR0/SBR1:</strong> Switch board firmware versions</li>
-                                        <li><strong>Boot Loader:</strong> System boot loader version</li>
-                                        <li><strong>Update Status:</strong> Last firmware update information</li>
-                                    </ul>
-                                </div>
-                                
-                                <div class="screenshot-placeholder">
-                                    <p>📷 Screenshot Placeholder: Device Information Panel</p>
-                                    <em>Display the complete device information dashboard with all hardware details</em>
-                                </div>
-                                
-                                <h4>Refresh and Caching</h4>
-                                <p>Device information is cached for performance but can be refreshed manually. The system automatically updates critical status information every 30 seconds.</p>
-                            </div>
-                        </section>
-
-                        <!-- Link Status Section -->
-                        <section id="link-status" class="manual-section">
-                            <h2>Link Status</h2>
-                            <div class="section-content">
-                                <h3>PCIe Link Monitoring</h3>
-                                <p>The Link Status dashboard provides real-time monitoring of PCIe port states, link training status, and connection health across all Atlas 3 switch ports.</p>
-                                
-                                <h4>Port Status Indicators</h4>
-                                <table class="manual-table">
-                                    <tr><th>Status</th><th>Indicator</th><th>Description</th></tr>
-                                    <tr><td>Link Up</td><td>🟢</td><td>Port is active and trained</td></tr>
-                                    <tr><td>Link Down</td><td>🔴</td><td>No device detected or link failed</td></tr>
-                                    <tr><td>Training</td><td>🟡</td><td>Link training in progress</td></tr>
-                                    <tr><td>Disabled</td><td>⚫</td><td>Port administratively disabled</td></tr>
-                                </table>
-                                
-                                <div class="screenshot-placeholder">
-                                    <p>📷 Screenshot Placeholder: Link Status Overview</p>
-                                    <em>Show the link status grid with multiple ports and their current states</em>
-                                </div>
-                                
-                                <h4>Link Details</h4>
-                                <p>Click any port to view detailed information:</p>
-                                <ul>
-                                    <li><strong>Link Speed:</strong> Current negotiated speed (Gen1/2/3/4/5)</li>
-                                    <li><strong>Link Width:</strong> Number of active lanes (x1, x2, x4, x8, x16)</li>
-                                    <li><strong>Training Time:</strong> Time taken for link establishment</li>
-                                    <li><strong>Error Counters:</strong> Link-level error statistics</li>
-                                    <li><strong>Device Info:</strong> Connected endpoint information</li>
-                                </ul>
-                                
-                                <div class="tip-box">
-                                    <strong>💡 Pro Tip:</strong> Use the auto-refresh feature during debugging to monitor link state changes in real-time. The dashboard updates every 5 seconds when enabled.
-                                </div>
-                            </div>
-                        </section>
-
-                        <!-- Bifurcation Section -->
-                        <section id="bifurcation" class="manual-section">
-                            <h2>Bifurcation</h2>
-                            <div class="section-content">
-                                <h3>Port Configuration Management</h3>
-                                <p>The Bifurcation dashboard allows you to configure how PCIe ports are divided and allocated across the Atlas 3 switch, enabling flexible topology management.</p>
-                                
-                                <h4>Bifurcation Modes</h4>
-                                <div class="mode-grid">
-                                    <div class="mode-card">
-                                        <h5>x16 Mode</h5>
-                                        <p>Single x16 port - Maximum bandwidth for single device</p>
-                                        <ul>
-                                            <li>1 × x16 port</li>
-                                            <li>Maximum bandwidth: 32 GB/s (PCIe 5.0)</li>
-                                            <li>Ideal for: High-performance NVMe, GPUs</li>
-                                        </ul>
-                                    </div>
-                                    
-                                    <div class="mode-card">
-                                        <h5>x8x8 Mode</h5>
-                                        <p>Two x8 ports - Balanced configuration</p>
-                                        <ul>
-                                            <li>2 × x8 ports</li>
-                                            <li>Bandwidth per port: 16 GB/s</li>
-                                            <li>Ideal for: Dual NVMe, balanced workloads</li>
-                                        </ul>
-                                    </div>
-                                    
-                                    <div class="mode-card">
-                                        <h5>x4x4x4x4 Mode</h5>
-                                        <p>Four x4 ports - Maximum device count</p>
-                                        <ul>
-                                            <li>4 × x4 ports</li>
-                                            <li>Bandwidth per port: 8 GB/s</li>
-                                            <li>Ideal for: Multiple NVMe drives, mixed devices</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                
-                                <div class="screenshot-placeholder">
-                                    <p>📷 Screenshot Placeholder: Bifurcation Configuration</p>
-                                    <em>Show the bifurcation mode selection interface with visual port layout</em>
-                                </div>
-                                
-                                <h4>Configuration Process</h4>
-                                <ol>
-                                    <li><strong>Select Mode:</strong> Choose desired bifurcation configuration</li>
-                                    <li><strong>Validate:</strong> System checks compatibility with connected devices</li>
-                                    <li><strong>Apply:</strong> Configuration is written to switch registers</li>
-                                    <li><strong>Reset:</strong> System may require reset for changes to take effect</li>
-                                    <li><strong>Verify:</strong> Confirm new configuration is active</li>
-                                </ol>
-                                
-                                <div class="warning-box">
-                                    <strong>⚠️ Caution:</strong> Bifurcation changes may require system reset and will temporarily disconnect all devices. Save your work before proceeding.
-                                </div>
-                            </div>
-                        </section>
-
-                        <!-- Registers Section -->
-                        <section id="registers" class="manual-section">
-                            <h2>Registers</h2>
-                            <div class="section-content">
-                                <h3>Memory and Register Access</h3>
-                                <p>The Registers dashboard provides direct access to Atlas 3 switch memory and configuration registers for advanced debugging and configuration.</p>
-                                
-                                <h4>Operation Types</h4>
-                                <div class="operation-grid">
-                                    <div class="operation-card">
-                                        <h5>Memory Read (MR)</h5>
-                                        <p>Read single memory location</p>
-                                        <code>mr &lt;address&gt;</code>
-                                        <p>Returns 32-bit value at specified address</p>
-                                    </div>
-                                    
-                                    <div class="operation-card">
-                                        <h5>Memory Write (MW)</h5>
-                                        <p>Write to single memory location</p>
-                                        <code>mw &lt;address&gt; &lt;value&gt;</code>
-                                        <p>Writes 32-bit value to specified address</p>
-                                    </div>
-                                    
-                                    <div class="operation-card">
-                                        <h5>Dump Range (DR)</h5>
-                                        <p>Read range of memory locations</p>
-                                        <code>dr &lt;start&gt; &lt;end&gt;</code>
-                                        <p>Returns formatted memory dump</p>
-                                    </div>
-                                    
-                                    <div class="operation-card">
-                                        <h5>Dump Pattern (DP)</h5>
-                                        <p>Advanced memory analysis</p>
-                                        <code>dp &lt;address&gt; &lt;pattern&gt;</code>
-                                        <p>Pattern-based memory operations</p>
-                                    </div>
-                                </div>
-                                
-                                <div class="screenshot-placeholder">
-                                    <p>📷 Screenshot Placeholder: Register Interface</p>
-                                    <em>Show the register read/write interface with command input and results display</em>
-                                </div>
-                                
-                                <h4>Safety Features</h4>
-                                <ul>
-                                    <li><strong>Read-Only Regions:</strong> Critical system areas are protected</li>
-                                    <li><strong>Validation:</strong> Address ranges are validated before access</li>
-                                    <li><strong>Backup:</strong> Configuration snapshots before major changes</li>
-                                    <li><strong>Rollback:</strong> Ability to restore previous configurations</li>
-                                </ul>
-                                
-                                <div class="danger-box">
-                                    <strong>⚠️ Warning:</strong> Direct register access can affect system stability. Only modify registers if you understand their function. Always backup configurations before making changes.
-                                </div>
-                            </div>
-                        </section>
-
-                        <!-- Firmware Updates Section -->
-                        <section id="firmware-updates" class="manual-section">
-                            <h2>Firmware Updates</h2>
-                            <div class="section-content">
-                                <h3>XMODEM-Based Firmware Management</h3>
-                                <p>The Firmware Updates dashboard provides secure, reliable firmware updating capabilities using the XMODEM protocol for Atlas 3 Host Cards.</p>
-                                
-                                <h4>Update Targets</h4>
-                                <div class="target-grid">
-                                    <div class="target-card">
-                                        <h5>MCU (Microcontroller)</h5>
-                                        <ul>
-                                            <li>Primary system control firmware</li>
-                                            <li>Manages basic device operations</li>
-                                            <li>Recommended for feature updates</li>
-                                        </ul>
-                                    </div>
-                                    
-                                    <div class="target-card">
-                                        <h5>SBR0 (Switch Board 0)</h5>
-                                        <ul>
-                                            <li>Primary PCIe switch firmware</li>
-                                            <li>Controls port configuration</li>
-                                            <li>Critical for link management</li>
-                                        </ul>
-                                    </div>
-                                    
-                                    <div class="target-card">
-                                        <h5>SBR1 (Switch Board 1)</h5>
-                                        <ul>
-                                            <li>Secondary switch functionality</li>
-                                            <li>Advanced features and extensions</li>
-                                            <li>Optional for most configurations</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                
-                                <div class="screenshot-placeholder">
-                                    <p>📷 Screenshot Placeholder: Firmware Update Interface</p>
-                                    <em>Show the firmware update dashboard with file selection and progress indicators</em>
-                                </div>
-                                
-                                <h4>Update Process</h4>
-                                <ol>
-                                    <li><strong>Pre-Update Check:</strong> Verify current firmware versions</li>
-                                    <li><strong>File Selection:</strong> Choose appropriate firmware file (.bin format)</li>
-                                    <li><strong>Target Selection:</strong> Select MCU, SBR0, or SBR1</li>
-                                    <li><strong>Validation:</strong> Firmware compatibility verification</li>
-                                    <li><strong>Transfer:</strong> XMODEM-based secure file transfer</li>
-                                    <li><strong>Programming:</strong> Firmware written to target device</li>
-                                    <li><strong>Verification:</strong> Checksum and integrity validation</li>
-                                    <li><strong>Reboot:</strong> System restart to activate new firmware</li>
-                                </ol>
-                                
-                                <div class="progress-indicators">
-                                    <h5>Progress Monitoring</h5>
-                                    <ul>
-                                        <li>📊 <strong>Transfer Progress:</strong> Real-time upload percentage</li>
-                                        <li>⚡ <strong>Speed Monitor:</strong> Transfer rate display</li>
-                                        <li>⏱️ <strong>Time Remaining:</strong> Estimated completion time</li>
-                                        <li>✅ <strong>Block Verification:</strong> Individual packet confirmation</li>
-                                    </ul>
-                                </div>
-                                
-                                <div class="critical-box">
-                                    <strong>🚨 Critical:</strong> Never interrupt firmware updates or disconnect devices during the process. Power loss or interruption can permanently damage the device requiring factory recovery.
-                                </div>
-                            </div>
-                        </section>
-
-                        <!-- Testing Suite Section -->
-                        <section id="testing-suite" class="manual-section">
-                            <h2>Testing Suite</h2>
-                            <div class="section-content">
-                                <h3>Comprehensive PCIe Testing Framework</h3>
-                                <p>The Testing Suite provides automated testing capabilities for Atlas 3 Host Cards and connected devices, focusing on performance validation and system stability.</p>
-                                
-                                <h4>Available Tests</h4>
-                                <div class="test-grid">
-                                    <div class="test-card">
-                                        <h5>🔍 PCIe Discovery</h5>
-                                        <p>Comprehensive topology scanning</p>
-                                        <ul>
-                                            <li>Atlas 3 switch enumeration</li>
-                                            <li>Downstream device discovery</li>
-                                            <li>Link capability assessment</li>
-                                        </ul>
-                                    </div>
-                                    
-                                    <div class="test-card">
-                                        <h5>💾 NVMe Discovery</h5>
-                                        <p>NVMe device enumeration and analysis</p>
-                                        <ul>
-                                            <li>NVMe namespace detection</li>
-                                            <li>Drive capacity and health</li>
-                                            <li>Performance characteristics</li>
-                                            <li>SMART data retrieval</li>
-                                        </ul>
-                                    </div>
-                                    
-                                    <div class="test-card">
-                                        <h5>⚡ Link Training Time</h5>
-                                        <p>LTSSM state transition measurement</p>
-                                        <ul>
-                                            <li>Training duration analysis</li>
-                                            <li>Speed negotiation timing</li>
-                                            <li>Multiple measurement averaging</li>
-                                            <li>Statistical analysis</li>
-                                        </ul>
-                                    </div>
-                                    
-                                    <div class="test-card">
-                                        <h5>🔄 Link Retrain Count</h5>
-                                        <p>Link stability monitoring</p>
-                                        <ul>
-                                            <li>Retrain event counting</li>
-                                            <li>Stability assessment</li>
-                                            <li>Error rate calculation</li>
-                                            <li>Long-term monitoring</li>
-                                        </ul>
-                                    </div>
-                                    
-                                    <div class="test-card">
-                                        <h5>📖 Sequential Read Performance</h5>
-                                        <p>Sequential read throughput testing</p>
-                                        <ul>
-                                            <li>Variable block size testing</li>
-                                            <li>Queue depth optimization</li>
-                                            <li>Sustained performance measurement</li>
-                                            <li>Thermal throttling detection</li>
-                                        </ul>
-                                    </div>
-                                    
-                                    <div class="test-card">
-                                        <h5>📝 Sequential Write Performance</h5>
-                                        <p>Sequential write throughput testing</p>
-                                        <ul>
-                                            <li>Write endurance consideration</li>
-                                            <li>Cache behavior analysis</li>
-                                            <li>Sustained vs burst performance</li>
-                                            <li>Write amplification monitoring</li>
-                                        </ul>
-                                    </div>
-                                    
-                                    <div class="test-card">
-                                        <h5>🎯 Random IOPS Performance</h5>
-                                        <p>Random I/O operations testing</p>
-                                        <ul>
-                                            <li>4K random read/write IOPS</li>
-                                            <li>Mixed workload simulation</li>
-                                            <li>Latency distribution analysis</li>
-                                            <li>QoS performance validation</li>
-                                        </ul>
-                                    </div>
-                                    
-                                    <div class="test-card">
-                                        <h5>🎭 Link Quality Assessment</h5>
-                                        <p>Signal integrity and link quality</p>
-                                        <ul>
-                                            <li>Error rate measurement</li>
-                                            <li>Signal quality metrics</li>
-                                            <li>Jitter and noise analysis</li>
-                                            <li>Eye diagram assessment</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                
-                                <div class="screenshot-placeholder">
-                                    <p>📷 Screenshot Placeholder: Testing Dashboard</p>
-                                    <em>Show the test selection interface with available tests and progress indicators</em>
-                                </div>
-                                
-                                <h4>Test Execution</h4>
-                                <ol>
-                                    <li><strong>Device Selection:</strong> Choose target devices (auto-filtered to Atlas 3 endpoints)</li>
-                                    <li><strong>Test Configuration:</strong> Set parameters for selected tests</li>
-                                    <li><strong>Pre-test Validation:</strong> Verify device readiness and capabilities</li>
-                                    <li><strong>Execution:</strong> Run tests with real-time progress monitoring</li>
-                                    <li><strong>Results Collection:</strong> Gather and analyze test data</li>
-                                    <li><strong>Report Generation:</strong> Create comprehensive test reports</li>
-                                </ol>
-                                
-                                <div class="safety-box">
-                                    <strong>🛡️ Safety Features:</strong>
-                                    <ul>
-                                        <li><strong>Device Filtering:</strong> Only Atlas 3 downstream endpoints are tested</li>
-                                        <li><strong>Non-Destructive:</strong> All tests preserve existing data</li>
-                                        <li><strong>Thermal Monitoring:</strong> Automatic test suspension on overheating</li>
-                                        <li><strong>Error Handling:</strong> Graceful recovery from test failures</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </section>
-
-                        <!-- Analytics Section -->
-                        <section id="analytics" class="manual-section">
-                            <h2>Analytics</h2>
-                            <div class="section-content">
-                                <h3>Performance Data Analysis</h3>
-                                <p>The Analytics dashboard provides comprehensive visualization and analysis of test results, system performance, and historical data trends.</p>
-                                
-                                <h4>Visualization Types</h4>
-                                <div class="viz-grid">
-                                    <div class="viz-card">
-                                        <h5>📈 Performance Charts</h5>
-                                        <ul>
-                                            <li>Real-time performance graphs</li>
-                                            <li>Historical trend analysis</li>
-                                            <li>Comparative benchmarking</li>
-                                            <li>Interactive data exploration</li>
-                                        </ul>
-                                    </div>
-                                    
-                                    <div class="viz-card">
-                                        <h5>📊 Statistical Reports</h5>
-                                        <ul>
-                                            <li>Performance statistics summary</li>
-                                            <li>Percentile analysis</li>
-                                            <li>Standard deviation calculations</li>
-                                            <li>Confidence intervals</li>
-                                        </ul>
-                                    </div>
-                                    
-                                    <div class="viz-card">
-                                        <h5>🗺️ Topology Visualization</h5>
-                                        <ul>
-                                            <li>PCIe tree representation</li>
-                                            <li>Device hierarchy mapping</li>
-                                            <li>Link status visualization</li>
-                                            <li>Interactive topology explorer</li>
-                                        </ul>
-                                    </div>
-                                    
-                                    <div class="viz-card">
-                                        <h5>📋 Export Options</h5>
-                                        <ul>
-                                            <li>PDF report generation</li>
-                                            <li>CSV data export</li>
-                                            <li>JSON structured data</li>
-                                            <li>PNG/SVG chart export</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                
-                                <div class="screenshot-placeholder">
-                                    <p>📷 Screenshot Placeholder: Analytics Dashboard</p>
-                                    <em>Show performance charts, topology visualization, and export options</em>
-                                </div>
-                                
-                                <h4>Key Metrics</h4>
-                                <table class="manual-table">
-                                    <tr><th>Metric</th><th>Unit</th><th>Description</th></tr>
-                                    <tr><td>Throughput</td><td>GB/s</td><td>Data transfer rate</td></tr>
-                                    <tr><td>IOPS</td><td>Operations/sec</td><td>Input/Output operations per second</td></tr>
-                                    <tr><td>Latency</td><td>μs</td><td>Response time for operations</td></tr>
-                                    <tr><td>Link Training Time</td><td>ms</td><td>Time to establish PCIe link</td></tr>
-                                    <tr><td>Error Rate</td><td>%</td><td>Percentage of failed operations</td></tr>
-                                    <tr><td>Retrain Count</td><td>Events</td><td>Number of link retraining events</td></tr>
-                                </table>
-                            </div>
-                        </section>
-
-                        <!-- Terminal Section -->
-                        <section id="terminal" class="manual-section">
-                            <h2>Terminal</h2>
-                            <div class="section-content">
-                                <h3>Direct Command Interface</h3>
-                                <p>The Terminal dashboard provides direct command-line access to the Atlas 3 Host Card, enabling advanced users to execute custom commands and scripts.</p>
-                                
-                                <h4>Terminal Features</h4>
-                                <ul>
-                                    <li><strong>Real-time Communication:</strong> Direct serial interface with no caching</li>
-                                    <li><strong>Command History:</strong> Navigate previous commands with arrow keys</li>
-                                    <li><strong>Auto-completion:</strong> Tab completion for common commands</li>
-                                    <li><strong>Buffer Management:</strong> 1000-line scrollback buffer with auto-trimming</li>
-                                    <li><strong>Copy/Paste:</strong> Full clipboard integration</li>
-                                </ul>
-                                
-                                <div class="screenshot-placeholder">
-                                    <p>📷 Screenshot Placeholder: Terminal Interface</p>
-                                    <em>Show the terminal with command input, output display, and control buttons</em>
-                                </div>
-                                
-                                <h4>Common Commands</h4>
-                                <table class="manual-table">
-                                    <tr><th>Command</th><th>Description</th><th>Example</th></tr>
-                                    <tr><td>help</td><td>Display available commands</td><td>help</td></tr>
-                                    <tr><td>showport</td><td>Display port status</td><td>showport all</td></tr>
-                                    <tr><td>showmode</td><td>Current bifurcation mode</td><td>showmode</td></tr>
-                                    <tr><td>getconfig</td><td>Device configuration</td><td>getconfig</td></tr>
-                                    <tr><td>mr</td><td>Memory read</td><td>mr 0x1000</td></tr>
-                                    <tr><td>mw</td><td>Memory write</td><td>mw 0x1000 0xFF</td></tr>
-                                    <tr><td>reset</td><td>System reset</td><td>reset</td></tr>
-                                </table>
-                                
-                                <div class="tip-box">
-                                    <strong>💡 Pro Tips:</strong>
-                                    <ul>
-                                        <li>Use <code>Ctrl+L</code> to clear the terminal</li>
-                                        <li>Press <code>Tab</code> for command auto-completion</li>
-                                        <li>Use <code>↑</code>/<code>↓</code> arrows for command history</li>
-                                        <li>Type <code>help</code> for comprehensive command reference</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </section>
-
-                        <!-- Troubleshooting Section -->
-                        <section id="troubleshooting" class="manual-section">
-                            <h2>Troubleshooting</h2>
-                            <div class="section-content">
-                                <h3>Common Issues and Solutions</h3>
-                                
-                                <div class="troubleshoot-section">
-                                    <h4>🔌 Connection Issues</h4>
-                                    
-                                    <div class="issue-card">
-                                        <h5>Device Not Detected</h5>
-                                        <p><strong>Symptoms:</strong> No serial ports available or connection fails</p>
-                                        <p><strong>Solutions:</strong></p>
-                                        <ul>
-                                            <li>Verify physical cable connections</li>
-                                            <li>Check device power status</li>
-                                            <li>Ensure correct serial port drivers are installed</li>
-                                            <li>Try different USB ports or cables</li>
-                                            <li>Restart device and CalypsoPy+ application</li>
-                                        </ul>
-                                    </div>
-                                    
-                                    <div class="issue-card">
-                                        <h5>Connection Timeout</h5>
-                                        <p><strong>Symptoms:</strong> Connection attempts fail after 2 seconds</p>
-                                        <p><strong>Solutions:</strong></p>
-                                        <ul>
-                                            <li>Verify baud rate settings (115200)</li>
-                                            <li>Check for cable compatibility issues</li>
-                                            <li>Test with different terminal software first</li>
-                                            <li>Ensure device is not connected elsewhere</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                
-                                <div class="troubleshoot-section">
-                                    <h4>🧪 Testing Problems</h4>
-                                    
-                                    <div class="issue-card">
-                                        <h5>No Devices Found for Testing</h5>
-                                        <p><strong>Symptoms:</strong> Tests report "No compatible devices found"</p>
-                                        <p><strong>Solutions:</strong></p>
-                                        <ul>
-                                            <li>Ensure Atlas 3 devices are connected and powered</li>
-                                            <li>Run PCIe Discovery test first</li>
-                                            <li>Verify devices are downstream endpoints of Atlas 3</li>
-                                            <li>Check device filtering settings</li>
-                                        </ul>
-                                    </div>
-                                    
-                                    <div class="issue-card">
-                                        <h5>Test Failures or Inconsistent Results</h5>
-                                        <p><strong>Symptoms:</strong> Tests fail unexpectedly or show varying results</p>
-                                        <p><strong>Solutions:</strong></p>
-                                        <ul>
-                                            <li>Ensure system has adequate cooling</li>
-                                            <li>Check for background system activity</li>
-                                            <li>Verify adequate power supply</li>
-                                            <li>Run tests multiple times for consistency</li>
-                                            <li>Monitor system logs for error messages</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                
-                                <div class="troubleshoot-section">
-                                    <h4>🔧 Firmware Update Issues</h4>
-                                    
-                                    <div class="issue-card">
-                                        <h5>Update Stalled or Failed</h5>
-                                        <p><strong>Symptoms:</strong> Firmware update stops progressing or fails</p>
-                                        <p><strong>Solutions:</strong></p>
-                                        <ul>
-                                            <li><strong>Never power cycle during update!</strong></li>
-                                            <li>Wait for timeout and retry operation</li>
-                                            <li>Ensure stable power supply</li>
-                                            <li>Check file integrity and compatibility</li>
-                                            <li>Contact support if device becomes unresponsive</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                
-                                <div class="troubleshoot-section">
-                                    <h4>🖥️ Web Interface Issues</h4>
-                                    
-                                    <div class="issue-card">
-                                        <h5>Dashboards Not Loading</h5>
-                                        <p><strong>Symptoms:</strong> Blank dashboards or JavaScript errors</p>
-                                        <p><strong>Solutions:</strong></p>
-                                        <ul>
-                                            <li>Clear browser cache and cookies</li>
-                                            <li>Try different web browser</li>
-                                            <li>Check browser console for error messages</li>
-                                            <li>Ensure JavaScript is enabled</li>
-                                            <li>Restart CalypsoPy+ server</li>
-                                        </ul>
-                                    </div>
-                                    
-                                    <div class="issue-card">
-                                        <h5>Real-time Updates Not Working</h5>
-                                        <p><strong>Symptoms:</strong> Data doesn't update automatically</p>
-                                        <p><strong>Solutions:</strong></p>
-                                        <ul>
-                                            <li>Check network connectivity</li>
-                                            <li>Verify WebSocket connection in browser dev tools</li>
-                                            <li>Disable browser extensions that might block WebSockets</li>
-                                            <li>Try refreshing the page</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                
-                                <div class="screenshot-placeholder">
-                                    <p>📷 Screenshot Placeholder: Troubleshooting Tools</p>
-                                    <em>Show diagnostic information panel and connection status indicators</em>
-                                </div>
-                                
-                                <div class="emergency-box">
-                                    <h4>🚨 Emergency Recovery</h4>
-                                    <p>If your device becomes unresponsive after firmware update:</p>
-                                    <ol>
-                                        <li><strong>DO NOT power cycle</strong> - this may cause permanent damage</li>
-                                        <li>Contact technical support immediately</li>
-                                        <li>Provide firmware file and version information</li>
-                                        <li>Document any error messages or symptoms</li>
-                                    </ol>
-                                </div>
-                            </div>
-                        </section>
-
-                        <!-- Advanced Features Section -->
-                        <section id="advanced-features" class="manual-section">
-                            <h2>Advanced Features</h2>
-                            <div class="section-content">
-                                <h3>Power User Capabilities</h3>
-                                
-                                <div class="advanced-section">
-                                    <h4>📡 API Integration</h4>
-                                    <p>CalypsoPy+ provides WebSocket API for integration with external tools and automation systems.</p>
-                                    
-                                    <h5>WebSocket Events</h5>
-                                    <table class="manual-table">
-                                        <tr><th>Event</th><th>Description</th><th>Data Format</th></tr>
-                                        <tr><td>device_connected</td><td>Device connection established</td><td>JSON status object</td></tr>
-                                        <tr><td>test_progress</td><td>Test execution updates</td><td>Progress percentage</td></tr>
-                                        <tr><td>test_complete</td><td>Test finished</td><td>Results object</td></tr>
-                                        <tr><td>firmware_progress</td><td>Firmware update status</td><td>Transfer progress</td></tr>
-                                    </table>
-                                </div>
-                                
-                                <div class="advanced-section">
-                                    <h4>🔧 Custom Scripts</h4>
-                                    <p>Execute custom testing sequences and automation scripts through the Terminal interface.</p>
-                                    
-                                    <h5>Script Examples</h5>
-                                    <pre class="code-block">
-# Automated link quality test
-showport all
-for port in 0 1 2 3:
-    mr 0x1000 + (port * 0x100)
-    # Check error counters
-end
-
-# Performance baseline collection
-run_sequential_read_test --device nvme0 --duration 300
-run_random_iops_test --device nvme0 --duration 300
-export_results --format csv
-                                    </pre>
-                                </div>
-                                
-                                <div class="advanced-section">
-                                    <h4>⚙️ Configuration Management</h4>
-                                    <p>Save and restore device configurations for different testing scenarios.</p>
-                                    
-                                    <h5>Configuration Options</h5>
-                                    <ul>
-                                        <li><strong>Bifurcation Profiles:</strong> Save preferred port configurations</li>
-                                        <li><strong>Test Parameters:</strong> Store test settings for repeatability</li>
-                                        <li><strong>Performance Baselines:</strong> Reference measurements for comparison</li>
-                                        <li><strong>Device Profiles:</strong> Custom settings per device type</li>
-                                    </ul>
-                                </div>
-                                
-                                <div class="advanced-section">
-                                    <h4>📊 Custom Reporting</h4>
-                                    <p>Create specialized reports with custom metrics and visualizations.</p>
-                                    
-                                    <h5>Report Customization</h5>
-                                    <ul>
-                                        <li><strong>Metric Selection:</strong> Choose specific performance indicators</li>
-                                        <li><strong>Time Range:</strong> Define analysis periods</li>
-                                        <li><strong>Comparison Mode:</strong> Compare multiple test runs</li>
-                                        <li><strong>Export Formats:</strong> PDF, Excel, CSV, JSON</li>
-                                    </ul>
-                                </div>
-                                
-                                <div class="screenshot-placeholder">
-                                    <p>📷 Screenshot Placeholder: Advanced Features Interface</p>
-                                    <em>Show configuration management and custom reporting interfaces</em>
-                                </div>
-                                
-                                <div class="expert-box">
-                                    <h4>🎓 Expert Tips</h4>
-                                    <ul>
-                                        <li><strong>Batch Testing:</strong> Use scripting for overnight test campaigns</li>
-                                        <li><strong>Thermal Management:</strong> Monitor device temperatures during extended testing</li>
-                                        <li><strong>Data Correlation:</strong> Cross-reference test results with system logs</li>
-                                        <li><strong>Version Control:</strong> Track firmware and configuration changes</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </section>
-                    </div>
-                </div>
-                
-                <!-- Manual JavaScript for Search and Navigation -->
-                <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    // Search functionality
-                    const searchInput = document.getElementById('manual-search');
-                    const clearButton = document.getElementById('clear-search');
-                    const sections = document.querySelectorAll('.manual-section');
-                    const tocLinks = document.querySelectorAll('.toc-link');
-                    
-                    // Search function
-                    function performSearch(query) {
-                        const searchTerm = query.toLowerCase().trim();
-                        
-                        sections.forEach(section => {
-                            const content = section.textContent.toLowerCase();
-                            const isVisible = searchTerm === '' || content.includes(searchTerm);
-                            section.style.display = isVisible ? 'block' : 'none';
-                            
-                            // Highlight search terms
-                            if (searchTerm && isVisible) {
-                                highlightSearchTerm(section, searchTerm);
-                            } else {
-                                removeHighlights(section);
-                            }
-                        });
-                        
-                        // Update TOC
-                        updateTOC(searchTerm);
-                    }
-                    
-                    // Highlight search terms
-                    function highlightSearchTerm(element, term) {
-                        removeHighlights(element);
-                        const walker = document.createTreeWalker(
-                            element,
-                            NodeFilter.SHOW_TEXT,
-                            null,
-                            false
-                        );
-                        
-                        const textNodes = [];
-                        let node;
-                        while (node = walker.nextNode()) {
-                            textNodes.push(node);
-                        }
-                        
-                        textNodes.forEach(textNode => {
-                            const parent = textNode.parentNode;
-                            if (parent.tagName !== 'SCRIPT' && parent.tagName !== 'STYLE') {
-                                const text = textNode.textContent;
-                                const regex = new RegExp(`(${term})`, 'gi');
-                                if (regex.test(text)) {
-                                    const highlighted = text.replace(regex, '<mark class="search-highlight">$1</mark>');
-                                    const wrapper = document.createElement('span');
-                                    wrapper.innerHTML = highlighted;
-                                    parent.replaceChild(wrapper, textNode);
-                                }
-                            }
-                        });
-                    }
-                    
-                    // Remove highlights
-                    function removeHighlights(element) {
-                        const highlights = element.querySelectorAll('.search-highlight');
-                        highlights.forEach(highlight => {
-                            const parent = highlight.parentNode;
-                            parent.replaceChild(document.createTextNode(highlight.textContent), highlight);
-                            parent.normalize();
-                        });
-                    }
-                    
-                    // Update table of contents
-                    function updateTOC(searchTerm) {
-                        tocLinks.forEach(link => {
-                            const targetId = link.getAttribute('href').substring(1);
-                            const targetSection = document.getElementById(targetId);
-                            const isVisible = targetSection && targetSection.style.display !== 'none';
-                            link.parentElement.style.display = isVisible ? 'block' : 'none';
-                        });
-                    }
-                    
-                    // Search event listeners
-                    searchInput.addEventListener('input', function() {
-                        performSearch(this.value);
-                    });
-                    
-                    clearButton.addEventListener('click', function() {
-                        searchInput.value = '';
-                        performSearch('');
-                        searchInput.focus();
-                    });
-                    
-                    // TOC navigation
-                    tocLinks.forEach(link => {
-                        link.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            const targetId = this.getAttribute('href').substring(1);
-                            const targetSection = document.getElementById(targetId);
-                            if (targetSection) {
-                                targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                // Highlight section briefly
-                                targetSection.style.backgroundColor = '#e3f2fd';
-                                setTimeout(() => {
-                                    targetSection.style.backgroundColor = '';
-                                }, 2000);
-                            }
-                        });
-                    });
-                    
-                    // Expandable sections
-                    const expandableSections = document.querySelectorAll('.expandable-section h5');
-                    expandableSections.forEach(header => {
-                        header.style.cursor = 'pointer';
-                        header.addEventListener('click', function() {
-                            const content = this.nextElementSibling;
-                            if (content) {
-                                const isExpanded = content.style.display !== 'none';
-                                content.style.display = isExpanded ? 'none' : 'block';
-                                this.textContent = (isExpanded ? '▶ ' : '▼ ') + this.textContent.replace(/^[▶▼] /, '');
-                            }
-                        });
-                        // Set initial state
-                        header.textContent = '▼ ' + header.textContent;
-                    });
-                    
-                    // Keyboard shortcuts
-                    document.addEventListener('keydown', function(e) {
-                        // Ctrl/Cmd + F to focus search
-                        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-                            e.preventDefault();
-                            searchInput.focus();
-                        }
-                        
-                        // Escape to clear search
-                        if (e.key === 'Escape' && searchInput === document.activeElement) {
-                            searchInput.value = '';
-                            performSearch('');
-                        }
-                    });
-                });
-                </script>
-            </div>
 
         </main>
     </div>

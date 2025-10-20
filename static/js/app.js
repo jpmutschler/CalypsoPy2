@@ -209,7 +209,7 @@ function updateDashboardAccess() {
     document.querySelectorAll('.nav-item').forEach(item => {
         const dashboard = item.dataset.dashboard;
 
-        if (dashboard === 'connection' || dashboard === 'analytics') {
+        if (dashboard === 'connection' || dashboard === 'analytics' || dashboard === 'user-manual') {
             item.classList.remove('disabled');
             item.style.opacity = '1';
             item.style.pointerEvents = 'auto';
@@ -298,6 +298,11 @@ function switchDashboard(dashboardId) {
                 setTimeout(() => {
                     executeCommand('sysinfo', 'device_info');
                 }, 500);
+            } else if (dashboardId === 'link_status') {
+                initializeLinkStatusDashboard();
+                setTimeout(() => {
+                    executeCommand('showport', 'link_status');
+                }, 500);
             } else if (dashboardId === 'bifurcation') {
                 initializeBifurcationDashboard();
                 setTimeout(() => {
@@ -350,11 +355,22 @@ function executeCommand(command, dashboardId = currentDashboard) {
         return;
     }
 
-    const consoleId = `${dashboardId}Console`;
+    // Handle special console IDs for different dashboards
+    let consoleId;
+    if (dashboardId === 'link_status') {
+        consoleId = 'linkConsole';
+    } else {
+        consoleId = `${dashboardId}Console`;
+    }
+    
     const useCacheCheckbox = document.getElementById(`useCache${dashboardId.charAt(0).toUpperCase() + dashboardId.slice(1).replace('_', '')}`);
     const useCache = useCacheCheckbox ? useCacheCheckbox.checked : true;
 
-    addConsoleEntry(consoleId, 'command', `> ${command}`);
+    // Only try to add console entry if the console element exists
+    const consoleElement = document.getElementById(consoleId);
+    if (consoleElement) {
+        addConsoleEntry(consoleId, 'command', `> ${command}`);
+    }
 
     const sendBtnId = `send${dashboardId.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('')}Cmd`;
     const sendBtn = document.getElementById(sendBtnId);
@@ -405,7 +421,7 @@ function updateDashboardData(data) {
     }
 
     if (dashboard === 'device_info' && (data.data.command === 'sysinfo' || data.data.raw.includes('sysinfo'))) {
-        parseSysinfoData(data.data.raw);
+        parseSysinfoData(data.data.parsed);
         return;
     }
 
@@ -609,6 +625,43 @@ class LinkStatusDashboard {
                 }
             });
         });
+        
+        // Bind port overlay click events
+        this.bindPortOverlayEvents();
+    }
+    
+    bindPortOverlayEvents() {
+        const portOverlays = document.querySelectorAll('.port-overlay');
+        portOverlays.forEach(overlay => {
+            overlay.addEventListener('click', () => {
+                const location = overlay.getAttribute('data-location');
+                this.highlightPortGroup(location);
+            });
+        });
+    }
+    
+    highlightPortGroup(location) {
+        // Scroll to and highlight the corresponding port group card
+        const portGroupCards = document.querySelectorAll('.port-group-card');
+        portGroupCards.forEach(card => {
+            card.style.border = '1px solid #e2e8f0';
+            card.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
+        });
+        
+        // Find and highlight the matching port group
+        if (this.portData && this.portData.port_groups && this.portData.port_groups[location]) {
+            const group = this.portData.port_groups[location];
+            const groupTitle = group.name;
+            
+            portGroupCards.forEach(card => {
+                const titleElement = card.querySelector('.port-group-title');
+                if (titleElement && titleElement.textContent === groupTitle) {
+                    card.style.border = '2px solid var(--primary-red)';
+                    card.style.boxShadow = '0 4px 15px rgba(220, 53, 69, 0.3)';
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        }
     }
 
     onActivate() {
@@ -631,119 +684,220 @@ class LinkStatusDashboard {
 
         if (data.data?.command === 'showport' && parsedData) {
             this.portData = parsedData;
-            this.updatePortDisplay(parsedData);
+            this.updatePhysicalLayout(parsedData);
+            this.updatePortGroups(parsedData);
             this.updateMetrics(parsedData);
         }
     }
 
     updateMetrics(parsedData) {
-        const connectedSlotPorts = parsedData.ports?.filter(p => p.is_connected).length || 0;
-        const totalSlotPorts = parsedData.ports?.length || 0;
-
-        document.getElementById('totalPorts').textContent = totalSlotPorts;
-        document.getElementById('activePorts').textContent = connectedSlotPorts;
-
-        if (parsedData.golden_finger) {
-            const gf = parsedData.golden_finger;
-            document.getElementById('goldenFingerStatus').textContent = `${gf.speed} ${gf.width}`;
-        } else {
-            document.getElementById('goldenFingerStatus').textContent = 'N/A';
+        // Update Atlas 3 version banner
+        const versionBanner = document.querySelector('.atlas3-version-banner');
+        if (versionBanner && parsedData.atlas3_version) {
+            const versionValue = versionBanner.querySelector('.atlas3-version-value');
+            if (versionValue) {
+                versionValue.textContent = parsedData.atlas3_version;
+            }
         }
 
-        const maxSpeed = parsedData.golden_finger?.speed || 'N/A';
-        document.getElementById('maxSpeed').textContent = maxSpeed;
+        // Calculate total ports and active ports across all groups
+        let totalPorts = 0;
+        let activePorts = 0;
+        let goldenFingerPort = null;
+        let maxSpeedDetected = 'Gen1';
+        
+        if (parsedData.port_groups) {
+            Object.values(parsedData.port_groups).forEach(group => {
+                if (group.ports) {
+                    totalPorts += group.ports.length;
+                    const activeGroupPorts = group.ports.filter(p => p.status && p.status.toLowerCase() !== 'idle');
+                    activePorts += activeGroupPorts.length;
+                    
+                    // Find Golden Finger port status
+                    if (group.name && group.name.includes('Gold Finger') && activeGroupPorts.length > 0) {
+                        goldenFingerPort = activeGroupPorts[0]; // Should only be one golden finger port
+                    }
+                    
+                    // Track maximum speed detected across all active ports
+                    activeGroupPorts.forEach(port => {
+                        if (port.current_speed && this.compareSpeed(port.current_speed, maxSpeedDetected) > 0) {
+                            maxSpeedDetected = port.current_speed;
+                        }
+                    });
+                }
+            });
+        }
+
+        // Update metrics cards
+        const totalPortsEl = document.getElementById('totalPorts');
+        const activePortsEl = document.getElementById('activePorts');
+        const goldenFingerStatusEl = document.getElementById('goldenFingerStatus');
+        const maxSpeedEl = document.getElementById('maxSpeed');
+
+        if (totalPortsEl) totalPortsEl.textContent = totalPorts;
+        if (activePortsEl) activePortsEl.textContent = activePorts;
+        if (goldenFingerStatusEl) {
+            goldenFingerStatusEl.textContent = goldenFingerPort ? goldenFingerPort.status : 'Idle';
+        }
+        if (maxSpeedEl) {
+            maxSpeedEl.textContent = activePorts > 0 ? maxSpeedDetected : '--';
+        }
+        if (atlas3VersionEl) atlas3VersionEl.textContent = parsedData.atlas3_version || 'Unknown';
+        if (portUtilizationEl) {
+            const utilization = totalPorts > 0 ? Math.round((activePorts / totalPorts) * 100) : 0;
+            portUtilizationEl.textContent = `${utilization}%`;
+        }
     }
 
-    updatePortDisplay(parsedData) {
-        const container = document.getElementById('portStatusGrid');
+    updatePhysicalLayout(parsedData) {
+        // Update port overlays on the physical card image
+        const portOverlays = document.querySelectorAll('.port-overlay');
+        
+        portOverlays.forEach(overlay => {
+            const location = overlay.getAttribute('data-location');
+            if (parsedData.port_groups && parsedData.port_groups[location]) {
+                const group = parsedData.port_groups[location];
+                const activePorts = group.ports.filter(p => p.status && p.status.toLowerCase() !== 'idle').length;
+                
+                // Add or update status indicator
+                let indicator = overlay.querySelector('.port-status-indicator');
+                if (!indicator) {
+                    indicator = document.createElement('div');
+                    indicator.className = 'port-status-indicator';
+                    overlay.appendChild(indicator);
+                }
+                
+                // Update indicator based on port activity - only show if there are active ports
+                if (activePorts === 0) {
+                    // Hide overlay for groups with no active ports
+                    overlay.style.display = 'none';
+                } else {
+                    // Show overlay and set as active
+                    overlay.style.display = 'block';
+                    indicator.className = 'port-status-indicator active';
+                }
+                
+                // Update connected devices display only for active ports
+                let connectedDevicesDiv = overlay.querySelector('.connected-devices');
+                if (connectedDevicesDiv && activePorts > 0) {
+                    // Filter for active connected devices (not idle)
+                    const activeConnectedPorts = group.ports.filter(p => 
+                        p.is_connected && p.status && p.status.toLowerCase() !== 'idle'
+                    );
+                    
+                    if (activeConnectedPorts.length > 0) {
+                        const deviceInfo = activeConnectedPorts.map(port => 
+                            `Port ${port.port_number}: ${port.current_speed} x${port.current_width}`
+                        ).join('<br>');
+                        
+                        connectedDevicesDiv.innerHTML = deviceInfo;
+                        connectedDevicesDiv.style.opacity = '1';
+                        connectedDevicesDiv.style.visibility = 'visible';
+                    } else {
+                        connectedDevicesDiv.innerHTML = '';
+                        connectedDevicesDiv.style.opacity = '0';
+                        connectedDevicesDiv.style.visibility = 'hidden';
+                    }
+                }
+                
+                // Update overlay title with current status (only show active ports count)
+                if (activePorts > 0) {
+                    overlay.setAttribute('title', `${group.name}: ${activePorts} active port${activePorts !== 1 ? 's' : ''}`);
+                }
+            }
+        });
+    }
+
+    updatePortGroups(parsedData) {
+        const container = document.querySelector('.port-groups-container');
         if (!container) return;
 
         container.innerHTML = '';
 
-        if (parsedData.golden_finger) {
-            const gf = parsedData.golden_finger;
-            container.appendChild(this.createPortCard({
-                port_number: 'GF',
-                name: 'Golden Finger',
-                speed: gf.speed,
-                width: gf.width,
-                max_speed: gf.speed,
-                max_width: gf.max_width,
-                is_connected: gf.speed_code !== '00',
-                is_upstream: true
-            }));
-        }
-
-        if (parsedData.ports && parsedData.ports.length > 0) {
-            parsedData.ports.forEach(port => {
-                container.appendChild(this.createPortCard({
-                    port_number: port.port_number,
-                    name: `Port ${port.port_number}`,
-                    speed: port.speed,
-                    width: port.width,
-                    max_speed: port.max_speed,
-                    max_width: port.max_width,
-                    is_connected: port.is_connected,
-                    is_upstream: false
-                }));
+        if (parsedData.port_groups) {
+            Object.entries(parsedData.port_groups).forEach(([groupKey, group]) => {
+                if (group.ports && group.ports.length > 0) {
+                    // Only show groups that have active ports, but within those groups show ALL ports
+                    const activePorts = group.ports.filter(p => p.status && p.status.toLowerCase() !== 'idle');
+                    if (activePorts.length > 0) {
+                        container.appendChild(this.createPortGroupCard(group));
+                    }
+                }
             });
-        } else {
-            container.innerHTML = '<div class="port-status-loading">No port data available</div>';
         }
 
-        this.addConsoleEntry('Port status updated successfully', 'success');
+        if (container.children.length === 0) {
+            container.innerHTML = '<div class="link-status-loading"><div class="loading-spinner"></div>No active ports found</div>';
+        } else {
+            this.addConsoleEntry('Port groups updated successfully', 'success');
+        }
     }
 
-    createPortCard(portInfo) {
+    createPortGroupCard(group) {
         const card = document.createElement('div');
-        card.className = `port-status-item ${portInfo.is_connected ? 'connected' : 'disconnected'}`;
-
-        const statusClass = portInfo.is_connected ? 'connected' : 'disconnected';
-        const speedClass = this.getSpeedClass(portInfo.speed);
-
+        card.className = 'port-group-card';
+        
+        // For the Port Group Detail tile, show ALL ports (both active and idle)
+        const allPortsData = group.ports;
+        const activePortsData = group.ports.filter(p => p.status && p.status.toLowerCase() !== 'idle');
+        const activePorts = activePortsData.length;
+        
         card.innerHTML = `
-            <div class="port-header">
-                <div class="port-name-container">
-                    <div class="port-name">${portInfo.name}</div>
-                    ${portInfo.is_upstream ? '<span class="port-type-badge">Upstream</span>' : '<span class="port-type-badge">Downstream</span>'}
-                </div>
-                <div class="port-led ${statusClass}"></div>
+            <div class="port-group-header">
+                <div class="port-group-title">${group.name}</div>
+                <div class="port-group-range">${group.port_range}</div>
             </div>
             
-            <div class="port-specs">
-                <div class="port-spec">
-                    <span class="port-spec-label">Current Speed</span>
-                    <span class="port-spec-value">
-                        <span class="port-generation ${speedClass}">${portInfo.speed}</span>
-                    </span>
-                </div>
-                <div class="port-spec">
-                    <span class="port-spec-label">Current Width</span>
-                    <span class="port-spec-value">${portInfo.width}</span>
-                </div>
-                <div class="port-spec">
-                    <span class="port-spec-label">Max Speed</span>
-                    <span class="port-spec-value">${portInfo.max_speed}</span>
-                </div>
-                <div class="port-spec">
-                    <span class="port-spec-label">Max Width</span>
-                    <span class="port-spec-value">${portInfo.max_width}</span>
+            <div class="port-group-summary">
+                <div class="port-summary-item">
+                    <span class="port-summary-value">${activePorts}</span>
+                    <span class="port-summary-label">Active Port${activePorts !== 1 ? 's' : ''}</span>
                 </div>
             </div>
             
-            <div class="connection-details">
-                <div class="detail-item">
-                    <span class="detail-label">Status</span>
-                    <span class="detail-value">${portInfo.is_connected ? 'Connected' : 'Disconnected'}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Lane Config</span>
-                    <span class="detail-value">${portInfo.speed} ${portInfo.width}</span>
-                </div>
+            <div class="port-details-list">
+                ${allPortsData.map(port => `
+                    <div class="port-detail-item">
+                        <div class="port-detail-header">
+                            <span class="port-detail-name">Port ${port.port_number}</span>
+                            <span class="port-detail-status ${this.getStatusClass(port.status)}">
+                                ${port.status || 'Unknown'}
+                            </span>
+                        </div>
+                        ${port.status && port.status.toLowerCase() !== 'idle' ? `
+                            <div class="port-detail-specs">
+                                <span class="port-spec">Speed: ${port.current_speed || '--'}</span>
+                                <span class="port-spec">Width: x${port.current_width || 0}</span>
+                                <span class="port-spec">Max Speed: ${port.max_speed || '--'}</span>
+                                <span class="port-spec">Max Width: x${port.max_width || 0}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('')}
             </div>
         `;
-
+        
         return card;
+    }
+    
+    getStatusClass(status) {
+        if (!status) return 'idle';
+        const statusLower = status.toLowerCase();
+        if (statusLower === 'idle') return 'idle';
+        if (statusLower.includes('active') || statusLower.includes('connected')) return 'active';
+        if (statusLower.includes('error') || statusLower.includes('fail')) return 'error';
+        return 'idle';
+    }
+    
+    compareSpeed(speed1, speed2) {
+        // Compare PCIe speeds, returns 1 if speed1 > speed2, -1 if speed1 < speed2, 0 if equal
+        const speedOrder = {'Gen1': 1, 'Gen2': 2, 'Gen3': 3, 'Gen4': 4, 'Gen5': 5, 'Gen6': 6};
+        const val1 = speedOrder[speed1] || 0;
+        const val2 = speedOrder[speed2] || 0;
+        
+        if (val1 > val2) return 1;
+        if (val1 < val2) return -1;
+        return 0;
     }
 
     getSpeedClass(speed) {
@@ -762,7 +916,17 @@ class LinkStatusDashboard {
     }
 
     addConsoleEntry(message, type = 'info') {
-        addConsoleEntry('linkConsole', type, message);
+        // Link Status dashboard doesn't have a console - use notifications instead
+        if (type === 'error') {
+            showNotification(message, 'error');
+        } else if (type === 'success') {
+            showNotification(message, 'success');
+        } else if (type === 'command') {
+            // Don't show command notifications for cleaner UX
+            console.log(`Link Status: ${message}`);
+        } else {
+            console.log(`Link Status: ${message}`);
+        }
     }
 
     getStatusSummary() {
@@ -770,10 +934,19 @@ class LinkStatusDashboard {
             return 'No port data available';
         }
 
-        const connectedCount = this.portData.ports?.filter(p => p.is_connected).length || 0;
-        const totalCount = this.portData.ports?.length || 0;
+        let totalPorts = 0;
+        let activePorts = 0;
+        
+        if (this.portData.port_groups) {
+            Object.values(this.portData.port_groups).forEach(group => {
+                if (group.ports) {
+                    totalPorts += group.ports.length;
+                    activePorts += group.ports.filter(p => p.status && p.status.toLowerCase() !== 'idle').length;
+                }
+            });
+        }
 
-        return `${connectedCount} of ${totalCount} ports active`;
+        return `${activePorts} of ${totalPorts} ports active across ${Object.keys(this.portData.port_groups || {}).length} locations`;
     }
 }
 
@@ -909,31 +1082,258 @@ function handlePortChange() {
     }
 }
 
-function parseSysinfoData(rawData) {
-    const exampleData = {
-        hardware: {
-            serial: 'G8H144125062062',
-            company: 'SerialCables,Inc.',
-            model: 'PC16-RN-xkmjl-835-144',
-            version: '0.1.0',
-            sdk_version: '0 34 160 29'
-        },
-        thermal: {
-            board_temperature: 55,
-            fan_speed: 6310
+function parseSysinfoData(parsedData) {
+    // Use the properly parsed data from Atlas3Parser
+    if (!parsedData || !parsedData.device_info) {
+        showNotification('No device information available', 'warning');
+        return;
+    }
+
+    const deviceInfo = parsedData.device_info;
+    const thermalData = parsedData.thermal_data || {};
+    const voltageRails = parsedData.voltage_rails || [];
+    const powerConsumption = parsedData.power_consumption || {};
+    const clockStatus = parsedData.clock_status || {};
+    const spreadStatus = parsedData.spread_status || {};
+    const portSummary = parsedData.port_summary || {};
+    const bistResults = parsedData.bist_results || {};
+
+    // Update Hardware Information section
+    document.getElementById('hwSerialNumber').textContent = deviceInfo.serial_number || 'Unknown';
+    document.getElementById('hwCompany').textContent = deviceInfo.company || 'Unknown';
+    document.getElementById('hwModel').textContent = deviceInfo.model || 'Unknown';
+    document.getElementById('hwVersion').textContent = deviceInfo.mcu_version || 'Unknown';
+    document.getElementById('sdkVersion').textContent = deviceInfo.sbr_version || 'Unknown';
+
+    // Update Device Summary Cards
+    document.getElementById('deviceModel').textContent = deviceInfo.model || 'Unknown';
+    document.getElementById('firmwareVersion').textContent = deviceInfo.mcu_version || 'Unknown';
+    document.getElementById('serialNumber').textContent = deviceInfo.serial_number || 'Unknown';
+
+    // Update Thermal Status
+    if (thermalData.switch_temperature) {
+        // Update summary card
+        document.getElementById('boardTemp').textContent = `${thermalData.switch_temperature.value}°C`;
+        
+        // Update thermal section temperature
+        const thermalBoardTempEl = document.getElementById('thermalBoardTemp');
+        if (thermalBoardTempEl) {
+            thermalBoardTempEl.textContent = `${thermalData.switch_temperature.value}°C`;
         }
-    };
+        
+        // Update thermal status indicator
+        const thermalBoardStatusEl = document.getElementById('thermalBoardStatus');
+        if (thermalBoardStatusEl) {
+            thermalBoardStatusEl.textContent = thermalData.switch_temperature.status || 'Normal';
+            thermalBoardStatusEl.className = `thermal-status ${thermalData.switch_temperature.status || 'normal'}`;
+        }
+    }
 
-    document.getElementById('hwSerialNumber').textContent = exampleData.hardware.serial;
-    document.getElementById('hwCompany').textContent = exampleData.hardware.company;
-    document.getElementById('hwModel').textContent = exampleData.hardware.model;
-    document.getElementById('hwVersion').textContent = exampleData.hardware.version;
-    document.getElementById('sdkVersion').textContent = exampleData.hardware.sdk_version;
+    // Update Fan Speed
+    if (thermalData.fan_speed) {
+        const fanSpeedEl = document.getElementById('fanSpeed');
+        if (fanSpeedEl) {
+            fanSpeedEl.textContent = `${thermalData.fan_speed.value} ${thermalData.fan_speed.unit}`;
+        }
+        
+        // Update fan speed bar (optional visual indicator)
+        const fanSpeedBar = document.getElementById('fanSpeedBar');
+        if (fanSpeedBar && thermalData.fan_speed.value) {
+            const percentage = Math.min((thermalData.fan_speed.value / 10000) * 100, 100);
+            fanSpeedBar.style.width = `${percentage}%`;
+        }
+    }
 
-    document.getElementById('deviceModel').textContent = exampleData.hardware.model.split('-')[0];
-    document.getElementById('firmwareVersion').textContent = exampleData.hardware.version;
-    document.getElementById('serialNumber').textContent = exampleData.hardware.serial.substring(0, 12) + '...';
-    document.getElementById('boardTemp').textContent = exampleData.thermal.board_temperature + '°C';
+    // Update Voltage Rails - FIX: Populate voltage grid with compact layout
+    const voltageGrid = document.getElementById('voltageGrid');
+    if (voltageGrid && voltageRails.length > 0) {
+        voltageGrid.innerHTML = ''; // Clear existing content
+        
+        voltageRails.forEach(rail => {
+            const voltageItem = document.createElement('div');
+            voltageItem.className = 'voltage-item compact';
+            const toleranceColor = rail.tolerance_percent > 5 ? 'error' : rail.tolerance_percent > 2 ? 'warning' : 'normal';
+            voltageItem.innerHTML = `
+                <div class="voltage-header">
+                    <span class="voltage-label">${rail.rail_name}</span>
+                    <span class="voltage-status ${toleranceColor}"></span>
+                </div>
+                <div class="voltage-reading">${rail.measured_voltage_v}V</div>
+                <div class="voltage-details">
+                    <span class="nominal">nom: ${rail.nominal_voltage}V</span>
+                    <span class="tolerance ${rail.tolerance_percent >= 0 ? 'positive' : 'negative'}">${rail.tolerance_percent > 0 ? '+' : ''}${rail.tolerance_percent}%</span>
+                </div>
+            `;
+            voltageGrid.appendChild(voltageItem);
+        });
+    }
+
+    // Update Power Consumption
+    if (powerConsumption.load_current) {
+        const boardCurrentEl = document.getElementById('boardCurrent');
+        if (boardCurrentEl) {
+            boardCurrentEl.textContent = `${powerConsumption.load_current.current_ma} mA (${powerConsumption.load_current.value}A)`;
+        }
+    }
+    
+    if (powerConsumption.power_voltage) {
+        const powerVoltageEl = document.getElementById('powerVoltage');
+        if (powerVoltageEl) {
+            powerVoltageEl.textContent = `${powerConsumption.power_voltage.value}V`;
+        }
+    }
+    
+    if (powerConsumption.load_power) {
+        const loadPowerEl = document.getElementById('loadPower');
+        if (loadPowerEl) {
+            loadPowerEl.textContent = `${powerConsumption.load_power.value}W`;
+        }
+    }
+
+    // Update Port Configuration
+    const portGrid = document.getElementById('portGrid');
+    if (portGrid) {
+        portGrid.innerHTML = ''; // Clear existing content
+        
+        // Add Atlas3 version info if available
+        const versionEl = document.getElementById('atlas3Version');
+        if (versionEl) {
+            versionEl.textContent = portSummary.atlas3_version || 'Unknown';
+        }
+        
+        // Helper function to add port sections (only shows non-idle ports)
+        const addPortSection = (ports, sectionTitle) => {
+            if (ports && ports.length > 0) {
+                // Filter out idle ports - only show active/connected ports
+                const activePorts = ports.filter(port => {
+                    const cleanStatus = port.status ? port.status.replace(/\x1b\[[0-9;]*m/g, '').toLowerCase() : '';
+                    return cleanStatus !== 'idle' && port.is_active;
+                });
+                
+                // Only create section if there are active ports to show
+                if (activePorts.length > 0) {
+                    const sectionHeader = document.createElement('div');
+                    sectionHeader.className = 'port-section-header';
+                    sectionHeader.textContent = sectionTitle;
+                    portGrid.appendChild(sectionHeader);
+                    
+                    activePorts.forEach(port => {
+                        const portItem = document.createElement('div');
+                        portItem.className = 'port-item active'; // All shown ports are active
+                        
+                        // Clean any ANSI codes from status
+                        const cleanStatus = port.status ? port.status.replace(/\x1b\[[0-9;]*m/g, '') : 'Unknown';
+                        
+                        portItem.innerHTML = `
+                            <div class="port-label">${port.connector || 'N/A'} | Port ${port.port_number || 'N/A'}</div>
+                            <div class="port-speed">${port.current_speed || 'N/A'} x${port.current_width || 0}</div>
+                            <div class="port-max">Max: ${port.max_speed || 'N/A'} x${port.max_width || 0}</div>
+                            <div class="port-status active">${cleanStatus}</div>
+                        `;
+                        portGrid.appendChild(portItem);
+                    });
+                }
+            }
+        };
+        
+        // Helper function to count active ports only
+        const countActivePorts = (ports) => {
+            if (!ports || !Array.isArray(ports)) return 0;
+            return ports.filter(port => {
+                const cleanStatus = port.status ? port.status.replace(/\x1b\[[0-9;]*m/g, '').toLowerCase() : '';
+                return cleanStatus !== 'idle' && port.is_active;
+            }).length;
+        };
+        
+        // Check if we have any active port data
+        const activePortCount = countActivePorts(portSummary.upstream_ports) + 
+                               countActivePorts(portSummary.ext_mcio_ports) + 
+                               countActivePorts(portSummary.int_mcio_ports) + 
+                               countActivePorts(portSummary.straddle_ports);
+        
+        if (activePortCount > 0) {
+            // Add all port sections (will filter internally)
+            addPortSection(portSummary.upstream_ports, 'Upstream Ports');
+            addPortSection(portSummary.ext_mcio_ports, 'EXT MCIO Ports');
+            addPortSection(portSummary.int_mcio_ports, 'INT MCIO Ports');
+            addPortSection(portSummary.straddle_ports, 'Straddle Ports');
+        } else {
+            // Show empty state for ports if no active ports
+            portGrid.innerHTML = `
+                <div style="text-align: center; color: var(--secondary-gray); padding: 20px;">
+                    No active ports found
+                </div>
+            `;
+        }
+    }
+
+    // Update Clock Status
+    if (Object.keys(clockStatus).length > 0) {
+        const clockStatusEl = document.getElementById('clockStatus');
+        if (clockStatusEl) {
+            const clockItems = [];
+            if (clockStatus.pcie_straddle_clock) clockItems.push('PCIe Straddle');
+            if (clockStatus.ext_mcio_clock) clockItems.push('EXT MCIO');
+            if (clockStatus.int_mcio_clock) clockItems.push('INT MCIO');
+            clockStatusEl.textContent = clockItems.length > 0 ? clockItems.join(', ') + ' Enabled' : 'All Disabled';
+        }
+    }
+    
+    // Update Spread Status
+    if (Object.keys(spreadStatus).length > 0) {
+        const spreadStatusEl = document.getElementById('spreadStatus');
+        if (spreadStatusEl) {
+            spreadStatusEl.textContent = spreadStatus.status ? spreadStatus.status.toUpperCase() : 'Unknown';
+            spreadStatusEl.className = `status-indicator ${spreadStatus.enabled ? 'normal' : 'warning'}`;
+        }
+    }
+    
+    // Update BIST Results
+    if (Object.keys(bistResults).length > 0 && bistResults.devices) {
+        const bistGrid = document.getElementById('bistGrid');
+        if (bistGrid) {
+            bistGrid.innerHTML = ''; // Clear existing content
+            
+            // Add summary
+            const bistSummary = document.createElement('div');
+            bistSummary.className = 'bist-summary';
+            bistSummary.innerHTML = `
+                <div class="bist-total">Total: ${bistResults.total_devices || 0}</div>
+                <div class="bist-passed">Passed: ${bistResults.passed_devices || 0}</div>
+                <div class="bist-failed">Failed: ${bistResults.failed_devices || 0}</div>
+            `;
+            bistGrid.appendChild(bistSummary);
+            
+            // Add device results
+            bistResults.devices.forEach(device => {
+                const deviceItem = document.createElement('div');
+                const statusClass = device.passed ? 'passed' : 'failed';
+                deviceItem.className = `bist-item ${statusClass}`;
+                
+                // Clean the status text for display (remove ANSI codes if any)
+                const cleanStatus = device.status.replace(/\x1b\[[0-9;]*m/g, '');
+                
+                deviceItem.innerHTML = `
+                    <div class="bist-device">${device.device}</div>
+                    <div class="bist-channel">${device.channel}</div>
+                    <div class="bist-address">${device.address}</div>
+                    <div class="bist-status ${statusClass}">${cleanStatus}</div>
+                `;
+                bistGrid.appendChild(deviceItem);
+            });
+        }
+    } else {
+        // Show empty state for BIST if no data
+        const bistGrid = document.getElementById('bistGrid');
+        if (bistGrid) {
+            bistGrid.innerHTML = `
+                <div style="text-align: center; color: var(--secondary-gray); padding: 20px;">
+                    No BIST data available
+                </div>
+            `;
+        }
+    }
+
 
     showNotification('System information updated successfully', 'success');
 }
@@ -1001,7 +1401,10 @@ function setupEventHandlers() {
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', () => {
             const dashboard = item.dataset.dashboard;
-            if (dashboard) {
+            if (dashboard === 'user-manual') {
+                // Open User's Manual in new window
+                window.open('/static/users_manual.html', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+            } else if (dashboard) {
                 switchDashboard(dashboard);
             }
         });
