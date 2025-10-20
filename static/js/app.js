@@ -25,7 +25,7 @@ let systemMetrics = {
 let responseChart;
 
 // Dashboard instances
-let bifurcationDashboard = null;
+let clockDashboard = null;
 let linkStatusDashboard = null;
 let resetsDashboard = null;
 let errorsDashboard = null;
@@ -304,10 +304,13 @@ function switchDashboard(dashboardId) {
                 setTimeout(() => {
                     executeCommand('showport', 'link_status');
                 }, 500);
-            } else if (dashboardId === 'bifurcation') {
-                initializeBifurcationDashboard();
+            } else if (dashboardId === 'clock') {
+                initializeClockDashboard();
                 setTimeout(() => {
-                    executeCommand('showmode', 'bifurcation');
+                    // Execute all three clock commands
+                    executeCommand('showmode', 'clock');
+                    setTimeout(() => executeCommand('clk', 'clock'), 1000);
+                    setTimeout(() => executeCommand('spread', 'clock'), 2000);
                 }, 500);
             } else if (dashboardId === 'resets') {
                 // Activate Resets Dashboard
@@ -332,12 +335,12 @@ function switchDashboard(dashboardId) {
     }
 }
 
-function initializeBifurcationDashboard() {
-    if (!bifurcationDashboard) {
-        bifurcationDashboard = new BifurcationDashboard();
+function initializeClockDashboard() {
+    if (!clockDashboard) {
+        clockDashboard = new ClockDashboard();
     }
-    if (bifurcationDashboard && bifurcationDashboard.onActivate) {
-        bifurcationDashboard.onActivate();
+    if (clockDashboard && clockDashboard.onActivate) {
+        clockDashboard.onActivate();
     }
 }
 
@@ -414,9 +417,9 @@ function updateDashboardData(data) {
         return;
     }
 
-    if (dashboard === 'bifurcation') {
-        if (bifurcationDashboard && bifurcationDashboard.handleResponse) {
-            bifurcationDashboard.handleResponse(data);
+    if (dashboard === 'clock') {
+        if (clockDashboard && clockDashboard.handleResponse) {
+            clockDashboard.handleResponse(data);
         }
         return;
     }
@@ -432,22 +435,14 @@ function updateDashboardData(data) {
 }
 
 // =============================================================================
-// BIFURCATION DASHBOARD CLASS
+// CLOCK DASHBOARD CLASS
 // =============================================================================
 
-const BIFURCATION_MODES = {
-    0: { goldenFinger: 'X16(SSC)', straddlePCIE: 'X16(CC)', leftMCIO: 'X16(CC)', rightMCIO: 'X16(CC)' },
-    1: { goldenFinger: 'X16(SSC)', straddlePCIE: 'X16(CC)', leftMCIO: 'X8(CC)', rightMCIO: 'X8(CC)' },
-    2: { goldenFinger: 'X16(SSC)', straddlePCIE: 'X16(CC)', leftMCIO: 'X4(CC)', rightMCIO: 'X4(CC)' },
-    3: { goldenFinger: 'X16(SSC)', straddlePCIE: 'X16(CC)', leftMCIO: 'X2(CC)', rightMCIO: 'X2(CC)' },
-    4: { goldenFinger: 'X16(SSC)', straddlePCIE: 'X16(CC)', leftMCIO: 'X8(CC)', rightMCIO: 'X16(CC)' },
-    5: { goldenFinger: 'X16(SSC)', straddlePCIE: 'X16(CC)', leftMCIO: 'X4(CC)', rightMCIO: 'X16(CC)' },
-    6: { goldenFinger: 'X16(SSC)', straddlePCIE: 'X16(CC)', leftMCIO: 'X16(CC)', rightMCIO: 'X4(CC)' }
-};
-
-class BifurcationDashboard {
+class ClockDashboard {
     constructor() {
-        this.currentMode = null;
+        this.firmwareConfig = null;
+        this.refclkData = null;
+        this.sscData = null;
         this.isLoading = false;
         this.init();
     }
@@ -457,101 +452,170 @@ class BifurcationDashboard {
     }
 
     bindEvents() {
-        const commandInput = document.getElementById('bifurcationCommandInput');
-        const sendBtn = document.getElementById('sendBifurcationCmd');
-        const refreshBtn = document.getElementById('refreshBifurcation');
-
-        if (commandInput && sendBtn) {
-            commandInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && !sendBtn.disabled) {
-                    executeCommand(commandInput.value.trim(), 'bifurcation');
-                    commandInput.value = '';
-                }
-            });
-
-            sendBtn.addEventListener('click', () => {
-                if (!sendBtn.disabled) {
-                    executeCommand(commandInput.value.trim(), 'bifurcation');
-                    commandInput.value = '';
-                }
-            });
-        }
+        const refreshBtn = document.getElementById('refreshClock');
 
         if (refreshBtn) {
             refreshBtn.addEventListener('click', () => {
-                this.refreshBifurcationMode();
+                this.refreshClockStatus();
             });
         }
-
-        const presetBtns = document.querySelectorAll('#bifurcationPresets .preset-btn');
-        presetBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const cmd = btn.getAttribute('data-cmd');
-                if (cmd) {
-                    executeCommand(cmd, 'bifurcation');
-                }
-            });
-        });
     }
 
     onActivate() {
-        this.addConsoleEntry('Dashboard activated. Checking current bifurcation mode...', 'system');
+        console.log('Clock Dashboard activated. Fetching clock status...');
     }
 
     handleResponse(data) {
-        if (data.success && data.data?.command === 'showmode') {
-            this.parseShowModeResponse(data.data.raw);
+        if (!data.success) return;
+
+        const command = data.data?.command?.toLowerCase();
+        const type = data.data?.type;
+
+        if (command === 'showmode' || type === 'showmode_response') {
+            this.handleShowModeResponse(data.data);
+        } else if (command === 'clk' || type === 'clk_response') {
+            this.handleClkResponse(data.data);
+        } else if (command === 'spread' || type === 'spread_response') {
+            this.handleSpreadResponse(data.data);
         }
     }
 
-    parseShowModeResponse(response) {
-        const modeMatch = response.match(/SBR mode:\s*(\d+)/i) || response.match(/mode:\s*(\d+)/i);
-        if (modeMatch) {
-            const mode = parseInt(modeMatch[1]);
-            this.updateCurrentMode(mode);
+    handleShowModeResponse(data) {
+        if (data.parsed?.firmware_config !== undefined) {
+            this.firmwareConfig = data.parsed.firmware_config;
+            this.updateFirmwareDisplay();
         }
     }
 
-    updateCurrentMode(mode) {
-        if (mode < 0 || mode > 6) return;
-
-        this.currentMode = mode;
-        const modeConfig = BIFURCATION_MODES[mode];
-
-        this.updateElement('currentSBRMode', mode.toString());
-        this.updateElement('goldenFingerConfig', modeConfig.goldenFinger);
-        this.updateElement('straddlePCIE', modeConfig.straddlePCIE);
-        this.updateElement('mcioStatus', `L:${modeConfig.leftMCIO} R:${modeConfig.rightMCIO}`);
-
-        this.updateElement('modeGoldenFinger', modeConfig.goldenFinger);
-        this.updateElement('modeStraddlePCIE', modeConfig.straddlePCIE);
-        this.updateElement('modeLeftMCIO', modeConfig.leftMCIO);
-        this.updateElement('modeRightMCIO', modeConfig.rightMCIO);
-
-        const modeNumberEl = document.querySelector('.bifurcation-mode-number');
-        if (modeNumberEl) {
-            modeNumberEl.textContent = `Mode: ${mode}`;
+    handleClkResponse(data) {
+        if (data.parsed?.refclk_status) {
+            this.parseRefclkStatus(data.parsed.refclk_status);
         }
-
-        this.highlightActiveMode(mode);
-        this.addConsoleEntry(`Current bifurcation mode updated: ${mode}`, 'success');
     }
 
+    handleSpreadResponse(data) {
+        if (data.parsed?.ssc_spread) {
+            this.parseSSCSpread(data.parsed.ssc_spread);
+        }
+    }
+
+    parseRefclkStatus(response) {
+        const lines = response.split('\n');
+        const portGroups = [];
+        
+        lines.forEach(line => {
+            const match = line.match(/Port Group (\d+):\s*(\w+)/);
+            if (match) {
+                portGroups.push({
+                    group: parseInt(match[1]),
+                    status: match[2].toLowerCase()
+                });
+            }
+        });
+
+        this.refclkData = portGroups;
+        this.updateRefclkGrid();
+        this.updateRefclkStatus();
+    }
+
+    parseSSCSpread(response) {
+        const lines = response.split('\n');
+        const sscData = {};
+        
+        lines.forEach(line => {
+            if (line.includes('Spread Percentage:')) {
+                const match = line.match(/Spread Percentage:\s*(.+)/);
+                if (match) sscData.percentage = match[1];
+            } else if (line.includes('PCIe 6.x Compliance:')) {
+                const match = line.match(/PCIe 6.x Compliance:\s*(.+)/);
+                if (match) sscData.compliance = match[1];
+            } else if (line.includes('Spread Type:')) {
+                const match = line.match(/Spread Type:\s*(.+)/);
+                if (match) sscData.type = match[1];
+            } else if (line.includes('Modulation Frequency:')) {
+                const match = line.match(/Modulation Frequency:\s*(.+)/);
+                if (match) sscData.frequency = match[1];
+            }
+        });
+
+        this.sscData = sscData;
+        this.updateSSCDisplay();
+    }
+
+    updateFirmwareDisplay() {
+        if (!this.firmwareConfig) return;
+        
+        // Update the overview metrics
+        this.updateElement('firmwareConfig', this.firmwareConfig.toString());
+        
+        // Map mode numbers to descriptions
+        const modeDescriptions = {
+            1: 'SSC without Precoding',
+            2: 'SSC with Precoding', 
+            3: 'Common Clock without Precoding',
+            4: 'Common Clock with Precoding'
+        };
+        
+        // Update current mode display
+        this.updateElement('currentModeNumber', this.firmwareConfig.toString());
+        this.updateElement('currentModeDescription', modeDescriptions[this.firmwareConfig] || 'Unknown Configuration');
+        
+        // Highlight active mode in the list
+        this.highlightActiveMode(this.firmwareConfig);
+    }
+    
     highlightActiveMode(activeMode) {
-        const rows = document.querySelectorAll('#bifurcationTableBody tr');
-        rows.forEach(row => {
-            const mode = parseInt(row.getAttribute('data-mode'));
-            if (mode === activeMode) {
-                row.classList.add('active-mode');
+        const modeItems = document.querySelectorAll('.mode-item');
+        modeItems.forEach((item, index) => {
+            const modeNumber = index + 1; // Mode numbers are 1-based
+            if (modeNumber === activeMode) {
+                item.classList.add('active');
             } else {
-                row.classList.remove('active-mode');
+                item.classList.remove('active');
             }
         });
     }
 
-    refreshBifurcationMode() {
-        this.addConsoleEntry('Refreshing bifurcation mode...', 'command');
-        executeCommand('showmode', 'bifurcation');
+    updateRefclkGrid() {
+        const grid = document.getElementById('refclkGrid');
+        if (!grid || !this.refclkData) return;
+
+        grid.innerHTML = '';
+        this.refclkData.forEach(group => {
+            const card = document.createElement('div');
+            card.className = 'refclk-group-card';
+            card.innerHTML = `
+                <div class="refclk-group-title">Port Group ${group.group}</div>
+                <div class="refclk-status ${group.status}">${group.status.charAt(0).toUpperCase() + group.status.slice(1)}</div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    updateRefclkStatus() {
+        if (!this.refclkData) return;
+        
+        const enabledCount = this.refclkData.filter(g => g.status === 'enabled').length;
+        const totalCount = this.refclkData.length;
+        this.updateElement('refclkStatus', `${enabledCount}/${totalCount} Enabled`);
+    }
+
+    updateSSCDisplay() {
+        if (!this.sscData) return;
+
+        this.updateElement('sscSpread', this.sscData.percentage || '--');
+        this.updateElement('sscPercentage', this.sscData.percentage || '--');
+        this.updateElement('pcie6xCompliance', this.sscData.compliance || '--');
+        this.updateElement('spreadRange', this.sscData.percentage || '--');
+        this.updateElement('modulationType', this.sscData.type || '--');
+        this.updateElement('clockCompliance', this.sscData.compliance || '--');
+    }
+
+    refreshClockStatus() {
+        console.log('Refreshing clock status...');
+        executeCommand('showmode', 'clock');
+        setTimeout(() => executeCommand('clk', 'clock'), 1000);
+        setTimeout(() => executeCommand('spread', 'clock'), 2000);
     }
 
     updateElement(id, value) {
@@ -561,17 +625,20 @@ class BifurcationDashboard {
         }
     }
 
-    addConsoleEntry(message, type = 'info') {
-        addConsoleEntry('bifurcationConsole', type, message);
-    }
-
     getStatusSummary() {
-        if (this.currentMode === null) {
-            return 'No mode information available';
+        if (!this.firmwareConfig && !this.refclkData && !this.sscData) {
+            return 'No clock information available';
         }
 
-        const config = BIFURCATION_MODES[this.currentMode];
-        return `Mode ${this.currentMode}: GF:${config.goldenFinger}, SP:${config.straddlePCIE}, L:${config.leftMCIO}, R:${config.rightMCIO}`;
+        let summary = '';
+        if (this.firmwareConfig) summary += `Config: ${this.firmwareConfig}`;
+        if (this.refclkData) {
+            const enabledCount = this.refclkData.filter(g => g.status === 'enabled').length;
+            summary += `, REFCLK: ${enabledCount}/${this.refclkData.length}`;
+        }
+        if (this.sscData?.percentage) summary += `, SSC: ${this.sscData.percentage}`;
+        
+        return summary || 'Clock status available';
     }
 }
 
@@ -1518,11 +1585,11 @@ function exportDeviceInfo() {
         reportContent += '\n';
     }
 
-    if (bifurcationDashboard && bifurcationDashboard.currentMode !== null) {
-        reportContent += 'PCIE BIFURCATION\n';
+    if (clockDashboard && clockDashboard.firmwareConfig !== null) {
+        reportContent += 'CLOCK CONFIGURATION\n';
         reportContent += '-'.repeat(40) + '\n';
-        reportContent += `Current SBR Mode: ${bifurcationDashboard.currentMode}\n`;
-        reportContent += `Configuration: ${bifurcationDashboard.getStatusSummary()}\n`;
+        reportContent += `Firmware Config: ${clockDashboard.firmwareConfig}\n`;
+        reportContent += `Status: ${clockDashboard.getStatusSummary()}\n`;
         reportContent += '\n';
     }
 
@@ -1926,7 +1993,7 @@ function setupKeyboardShortcuts() {
     document.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key >= '1' && e.key <= '9') {
             e.preventDefault();
-            const dashboards = ['connection', 'device_info', 'link_status', 'bifurcation', 'i2c', 'advanced', 'resets', 'firmware', 'analytics'];
+            const dashboards = ['connection', 'device_info', 'link_status', 'clock', 'i2c', 'advanced', 'resets', 'firmware', 'analytics'];
             const index = parseInt(e.key) - 1;
             if (dashboards[index]) {
                 switchDashboard(dashboards[index]);
@@ -2032,7 +2099,7 @@ function initializeApplication() {
     console.log('%cCalypsoPy+ v1.0.0', 'color: #790000; font-size: 16px; font-weight: bold;');
     console.log('%cby Serial Cables', 'color: #777676; font-size: 12px;');
     console.log('%cProfessional Hardware Interface Ready', 'color: #22c55e; font-size: 12px;');
-    console.log('%cBifurcation Dashboard: Enabled', 'color: #e63946; font-size: 12px;');
+    console.log('%cClock Dashboard: Enabled', 'color: #e63946; font-size: 12px;');
     console.log('%cResets Dashboard: Enabled', 'color: #ef4444; font-size: 12px;');
     console.log('%cErrors Dashboard: Enabled', 'color: #f59e0b; font-size: 12px;');
     console.log('%cTerminal Dashboard: Enabled', 'color: #73d0ff; font-size: 12px;');
@@ -2066,11 +2133,10 @@ window.CalypsoPy = {
     isDeveloperMode: () => isDeveloperMode,
     currentPort: () => currentPort,
     currentDashboard: () => currentDashboard,
-    bifurcationDashboard: () => bifurcationDashboard,
+    clockDashboard: () => clockDashboard,
     resetsDashboard: () => window.resetsDashboard,
     errorsDashboard: () => window.errorsDashboard,
     advancedDashboard: () => window.advancedDashboard,
     terminalDashboard: () => window.terminalDashboard,
-    BifurcationDashboard: BifurcationDashboard,
-    BIFURCATION_MODES: BIFURCATION_MODES
+    ClockDashboard: ClockDashboard
 };

@@ -15863,3 +15863,476 @@ Atlas3 chip ver: A0
 2025-10-20 14:34:21,485 - engineio.server - INFO - fbl5S64594jOeEiUAAAD: Received packet PONG data 
 2025-10-20 14:34:21,485 - engineio.server - INFO - SerSfq0m84jplcWaAAAB: Received packet PONG data 
 2025-10-20 14:34:21,485 - engineio.server - INFO - RtPS61IWoaMH9lpzAAAC: Received packet PONG data 
+2025-10-20 15:35:00,904 - __main__ - WARNING - Testing modules not available: attempted relative import with no known parent package
+2025-10-20 15:35:00,906 - __main__ - WARNING - Testing modules not available: attempted relative import with no known parent package
+2025-10-20 15:35:01,256 - engineio.server - INFO - Server initialized for eventlet.
+2025-10-20 15:35:03,670 - engineio.server - INFO - 189hRWKWVwABlwBIAAAA: Sending packet OPEN data {'sid': '189hRWKWVwABlwBIAAAA', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 15:35:03,670 - engineio.server - INFO - 5vmAAYc2FpxwSuG3AAAB: Sending packet OPEN data {'sid': '5vmAAYc2FpxwSuG3AAAB', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 15:35:03,670 - engineio.server - INFO - irFFgNSOs9S8CKLNAAAC: Sending packet OPEN data {'sid': 'irFFgNSOs9S8CKLNAAAC', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 15:35:03,670 - engineio.server - INFO - P6Gwl2tARjcauXvkAAAD: Sending packet OPEN data {'sid': 'P6Gwl2tARjcauXvkAAAD', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 15:35:03,677 - engineio.server - INFO - 189hRWKWVwABlwBIAAAA: Received packet MESSAGE data 0
+2025-10-20 15:35:03,677 - socketio.server - INFO - emitting event "system_status" to 6c22C1M9Kl-sbcALAAAE [/]
+2025-10-20 15:35:03,679 - engineio.server - INFO - 189hRWKWVwABlwBIAAAA: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760996103.677486,"total_commands":0}}]
+2025-10-20 15:35:03,680 - __main__ - INFO - Client connected
+2025-10-20 15:35:03,680 - engineio.server - INFO - 189hRWKWVwABlwBIAAAA: Sending packet MESSAGE data 0{"sid":"6c22C1M9Kl-sbcALAAAE"}
+2025-10-20 15:35:03,680 - engineio.server - INFO - 189hRWKWVwABlwBIAAAA: Received request to upgrade to websocket
+2025-10-20 15:35:03,685 - engineio.server - INFO - 5vmAAYc2FpxwSuG3AAAB: Received packet MESSAGE data 0
+2025-10-20 15:35:03,685 - socketio.server - INFO - emitting event "system_status" to EIY6gT_56158GflMAAAF [/]
+2025-10-20 15:35:03,685 - engineio.server - INFO - 5vmAAYc2FpxwSuG3AAAB: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760996103.6856341,"total_commands":0}}]
+2025-10-20 15:35:03,691 - __main__ - INFO - Client connected
+2025-10-20 15:35:03,691 - engineio.server - INFO - 5vmAAYc2FpxwSuG3AAAB: Sending packet MESSAGE data 0{"sid":"EIY6gT_56158GflMAAAF"}
+2025-10-20 15:35:03,691 - engineio.server - INFO - P6Gwl2tARjcauXvkAAAD: Received packet MESSAGE data 0
+2025-10-20 15:35:03,691 - socketio.server - INFO - emitting event "system_status" to fTMs3HgK4mMMD0iIAAAG [/]
+2025-10-20 15:35:03,691 - engineio.server - INFO - P6Gwl2tARjcauXvkAAAD: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760996103.69145,"total_commands":0}}]
+2025-10-20 15:35:03,691 - __main__ - INFO - Client connected
+2025-10-20 15:35:03,693 - engineio.server - INFO - P6Gwl2tARjcauXvkAAAD: Sending packet MESSAGE data 0{"sid":"fTMs3HgK4mMMD0iIAAAG"}
+2025-10-20 15:35:03,693 - engineio.server - INFO - irFFgNSOs9S8CKLNAAAC: Received packet MESSAGE data 0
+2025-10-20 15:35:03,693 - socketio.server - INFO - emitting event "system_status" to bFZnWmAWnA7btIdzAAAH [/]
+2025-10-20 15:35:03,693 - engineio.server - INFO - irFFgNSOs9S8CKLNAAAC: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760996103.6931896,"total_commands":0}}]
+2025-10-20 15:35:03,693 - __main__ - INFO - Client connected
+2025-10-20 15:35:03,693 - engineio.server - INFO - irFFgNSOs9S8CKLNAAAC: Sending packet MESSAGE data 0{"sid":"bFZnWmAWnA7btIdzAAAH"}
+2025-10-20 15:35:03,693 - engineio.server - INFO - 189hRWKWVwABlwBIAAAA: Upgrade to websocket successful
+2025-10-20 15:35:03,697 - engineio.server - INFO - 5vmAAYc2FpxwSuG3AAAB: Received request to upgrade to websocket
+2025-10-20 15:35:03,700 - engineio.server - INFO - 5vmAAYc2FpxwSuG3AAAB: Upgrade to websocket successful
+2025-10-20 15:35:03,708 - engineio.server - INFO - irFFgNSOs9S8CKLNAAAC: Received request to upgrade to websocket
+2025-10-20 15:35:03,712 - engineio.server - INFO - irFFgNSOs9S8CKLNAAAC: Upgrade to websocket successful
+2025-10-20 15:35:03,725 - engineio.server - INFO - P6Gwl2tARjcauXvkAAAD: Received request to upgrade to websocket
+2025-10-20 15:35:03,725 - engineio.server - INFO - P6Gwl2tARjcauXvkAAAD: Upgrade to websocket successful
+2025-10-20 15:36:22,273 - app - WARNING - Testing modules not available: attempted relative import with no known parent package
+2025-10-20 15:36:22,276 - app - WARNING - Testing modules not available: attempted relative import with no known parent package
+2025-10-20 15:36:22,299 - engineio.server - INFO - Server initialized for eventlet.
+2025-10-20 15:36:22,830 - engineio.server - INFO - k5-Os8-Q7ySL7B8-AAAI: Sending packet OPEN data {'sid': 'k5-Os8-Q7ySL7B8-AAAI', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 15:36:22,875 - engineio.server - INFO - k5-Os8-Q7ySL7B8-AAAI: Received packet MESSAGE data 0
+2025-10-20 15:36:22,875 - socketio.server - INFO - emitting event "system_status" to Q2VYVU-NF2OBeH6oAAAJ [/]
+2025-10-20 15:36:22,877 - engineio.server - INFO - k5-Os8-Q7ySL7B8-AAAI: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760996182.8756957,"total_commands":0}}]
+2025-10-20 15:36:22,877 - __main__ - INFO - Client connected
+2025-10-20 15:36:22,877 - engineio.server - INFO - k5-Os8-Q7ySL7B8-AAAI: Sending packet MESSAGE data 0{"sid":"Q2VYVU-NF2OBeH6oAAAJ"}
+2025-10-20 15:36:22,877 - engineio.server - INFO - k5-Os8-Q7ySL7B8-AAAI: Received request to upgrade to websocket
+2025-10-20 15:36:22,884 - __main__ - INFO - Starting port scan...
+2025-10-20 15:36:23,001 - __main__ - INFO - Raw port scan found 2 ports
+2025-10-20 15:36:23,002 - __main__ - INFO - Added port: COM4 - Standard Serial over Bluetooth link (COM4)
+2025-10-20 15:36:23,002 - __main__ - INFO - Added port: COM3 - Standard Serial over Bluetooth link (COM3)
+2025-10-20 15:36:23,002 - __main__ - INFO - Port scan complete: 2 ports found
+2025-10-20 15:36:23,002 - __main__ - INFO - API /api/ports called, returning 2 ports
+2025-10-20 15:36:23,005 - engineio.server - INFO - HZlwGZkmO6JED_qyAAAK: Sending packet OPEN data {'sid': 'HZlwGZkmO6JED_qyAAAK', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 15:36:23,007 - engineio.server - INFO - OWmsc3i8jF4ZotIrAAAL: Sending packet OPEN data {'sid': 'OWmsc3i8jF4ZotIrAAAL', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 15:36:23,007 - engineio.server - INFO - LkXctPkEAamrdj-2AAAM: Sending packet OPEN data {'sid': 'LkXctPkEAamrdj-2AAAM', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 15:36:23,791 - engineio.server - INFO - OWmsc3i8jF4ZotIrAAAL: Received packet MESSAGE data 0
+2025-10-20 15:36:23,792 - socketio.server - INFO - emitting event "system_status" to fxZSzhMaW0wIK0yxAAAN [/]
+2025-10-20 15:36:23,792 - engineio.server - INFO - OWmsc3i8jF4ZotIrAAAL: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760996183.792803,"total_commands":0}}]
+2025-10-20 15:36:23,792 - __main__ - INFO - Client connected
+2025-10-20 15:36:23,792 - engineio.server - INFO - OWmsc3i8jF4ZotIrAAAL: Sending packet MESSAGE data 0{"sid":"fxZSzhMaW0wIK0yxAAAN"}
+2025-10-20 15:36:23,793 - engineio.server - INFO - HZlwGZkmO6JED_qyAAAK: Received packet MESSAGE data 0
+2025-10-20 15:36:23,793 - socketio.server - INFO - emitting event "system_status" to OGWHnne0dJEYIYJZAAAO [/]
+2025-10-20 15:36:23,801 - engineio.server - INFO - HZlwGZkmO6JED_qyAAAK: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760996183.7938037,"total_commands":0}}]
+2025-10-20 15:36:23,801 - __main__ - INFO - Client connected
+2025-10-20 15:36:23,801 - engineio.server - INFO - HZlwGZkmO6JED_qyAAAK: Sending packet MESSAGE data 0{"sid":"OGWHnne0dJEYIYJZAAAO"}
+2025-10-20 15:36:23,802 - engineio.server - INFO - HZlwGZkmO6JED_qyAAAK: Received request to upgrade to websocket
+2025-10-20 15:36:23,818 - engineio.server - INFO - OWmsc3i8jF4ZotIrAAAL: Received request to upgrade to websocket
+2025-10-20 15:36:24,427 - engineio.server - INFO - LkXctPkEAamrdj-2AAAM: Received packet MESSAGE data 0
+2025-10-20 15:36:24,427 - socketio.server - INFO - emitting event "system_status" to 3rR2IvhHIBIez5B1AAAP [/]
+2025-10-20 15:36:24,429 - engineio.server - INFO - LkXctPkEAamrdj-2AAAM: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760996184.427507,"total_commands":0}}]
+2025-10-20 15:36:24,429 - __main__ - INFO - Client connected
+2025-10-20 15:36:24,429 - engineio.server - INFO - LkXctPkEAamrdj-2AAAM: Sending packet MESSAGE data 0{"sid":"3rR2IvhHIBIez5B1AAAP"}
+2025-10-20 15:36:24,431 - engineio.server - INFO - k5-Os8-Q7ySL7B8-AAAI: Upgrade to websocket successful
+2025-10-20 15:36:24,436 - engineio.server - INFO - LkXctPkEAamrdj-2AAAM: Received request to upgrade to websocket
+2025-10-20 15:36:24,674 - engineio.server - INFO - OWmsc3i8jF4ZotIrAAAL: Upgrade to websocket successful
+2025-10-20 15:36:24,674 - engineio.server - INFO - HZlwGZkmO6JED_qyAAAK: Upgrade to websocket successful
+2025-10-20 15:36:24,699 - engineio.server - INFO - LkXctPkEAamrdj-2AAAM: Upgrade to websocket successful
+2025-10-20 15:36:47,847 - engineio.server - INFO - k5-Os8-Q7ySL7B8-AAAI: Sending packet PING data None
+2025-10-20 15:36:47,848 - engineio.server - INFO - k5-Os8-Q7ySL7B8-AAAI: Received packet PONG data 
+2025-10-20 15:36:48,006 - engineio.server - INFO - OWmsc3i8jF4ZotIrAAAL: Sending packet PING data None
+2025-10-20 15:36:48,006 - engineio.server - INFO - LkXctPkEAamrdj-2AAAM: Sending packet PING data None
+2025-10-20 15:36:48,006 - engineio.server - INFO - HZlwGZkmO6JED_qyAAAK: Sending packet PING data None
+2025-10-20 15:36:48,006 - engineio.server - INFO - LkXctPkEAamrdj-2AAAM: Received packet PONG data 
+2025-10-20 15:36:48,008 - engineio.server - INFO - OWmsc3i8jF4ZotIrAAAL: Received packet PONG data 
+2025-10-20 15:36:48,008 - engineio.server - INFO - HZlwGZkmO6JED_qyAAAK: Received packet PONG data 
+2025-10-20 15:37:12,861 - engineio.server - INFO - k5-Os8-Q7ySL7B8-AAAI: Sending packet PING data None
+2025-10-20 15:37:12,861 - engineio.server - INFO - k5-Os8-Q7ySL7B8-AAAI: Received packet PONG data 
+2025-10-20 15:37:13,004 - engineio.server - INFO - LkXctPkEAamrdj-2AAAM: Sending packet PING data None
+2025-10-20 15:37:13,005 - engineio.server - INFO - OWmsc3i8jF4ZotIrAAAL: Sending packet PING data None
+2025-10-20 15:37:13,005 - engineio.server - INFO - HZlwGZkmO6JED_qyAAAK: Sending packet PING data None
+2025-10-20 15:37:13,005 - engineio.server - INFO - OWmsc3i8jF4ZotIrAAAL: Received packet PONG data 
+2025-10-20 15:37:13,005 - engineio.server - INFO - LkXctPkEAamrdj-2AAAM: Received packet PONG data 
+2025-10-20 15:37:13,005 - engineio.server - INFO - HZlwGZkmO6JED_qyAAAK: Received packet PONG data 
+2025-10-20 15:37:37,883 - engineio.server - INFO - k5-Os8-Q7ySL7B8-AAAI: Sending packet PING data None
+2025-10-20 15:37:37,883 - engineio.server - INFO - k5-Os8-Q7ySL7B8-AAAI: Received packet PONG data 
+2025-10-20 15:37:38,011 - engineio.server - INFO - OWmsc3i8jF4ZotIrAAAL: Sending packet PING data None
+2025-10-20 15:37:38,011 - engineio.server - INFO - LkXctPkEAamrdj-2AAAM: Sending packet PING data None
+2025-10-20 15:37:38,011 - engineio.server - INFO - HZlwGZkmO6JED_qyAAAK: Sending packet PING data None
+2025-10-20 15:37:38,011 - engineio.server - INFO - LkXctPkEAamrdj-2AAAM: Received packet PONG data 
+2025-10-20 15:37:38,011 - engineio.server - INFO - OWmsc3i8jF4ZotIrAAAL: Received packet PONG data 
+2025-10-20 15:37:38,011 - engineio.server - INFO - HZlwGZkmO6JED_qyAAAK: Received packet PONG data 
+2025-10-20 15:38:02,888 - engineio.server - INFO - k5-Os8-Q7ySL7B8-AAAI: Sending packet PING data None
+2025-10-20 15:38:02,888 - engineio.server - INFO - k5-Os8-Q7ySL7B8-AAAI: Received packet PONG data 
+2025-10-20 15:38:03,023 - engineio.server - INFO - OWmsc3i8jF4ZotIrAAAL: Sending packet PING data None
+2025-10-20 15:38:03,023 - engineio.server - INFO - HZlwGZkmO6JED_qyAAAK: Sending packet PING data None
+2025-10-20 15:38:03,023 - engineio.server - INFO - LkXctPkEAamrdj-2AAAM: Sending packet PING data None
+2025-10-20 15:38:03,023 - engineio.server - INFO - HZlwGZkmO6JED_qyAAAK: Received packet PONG data 
+2025-10-20 15:38:03,023 - engineio.server - INFO - LkXctPkEAamrdj-2AAAM: Received packet PONG data 
+2025-10-20 15:38:03,023 - engineio.server - INFO - OWmsc3i8jF4ZotIrAAAL: Received packet PONG data 
+2025-10-20 15:51:47,024 - __main__ - WARNING - Testing modules not available: attempted relative import with no known parent package
+2025-10-20 15:51:47,026 - __main__ - WARNING - Testing modules not available: attempted relative import with no known parent package
+2025-10-20 15:51:47,373 - engineio.server - INFO - Server initialized for eventlet.
+2025-10-20 15:51:48,643 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Sending packet OPEN data {'sid': 'jEu4oSCiEuiK077xAAAA', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 15:51:48,643 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Sending packet OPEN data {'sid': 'mngRLIjKyUWDjpDVAAAB', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 15:51:48,643 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Sending packet OPEN data {'sid': 'ULZUS6UKe1VXfbv9AAAC', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 15:51:48,643 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Sending packet OPEN data {'sid': 'QX1wotaRVBoHriHjAAAD', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 15:51:48,650 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Received packet MESSAGE data 0
+2025-10-20 15:51:48,652 - socketio.server - INFO - emitting event "system_status" to LKs356aI14fr7m7VAAAE [/]
+2025-10-20 15:51:48,652 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760997108.6523912,"total_commands":0}}]
+2025-10-20 15:51:48,652 - __main__ - INFO - Client connected
+2025-10-20 15:51:48,654 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Sending packet MESSAGE data 0{"sid":"LKs356aI14fr7m7VAAAE"}
+2025-10-20 15:51:48,654 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Received packet MESSAGE data 0
+2025-10-20 15:51:48,655 - socketio.server - INFO - emitting event "system_status" to VfylNaF57FnwJJ6YAAAF [/]
+2025-10-20 15:51:48,655 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760997108.655479,"total_commands":0}}]
+2025-10-20 15:51:48,655 - __main__ - INFO - Client connected
+2025-10-20 15:51:48,655 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Sending packet MESSAGE data 0{"sid":"VfylNaF57FnwJJ6YAAAF"}
+2025-10-20 15:51:48,655 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Received request to upgrade to websocket
+2025-10-20 15:51:48,657 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Received packet MESSAGE data 0
+2025-10-20 15:51:48,657 - socketio.server - INFO - emitting event "system_status" to fCWPLrqxcmTtAxhNAAAG [/]
+2025-10-20 15:51:48,657 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760997108.6578515,"total_commands":0}}]
+2025-10-20 15:51:48,657 - __main__ - INFO - Client connected
+2025-10-20 15:51:48,659 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Sending packet MESSAGE data 0{"sid":"fCWPLrqxcmTtAxhNAAAG"}
+2025-10-20 15:51:48,659 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Received packet MESSAGE data 0
+2025-10-20 15:51:48,660 - socketio.server - INFO - emitting event "system_status" to -zQp89ERnOPSWNrxAAAH [/]
+2025-10-20 15:51:48,660 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760997108.660625,"total_commands":0}}]
+2025-10-20 15:51:48,661 - __main__ - INFO - Client connected
+2025-10-20 15:51:48,661 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Sending packet MESSAGE data 0{"sid":"-zQp89ERnOPSWNrxAAAH"}
+2025-10-20 15:51:48,668 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Received request to upgrade to websocket
+2025-10-20 15:51:48,668 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Upgrade to websocket successful
+2025-10-20 15:51:48,672 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Upgrade to websocket successful
+2025-10-20 15:51:48,697 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Received request to upgrade to websocket
+2025-10-20 15:51:48,697 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Upgrade to websocket successful
+2025-10-20 15:51:48,713 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Received request to upgrade to websocket
+2025-10-20 15:51:48,713 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Upgrade to websocket successful
+2025-10-20 15:52:13,649 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Sending packet PING data None
+2025-10-20 15:52:13,649 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Sending packet PING data None
+2025-10-20 15:52:13,649 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Sending packet PING data None
+2025-10-20 15:52:13,649 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Sending packet PING data None
+2025-10-20 15:52:13,649 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Received packet PONG data 
+2025-10-20 15:52:13,649 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Received packet PONG data 
+2025-10-20 15:52:13,649 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Received packet PONG data 
+2025-10-20 15:52:13,649 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Received packet PONG data 
+2025-10-20 15:52:38,654 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Sending packet PING data None
+2025-10-20 15:52:38,654 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Sending packet PING data None
+2025-10-20 15:52:38,654 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Sending packet PING data None
+2025-10-20 15:52:38,654 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Sending packet PING data None
+2025-10-20 15:52:38,654 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Received packet PONG data 
+2025-10-20 15:52:38,654 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Received packet PONG data 
+2025-10-20 15:52:38,654 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Received packet PONG data 
+2025-10-20 15:52:38,654 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Received packet PONG data 
+2025-10-20 15:53:03,660 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Sending packet PING data None
+2025-10-20 15:53:03,660 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Sending packet PING data None
+2025-10-20 15:53:03,660 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Sending packet PING data None
+2025-10-20 15:53:03,660 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Sending packet PING data None
+2025-10-20 15:53:03,660 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Received packet PONG data 
+2025-10-20 15:53:03,660 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Received packet PONG data 
+2025-10-20 15:53:03,660 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Received packet PONG data 
+2025-10-20 15:53:03,660 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Received packet PONG data 
+2025-10-20 15:53:28,670 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Sending packet PING data None
+2025-10-20 15:53:28,670 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Sending packet PING data None
+2025-10-20 15:53:28,670 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Sending packet PING data None
+2025-10-20 15:53:28,670 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Sending packet PING data None
+2025-10-20 15:53:28,671 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Received packet PONG data 
+2025-10-20 15:53:28,671 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Received packet PONG data 
+2025-10-20 15:53:28,671 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Received packet PONG data 
+2025-10-20 15:53:28,671 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Received packet PONG data 
+2025-10-20 15:53:53,689 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Sending packet PING data None
+2025-10-20 15:53:53,689 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Sending packet PING data None
+2025-10-20 15:53:53,689 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Sending packet PING data None
+2025-10-20 15:53:53,689 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Sending packet PING data None
+2025-10-20 15:53:53,689 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Received packet PONG data 
+2025-10-20 15:53:53,689 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Received packet PONG data 
+2025-10-20 15:53:53,689 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Received packet PONG data 
+2025-10-20 15:53:53,689 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Received packet PONG data 
+2025-10-20 15:54:18,694 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Sending packet PING data None
+2025-10-20 15:54:18,694 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Sending packet PING data None
+2025-10-20 15:54:18,694 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Sending packet PING data None
+2025-10-20 15:54:18,694 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Sending packet PING data None
+2025-10-20 15:54:18,694 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Received packet PONG data 
+2025-10-20 15:54:18,696 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Received packet PONG data 
+2025-10-20 15:54:18,696 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Received packet PONG data 
+2025-10-20 15:54:18,696 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Received packet PONG data 
+2025-10-20 15:54:43,706 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Sending packet PING data None
+2025-10-20 15:54:43,706 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Sending packet PING data None
+2025-10-20 15:54:43,706 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Sending packet PING data None
+2025-10-20 15:54:43,706 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Sending packet PING data None
+2025-10-20 15:54:43,706 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Received packet PONG data 
+2025-10-20 15:54:43,706 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Received packet PONG data 
+2025-10-20 15:54:43,706 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Received packet PONG data 
+2025-10-20 15:54:43,706 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Received packet PONG data 
+2025-10-20 15:55:08,711 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Sending packet PING data None
+2025-10-20 15:55:08,711 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Sending packet PING data None
+2025-10-20 15:55:08,711 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Sending packet PING data None
+2025-10-20 15:55:08,711 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Sending packet PING data None
+2025-10-20 15:55:08,711 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Received packet PONG data 
+2025-10-20 15:55:08,713 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Received packet PONG data 
+2025-10-20 15:55:08,713 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Received packet PONG data 
+2025-10-20 15:55:08,713 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Received packet PONG data 
+2025-10-20 15:55:33,719 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Sending packet PING data None
+2025-10-20 15:55:33,719 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Sending packet PING data None
+2025-10-20 15:55:33,719 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Sending packet PING data None
+2025-10-20 15:55:33,719 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Sending packet PING data None
+2025-10-20 15:55:33,719 - engineio.server - INFO - jEu4oSCiEuiK077xAAAA: Received packet PONG data 
+2025-10-20 15:55:33,719 - engineio.server - INFO - QX1wotaRVBoHriHjAAAD: Received packet PONG data 
+2025-10-20 15:55:33,719 - engineio.server - INFO - ULZUS6UKe1VXfbv9AAAC: Received packet PONG data 
+2025-10-20 15:55:33,719 - engineio.server - INFO - mngRLIjKyUWDjpDVAAAB: Received packet PONG data 
+2025-10-20 15:55:55,850 - app - WARNING - Testing modules not available: attempted relative import with no known parent package
+2025-10-20 15:55:55,853 - app - WARNING - Testing modules not available: attempted relative import with no known parent package
+2025-10-20 15:55:55,881 - engineio.server - INFO - Server initialized for eventlet.
+2025-10-20 15:55:56,492 - engineio.server - INFO - 1iUCKZhOin2cRGjfAAAI: Sending packet OPEN data {'sid': '1iUCKZhOin2cRGjfAAAI', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 15:55:56,572 - engineio.server - INFO - 1iUCKZhOin2cRGjfAAAI: Received packet MESSAGE data 0
+2025-10-20 15:55:56,574 - socketio.server - INFO - emitting event "system_status" to 3hPTMYyF3L5eCXMcAAAJ [/]
+2025-10-20 15:55:56,578 - engineio.server - INFO - 1iUCKZhOin2cRGjfAAAI: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760997356.5746086,"total_commands":0}}]
+2025-10-20 15:55:56,580 - __main__ - INFO - Client connected
+2025-10-20 15:55:56,580 - engineio.server - INFO - 1iUCKZhOin2cRGjfAAAI: Sending packet MESSAGE data 0{"sid":"3hPTMYyF3L5eCXMcAAAJ"}
+2025-10-20 15:55:56,582 - engineio.server - INFO - 1iUCKZhOin2cRGjfAAAI: Received request to upgrade to websocket
+2025-10-20 15:55:56,597 - engineio.server - INFO - ZuB6Z0CxLLbK7PgUAAAK: Sending packet OPEN data {'sid': 'ZuB6Z0CxLLbK7PgUAAAK', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 15:55:56,600 - engineio.server - INFO - vGKOpfsLS7qe6svFAAAL: Sending packet OPEN data {'sid': 'vGKOpfsLS7qe6svFAAAL', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 15:55:56,602 - engineio.server - INFO - TJhEiq7icJG9RrONAAAM: Sending packet OPEN data {'sid': 'TJhEiq7icJG9RrONAAAM', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 15:55:56,603 - __main__ - INFO - Starting port scan...
+2025-10-20 15:55:56,618 - __main__ - INFO - Raw port scan found 2 ports
+2025-10-20 15:55:56,618 - __main__ - INFO - Added port: COM4 - Standard Serial over Bluetooth link (COM4)
+2025-10-20 15:55:56,618 - __main__ - INFO - Added port: COM3 - Standard Serial over Bluetooth link (COM3)
+2025-10-20 15:55:56,618 - __main__ - INFO - Port scan complete: 2 ports found
+2025-10-20 15:55:56,618 - __main__ - INFO - API /api/ports called, returning 2 ports
+2025-10-20 15:55:56,797 - engineio.server - INFO - TJhEiq7icJG9RrONAAAM: Received packet MESSAGE data 0
+2025-10-20 15:55:56,797 - socketio.server - INFO - emitting event "system_status" to oKhVl_iyqlvx3r44AAAN [/]
+2025-10-20 15:55:56,797 - engineio.server - INFO - TJhEiq7icJG9RrONAAAM: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760997356.7971652,"total_commands":0}}]
+2025-10-20 15:55:56,797 - __main__ - INFO - Client connected
+2025-10-20 15:55:56,797 - engineio.server - INFO - TJhEiq7icJG9RrONAAAM: Sending packet MESSAGE data 0{"sid":"oKhVl_iyqlvx3r44AAAN"}
+2025-10-20 15:55:56,799 - engineio.server - INFO - vGKOpfsLS7qe6svFAAAL: Received packet MESSAGE data 0
+2025-10-20 15:55:56,801 - socketio.server - INFO - emitting event "system_status" to yO8P5FEpGVE51brrAAAO [/]
+2025-10-20 15:55:56,804 - engineio.server - INFO - vGKOpfsLS7qe6svFAAAL: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760997356.8016255,"total_commands":0}}]
+2025-10-20 15:55:56,804 - __main__ - INFO - Client connected
+2025-10-20 15:55:56,805 - engineio.server - INFO - vGKOpfsLS7qe6svFAAAL: Sending packet MESSAGE data 0{"sid":"yO8P5FEpGVE51brrAAAO"}
+2025-10-20 15:55:56,805 - engineio.server - INFO - ZuB6Z0CxLLbK7PgUAAAK: Received packet MESSAGE data 0
+2025-10-20 15:55:56,820 - socketio.server - INFO - emitting event "system_status" to LnyzUE8Dzb6LiuzZAAAP [/]
+2025-10-20 15:55:56,820 - engineio.server - INFO - ZuB6Z0CxLLbK7PgUAAAK: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760997356.8208365,"total_commands":0}}]
+2025-10-20 15:55:56,820 - __main__ - INFO - Client connected
+2025-10-20 15:55:56,820 - engineio.server - INFO - ZuB6Z0CxLLbK7PgUAAAK: Sending packet MESSAGE data 0{"sid":"LnyzUE8Dzb6LiuzZAAAP"}
+2025-10-20 15:55:56,832 - engineio.server - INFO - ZuB6Z0CxLLbK7PgUAAAK: Received request to upgrade to websocket
+2025-10-20 15:55:56,852 - engineio.server - INFO - vGKOpfsLS7qe6svFAAAL: Received request to upgrade to websocket
+2025-10-20 15:55:56,872 - engineio.server - INFO - TJhEiq7icJG9RrONAAAM: Received request to upgrade to websocket
+2025-10-20 15:55:57,605 - engineio.server - INFO - 1iUCKZhOin2cRGjfAAAI: Upgrade to websocket successful
+2025-10-20 15:55:58,236 - engineio.server - INFO - TJhEiq7icJG9RrONAAAM: Upgrade to websocket successful
+2025-10-20 15:55:58,237 - engineio.server - INFO - ZuB6Z0CxLLbK7PgUAAAK: Upgrade to websocket successful
+2025-10-20 15:55:58,237 - engineio.server - INFO - vGKOpfsLS7qe6svFAAAL: Upgrade to websocket successful
+2025-10-20 15:56:21,484 - engineio.server - INFO - 1iUCKZhOin2cRGjfAAAI: Sending packet PING data None
+2025-10-20 15:56:21,485 - engineio.server - INFO - 1iUCKZhOin2cRGjfAAAI: Received packet PONG data 
+2025-10-20 15:56:21,601 - engineio.server - INFO - ZuB6Z0CxLLbK7PgUAAAK: Sending packet PING data None
+2025-10-20 15:56:21,602 - engineio.server - INFO - vGKOpfsLS7qe6svFAAAL: Sending packet PING data None
+2025-10-20 15:56:21,602 - engineio.server - INFO - ZuB6Z0CxLLbK7PgUAAAK: Received packet PONG data 
+2025-10-20 15:56:21,602 - engineio.server - INFO - vGKOpfsLS7qe6svFAAAL: Received packet PONG data 
+2025-10-20 15:56:21,635 - engineio.server - INFO - TJhEiq7icJG9RrONAAAM: Sending packet PING data None
+2025-10-20 15:56:21,635 - engineio.server - INFO - TJhEiq7icJG9RrONAAAM: Received packet PONG data 
+2025-10-20 15:56:46,503 - engineio.server - INFO - 1iUCKZhOin2cRGjfAAAI: Sending packet PING data None
+2025-10-20 15:56:46,503 - engineio.server - INFO - 1iUCKZhOin2cRGjfAAAI: Received packet PONG data 
+2025-10-20 15:56:46,599 - engineio.server - INFO - vGKOpfsLS7qe6svFAAAL: Sending packet PING data None
+2025-10-20 15:56:46,599 - engineio.server - INFO - ZuB6Z0CxLLbK7PgUAAAK: Sending packet PING data None
+2025-10-20 15:56:46,599 - engineio.server - INFO - ZuB6Z0CxLLbK7PgUAAAK: Received packet PONG data 
+2025-10-20 15:56:46,599 - engineio.server - INFO - vGKOpfsLS7qe6svFAAAL: Received packet PONG data 
+2025-10-20 15:56:46,647 - engineio.server - INFO - TJhEiq7icJG9RrONAAAM: Sending packet PING data None
+2025-10-20 15:56:46,647 - engineio.server - INFO - TJhEiq7icJG9RrONAAAM: Received packet PONG data 
+2025-10-20 15:57:11,510 - engineio.server - INFO - 1iUCKZhOin2cRGjfAAAI: Sending packet PING data None
+2025-10-20 15:57:11,510 - engineio.server - INFO - 1iUCKZhOin2cRGjfAAAI: Received packet PONG data 
+2025-10-20 15:57:11,590 - engineio.server - INFO - ZuB6Z0CxLLbK7PgUAAAK: Sending packet PING data None
+2025-10-20 15:57:11,590 - engineio.server - INFO - vGKOpfsLS7qe6svFAAAL: Sending packet PING data None
+2025-10-20 15:57:11,590 - engineio.server - INFO - vGKOpfsLS7qe6svFAAAL: Received packet PONG data 
+2025-10-20 15:57:11,590 - engineio.server - INFO - ZuB6Z0CxLLbK7PgUAAAK: Received packet PONG data 
+2025-10-20 15:57:11,638 - engineio.server - INFO - TJhEiq7icJG9RrONAAAM: Sending packet PING data None
+2025-10-20 15:57:11,638 - engineio.server - INFO - TJhEiq7icJG9RrONAAAM: Received packet PONG data 
+2025-10-20 16:04:38,047 - __main__ - WARNING - Testing modules not available: attempted relative import with no known parent package
+2025-10-20 16:04:38,047 - __main__ - WARNING - Testing modules not available: attempted relative import with no known parent package
+2025-10-20 16:04:38,436 - engineio.server - INFO - Server initialized for eventlet.
+2025-10-20 16:04:43,631 - engineio.server - INFO - 8WyzfeHKGY3iXBDjAAAA: Sending packet OPEN data {'sid': '8WyzfeHKGY3iXBDjAAAA', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 16:04:43,631 - engineio.server - INFO - xOoKDc8mRneHirWeAAAB: Sending packet OPEN data {'sid': 'xOoKDc8mRneHirWeAAAB', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 16:04:43,639 - engineio.server - INFO - EuWn5gI8h3QDcrc3AAAC: Sending packet OPEN data {'sid': 'EuWn5gI8h3QDcrc3AAAC', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 16:04:43,639 - engineio.server - INFO - AgZ6iueBpnW1tsDVAAAD: Sending packet OPEN data {'sid': 'AgZ6iueBpnW1tsDVAAAD', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 16:04:43,642 - engineio.server - INFO - 8WyzfeHKGY3iXBDjAAAA: Received packet MESSAGE data 0
+2025-10-20 16:04:43,642 - socketio.server - INFO - emitting event "system_status" to WwY-UyIpBzAJl_SkAAAE [/]
+2025-10-20 16:04:43,642 - engineio.server - INFO - 8WyzfeHKGY3iXBDjAAAA: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760997883.6429393,"total_commands":0}}]
+2025-10-20 16:04:43,642 - __main__ - INFO - Client connected
+2025-10-20 16:04:43,645 - engineio.server - INFO - 8WyzfeHKGY3iXBDjAAAA: Sending packet MESSAGE data 0{"sid":"WwY-UyIpBzAJl_SkAAAE"}
+2025-10-20 16:04:43,645 - engineio.server - INFO - 8WyzfeHKGY3iXBDjAAAA: Received request to upgrade to websocket
+2025-10-20 16:04:43,649 - engineio.server - INFO - xOoKDc8mRneHirWeAAAB: Received packet MESSAGE data 0
+2025-10-20 16:04:43,649 - socketio.server - INFO - emitting event "system_status" to 1uiZpT40R4932_7dAAAF [/]
+2025-10-20 16:04:43,649 - engineio.server - INFO - xOoKDc8mRneHirWeAAAB: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760997883.6497314,"total_commands":0}}]
+2025-10-20 16:04:43,649 - __main__ - INFO - Client connected
+2025-10-20 16:04:43,649 - engineio.server - INFO - xOoKDc8mRneHirWeAAAB: Sending packet MESSAGE data 0{"sid":"1uiZpT40R4932_7dAAAF"}
+2025-10-20 16:04:43,649 - engineio.server - INFO - EuWn5gI8h3QDcrc3AAAC: Received packet MESSAGE data 0
+2025-10-20 16:04:43,654 - socketio.server - INFO - emitting event "system_status" to t8IUCyMIjwyyIIjhAAAG [/]
+2025-10-20 16:04:43,654 - engineio.server - INFO - EuWn5gI8h3QDcrc3AAAC: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760997883.654804,"total_commands":0}}]
+2025-10-20 16:04:43,654 - __main__ - INFO - Client connected
+2025-10-20 16:04:43,654 - engineio.server - INFO - EuWn5gI8h3QDcrc3AAAC: Sending packet MESSAGE data 0{"sid":"t8IUCyMIjwyyIIjhAAAG"}
+2025-10-20 16:04:43,654 - engineio.server - INFO - AgZ6iueBpnW1tsDVAAAD: Received packet MESSAGE data 0
+2025-10-20 16:04:43,654 - socketio.server - INFO - emitting event "system_status" to 9qU24ITp0uKFgaYrAAAH [/]
+2025-10-20 16:04:43,654 - engineio.server - INFO - AgZ6iueBpnW1tsDVAAAD: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760997883.654804,"total_commands":0}}]
+2025-10-20 16:04:43,654 - __main__ - INFO - Client connected
+2025-10-20 16:04:43,654 - engineio.server - INFO - AgZ6iueBpnW1tsDVAAAD: Sending packet MESSAGE data 0{"sid":"9qU24ITp0uKFgaYrAAAH"}
+2025-10-20 16:04:43,661 - engineio.server - INFO - 8WyzfeHKGY3iXBDjAAAA: Upgrade to websocket successful
+2025-10-20 16:04:43,665 - engineio.server - INFO - xOoKDc8mRneHirWeAAAB: Received request to upgrade to websocket
+2025-10-20 16:04:43,668 - engineio.server - INFO - xOoKDc8mRneHirWeAAAB: Upgrade to websocket successful
+2025-10-20 16:04:43,677 - engineio.server - INFO - EuWn5gI8h3QDcrc3AAAC: Received request to upgrade to websocket
+2025-10-20 16:04:43,681 - engineio.server - INFO - EuWn5gI8h3QDcrc3AAAC: Upgrade to websocket successful
+2025-10-20 16:04:43,693 - engineio.server - INFO - AgZ6iueBpnW1tsDVAAAD: Received request to upgrade to websocket
+2025-10-20 16:04:43,693 - engineio.server - INFO - AgZ6iueBpnW1tsDVAAAD: Upgrade to websocket successful
+2025-10-20 16:05:08,630 - engineio.server - INFO - 8WyzfeHKGY3iXBDjAAAA: Sending packet PING data None
+2025-10-20 16:05:08,638 - engineio.server - INFO - 8WyzfeHKGY3iXBDjAAAA: Received packet PONG data 
+2025-10-20 16:05:08,638 - engineio.server - INFO - EuWn5gI8h3QDcrc3AAAC: Sending packet PING data None
+2025-10-20 16:05:08,638 - engineio.server - INFO - AgZ6iueBpnW1tsDVAAAD: Sending packet PING data None
+2025-10-20 16:05:08,638 - engineio.server - INFO - xOoKDc8mRneHirWeAAAB: Sending packet PING data None
+2025-10-20 16:05:08,640 - engineio.server - INFO - AgZ6iueBpnW1tsDVAAAD: Received packet PONG data 
+2025-10-20 16:05:08,640 - engineio.server - INFO - xOoKDc8mRneHirWeAAAB: Received packet PONG data 
+2025-10-20 16:05:08,640 - engineio.server - INFO - EuWn5gI8h3QDcrc3AAAC: Received packet PONG data 
+2025-10-20 16:05:13,886 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Sending packet OPEN data {'sid': '9SAUgCm3X3nrK59TAAAI', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 16:05:13,933 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Received packet MESSAGE data 0
+2025-10-20 16:05:13,934 - socketio.server - INFO - emitting event "system_status" to XB7aNGMrblhotsinAAAJ [/]
+2025-10-20 16:05:13,934 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760997913.9348886,"total_commands":0}}]
+2025-10-20 16:05:13,934 - __main__ - INFO - Client connected
+2025-10-20 16:05:13,935 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Sending packet MESSAGE data 0{"sid":"XB7aNGMrblhotsinAAAJ"}
+2025-10-20 16:05:13,935 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Received request to upgrade to websocket
+2025-10-20 16:05:13,946 - __main__ - INFO - Starting port scan...
+2025-10-20 16:05:14,014 - __main__ - INFO - Raw port scan found 2 ports
+2025-10-20 16:05:14,016 - __main__ - INFO - Added port: COM4 - Standard Serial over Bluetooth link (COM4)
+2025-10-20 16:05:14,018 - __main__ - INFO - Added port: COM3 - Standard Serial over Bluetooth link (COM3)
+2025-10-20 16:05:14,018 - __main__ - INFO - Port scan complete: 2 ports found
+2025-10-20 16:05:14,018 - __main__ - INFO - API /api/ports called, returning 2 ports
+2025-10-20 16:05:14,019 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Sending packet OPEN data {'sid': 'L1IrvJTIIaEwNYDQAAAK', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 16:05:14,020 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Sending packet OPEN data {'sid': 'TjemF9jtqpfjqvdHAAAL', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 16:05:14,022 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Sending packet OPEN data {'sid': 'Sbeg1akujtNR-Oo6AAAM', 'upgrades': ['websocket'], 'pingTimeout': 20000, 'pingInterval': 25000, 'maxPayload': 1000000}
+2025-10-20 16:05:14,875 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Upgrade to websocket successful
+2025-10-20 16:05:14,878 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Received packet MESSAGE data 0
+2025-10-20 16:05:14,880 - socketio.server - INFO - emitting event "system_status" to 5WGN72d0uoq26jE9AAAN [/]
+2025-10-20 16:05:14,880 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760997914.880469,"total_commands":0}}]
+2025-10-20 16:05:14,880 - __main__ - INFO - Client connected
+2025-10-20 16:05:14,880 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Sending packet MESSAGE data 0{"sid":"5WGN72d0uoq26jE9AAAN"}
+2025-10-20 16:05:14,882 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Received packet MESSAGE data 0
+2025-10-20 16:05:14,882 - socketio.server - INFO - emitting event "system_status" to 4WHqFGEW-UpmWPeMAAAO [/]
+2025-10-20 16:05:14,883 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760997914.8821685,"total_commands":0}}]
+2025-10-20 16:05:14,883 - __main__ - INFO - Client connected
+2025-10-20 16:05:14,884 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Sending packet MESSAGE data 0{"sid":"4WHqFGEW-UpmWPeMAAAO"}
+2025-10-20 16:05:14,886 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Received packet MESSAGE data 0
+2025-10-20 16:05:14,887 - socketio.server - INFO - emitting event "system_status" to 6WDIOGAl7Kyn4EPBAAAP [/]
+2025-10-20 16:05:14,887 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Sending packet MESSAGE data 2["system_status",{"connected_ports":{},"dashboard_states":{"device_info":{"last_update":null,"cached_data":{},"command_count":0},"link_status":{"last_update":null,"cached_data":{},"command_count":0},"clock":{"last_update":null,"cached_data":{},"command_count":0},"i2c":{"last_update":null,"cached_data":{},"command_count":0},"advanced":{"last_update":null,"cached_data":{},"command_count":0},"resets":{"last_update":null,"cached_data":{},"command_count":0},"firmware":{"last_update":null,"cached_data":{},"command_count":0}},"cache_stats":{"size":0,"max_size":1000},"system_info":{"version":"1.0.0","uptime":1760997914.887603,"total_commands":0}}]
+2025-10-20 16:05:14,887 - __main__ - INFO - Client connected
+2025-10-20 16:05:14,887 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Sending packet MESSAGE data 0{"sid":"6WDIOGAl7Kyn4EPBAAAP"}
+2025-10-20 16:05:14,890 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Received request to upgrade to websocket
+2025-10-20 16:05:14,904 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Received request to upgrade to websocket
+2025-10-20 16:05:14,927 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Received request to upgrade to websocket
+2025-10-20 16:05:14,998 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Upgrade to websocket successful
+2025-10-20 16:05:14,999 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Upgrade to websocket successful
+2025-10-20 16:05:14,999 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Upgrade to websocket successful
+2025-10-20 16:05:38,916 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Sending packet PING data None
+2025-10-20 16:05:38,918 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Received packet PONG data 
+2025-10-20 16:05:39,017 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Sending packet PING data None
+2025-10-20 16:05:39,018 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Received packet PONG data 
+2025-10-20 16:05:39,041 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Sending packet PING data None
+2025-10-20 16:05:39,041 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Sending packet PING data None
+2025-10-20 16:05:39,043 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Received packet PONG data 
+2025-10-20 16:05:39,043 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Received packet PONG data 
+2025-10-20 16:06:03,919 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Sending packet PING data None
+2025-10-20 16:06:03,919 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Received packet PONG data 
+2025-10-20 16:06:04,014 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Sending packet PING data None
+2025-10-20 16:06:04,014 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Received packet PONG data 
+2025-10-20 16:06:04,045 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Sending packet PING data None
+2025-10-20 16:06:04,045 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Sending packet PING data None
+2025-10-20 16:06:04,045 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Received packet PONG data 
+2025-10-20 16:06:04,045 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Received packet PONG data 
+2025-10-20 16:06:28,925 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Sending packet PING data None
+2025-10-20 16:06:28,927 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Received packet PONG data 
+2025-10-20 16:06:29,026 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Sending packet PING data None
+2025-10-20 16:06:29,028 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Received packet PONG data 
+2025-10-20 16:06:29,051 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Sending packet PING data None
+2025-10-20 16:06:29,052 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Sending packet PING data None
+2025-10-20 16:06:29,052 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Received packet PONG data 
+2025-10-20 16:06:29,052 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Received packet PONG data 
+2025-10-20 16:06:53,917 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Sending packet PING data None
+2025-10-20 16:06:53,918 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Received packet PONG data 
+2025-10-20 16:06:54,033 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Sending packet PING data None
+2025-10-20 16:06:54,036 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Received packet PONG data 
+2025-10-20 16:06:54,051 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Sending packet PING data None
+2025-10-20 16:06:54,051 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Sending packet PING data None
+2025-10-20 16:06:54,051 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Received packet PONG data 
+2025-10-20 16:06:54,051 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Received packet PONG data 
+2025-10-20 16:07:18,934 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Sending packet PING data None
+2025-10-20 16:07:18,934 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Received packet PONG data 
+2025-10-20 16:07:19,034 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Sending packet PING data None
+2025-10-20 16:07:19,034 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Received packet PONG data 
+2025-10-20 16:07:19,050 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Sending packet PING data None
+2025-10-20 16:07:19,050 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Sending packet PING data None
+2025-10-20 16:07:19,050 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Received packet PONG data 
+2025-10-20 16:07:19,050 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Received packet PONG data 
+2025-10-20 16:07:43,942 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Sending packet PING data None
+2025-10-20 16:07:43,943 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Received packet PONG data 
+2025-10-20 16:07:44,042 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Sending packet PING data None
+2025-10-20 16:07:44,042 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Sending packet PING data None
+2025-10-20 16:07:44,042 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Sending packet PING data None
+2025-10-20 16:07:44,043 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Received packet PONG data 
+2025-10-20 16:07:44,044 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Received packet PONG data 
+2025-10-20 16:07:44,044 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Received packet PONG data 
+2025-10-20 16:08:08,943 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Sending packet PING data None
+2025-10-20 16:08:08,943 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Received packet PONG data 
+2025-10-20 16:08:09,060 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Sending packet PING data None
+2025-10-20 16:08:09,060 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Sending packet PING data None
+2025-10-20 16:08:09,060 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Sending packet PING data None
+2025-10-20 16:08:09,060 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Received packet PONG data 
+2025-10-20 16:08:09,060 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Received packet PONG data 
+2025-10-20 16:08:09,060 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Received packet PONG data 
+2025-10-20 16:08:33,943 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Sending packet PING data None
+2025-10-20 16:08:33,944 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Received packet PONG data 
+2025-10-20 16:08:34,060 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Sending packet PING data None
+2025-10-20 16:08:34,060 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Sending packet PING data None
+2025-10-20 16:08:34,060 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Sending packet PING data None
+2025-10-20 16:08:34,062 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Received packet PONG data 
+2025-10-20 16:08:34,062 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Received packet PONG data 
+2025-10-20 16:08:34,062 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Received packet PONG data 
+2025-10-20 16:08:58,961 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Sending packet PING data None
+2025-10-20 16:08:58,961 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Received packet PONG data 
+2025-10-20 16:08:59,061 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Sending packet PING data None
+2025-10-20 16:08:59,061 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Sending packet PING data None
+2025-10-20 16:08:59,061 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Sending packet PING data None
+2025-10-20 16:08:59,061 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Received packet PONG data 
+2025-10-20 16:08:59,061 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Received packet PONG data 
+2025-10-20 16:08:59,061 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Received packet PONG data 
+2025-10-20 16:09:23,986 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Sending packet PING data None
+2025-10-20 16:09:23,986 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Received packet PONG data 
+2025-10-20 16:09:24,069 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Sending packet PING data None
+2025-10-20 16:09:24,069 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Sending packet PING data None
+2025-10-20 16:09:24,069 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Sending packet PING data None
+2025-10-20 16:09:24,069 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Received packet PONG data 
+2025-10-20 16:09:24,069 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Received packet PONG data 
+2025-10-20 16:09:24,069 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Received packet PONG data 
+2025-10-20 16:09:48,978 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Sending packet PING data None
+2025-10-20 16:09:48,978 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Received packet PONG data 
+2025-10-20 16:09:49,061 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Sending packet PING data None
+2025-10-20 16:09:49,061 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Sending packet PING data None
+2025-10-20 16:09:49,061 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Sending packet PING data None
+2025-10-20 16:09:49,061 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Received packet PONG data 
+2025-10-20 16:09:49,061 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Received packet PONG data 
+2025-10-20 16:09:49,061 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Received packet PONG data 
+2025-10-20 16:10:13,986 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Sending packet PING data None
+2025-10-20 16:10:13,986 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Received packet PONG data 
+2025-10-20 16:10:14,069 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Sending packet PING data None
+2025-10-20 16:10:14,070 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Sending packet PING data None
+2025-10-20 16:10:14,070 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Sending packet PING data None
+2025-10-20 16:10:14,070 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Received packet PONG data 
+2025-10-20 16:10:14,070 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Received packet PONG data 
+2025-10-20 16:10:14,070 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Received packet PONG data 
+2025-10-20 16:10:38,987 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Sending packet PING data None
+2025-10-20 16:10:38,987 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Received packet PONG data 
+2025-10-20 16:10:39,087 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Sending packet PING data None
+2025-10-20 16:10:39,087 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Sending packet PING data None
+2025-10-20 16:10:39,087 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Sending packet PING data None
+2025-10-20 16:10:39,087 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Received packet PONG data 
+2025-10-20 16:10:39,087 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Received packet PONG data 
+2025-10-20 16:10:39,087 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Received packet PONG data 
+2025-10-20 16:11:03,988 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Sending packet PING data None
+2025-10-20 16:11:03,988 - engineio.server - INFO - 9SAUgCm3X3nrK59TAAAI: Received packet PONG data 
+2025-10-20 16:11:04,104 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Sending packet PING data None
+2025-10-20 16:11:04,104 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Sending packet PING data None
+2025-10-20 16:11:04,104 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Sending packet PING data None
+2025-10-20 16:11:04,104 - engineio.server - INFO - TjemF9jtqpfjqvdHAAAL: Received packet PONG data 
+2025-10-20 16:11:04,104 - engineio.server - INFO - Sbeg1akujtNR-Oo6AAAM: Received packet PONG data 
+2025-10-20 16:11:04,104 - engineio.server - INFO - L1IrvJTIIaEwNYDQAAAK: Received packet PONG data 

@@ -61,9 +61,9 @@
                     <div class="nav-icon">📡</div>
                     <div class="nav-text">Link Status</div>
                 </div>
-                <div class="nav-item" data-dashboard="bifurcation">
-                    <div class="nav-icon">🔀</div>
-                    <div class="nav-text">Bifurcation</div>
+                <div class="nav-item" data-dashboard="clock">
+                    <div class="nav-icon">🕐</div>
+                    <div class="nav-text">Clock</div>
                 </div>
                 <div class="nav-item" data-dashboard="registers">
                     <div class="nav-icon">📝</div>
@@ -502,152 +502,175 @@
                 </div>
             </div>
 
-            <!-- Bifurcation Dashboard -->
-            <div id="bifurcation-dashboard" class="dashboard-content">
+            <!-- Clock Dashboard -->
+            <div id="clock-dashboard" class="dashboard-content">
                 <div class="dashboard-header">
                     <div style="display: flex; justify-content: space-between; align-items: flex-end;">
                         <div>
-                            <h2 class="dashboard-title">PCIe Bifurcation Configuration</h2>
-                            <p class="dashboard-subtitle">Monitor and configure PCIe lane bifurcation modes</p>
+                            <h2 class="dashboard-title">Clock Configuration</h2>
+                            <p class="dashboard-subtitle">Monitor firmware configuration mode, REFCLK status, and SSC spreading</p>
                         </div>
                         <div style="display: flex; gap: 15px;">
-                            <button class="btn btn-outline" id="refreshBifurcation">
-                                <span>🔄</span> Refresh Mode
+                            <button class="btn btn-outline" id="refreshClock">
+                                <span>🔄</span> Refresh Status
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Current Mode Overview -->
+                <!-- Clock Status Overview -->
                 <div class="metrics-row">
                     <div class="metric-card">
-                        <div class="metric-value" id="currentSBRMode">--</div>
-                        <div class="metric-label">Current SBR Mode</div>
+                        <div class="metric-value" id="firmwareConfig">--</div>
+                        <div class="metric-label">Current Mode</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-value" id="goldenFingerConfig">--</div>
-                        <div class="metric-label">Golden Finger</div>
+                        <div class="metric-value" id="refclkStatus">--</div>
+                        <div class="metric-label">REFCLK Status</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-value" id="straddlePCIE">--</div>
-                        <div class="metric-label">Straddle PCIE</div>
+                        <div class="metric-value" id="sscSpread">--</div>
+                        <div class="metric-label">SSC Spreading</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-value" id="mcioStatus">--</div>
-                        <div class="metric-label">MCIO Status</div>
+                        <div class="metric-value" id="clockCompliance">--</div>
+                        <div class="metric-label">PCIe 6.x Compliance</div>
                     </div>
                 </div>
 
                 <div class="dashboard-grid">
-                    <!-- Current Configuration Card -->
+                    <!-- Firmware Configuration Card -->
                     <div class="card">
                         <div class="card-header">
                             <div class="card-title">
-                                <div class="card-icon">🔀</div>
-                                Current Bifurcation Mode
+                                <div class="card-icon">⚙️</div>
+                                Firmware Configuration
                             </div>
                         </div>
 
-                        <div id="bifurcationModeDisplay" class="bifurcation-mode-display">
-                            <div class="bifurcation-mode-card">
-                                <div class="bifurcation-mode-header">
-                                    <span class="bifurcation-mode-number">Mode: --</span>
-                                    <span class="bifurcation-status-badge active">ACTIVE</span>
+                        <div class="firmware-config-display">
+                            <div class="firmware-current-mode">
+                                <div class="current-mode-header">
+                                    <span class="mode-label">Current Mode:</span>
+                                    <span class="mode-number" id="currentModeNumber">--</span>
                                 </div>
-                                <div class="bifurcation-mode-details">
-                                    <div class="bifurcation-detail-row">
-                                        <span class="detail-label">Golden Finger:</span>
-                                        <span class="detail-value" id="modeGoldenFinger">--</span>
+                                <div class="mode-description" id="currentModeDescription">--</div>
+                            </div>
+                            
+                            <div class="available-modes">
+                                <h4>Available Modes:</h4>
+                                <div class="modes-list">
+                                    <div class="mode-item">
+                                        <span class="mode-number-small">1</span>
+                                        <span class="mode-desc">SSC without Precoding</span>
                                     </div>
-                                    <div class="bifurcation-detail-row">
-                                        <span class="detail-label">Straddle PCIE:</span>
-                                        <span class="detail-value" id="modeStraddlePCIE">--</span>
+                                    <div class="mode-item">
+                                        <span class="mode-number-small">2</span>
+                                        <span class="mode-desc">SSC with Precoding</span>
                                     </div>
-                                    <div class="bifurcation-detail-row">
-                                        <span class="detail-label">Left MCIO:</span>
-                                        <span class="detail-value" id="modeLeftMCIO">--</span>
+                                    <div class="mode-item">
+                                        <span class="mode-number-small">3</span>
+                                        <span class="mode-desc">Common Clock without Precoding</span>
                                     </div>
-                                    <div class="bifurcation-detail-row">
-                                        <span class="detail-label">Right MCIO:</span>
-                                        <span class="detail-value" id="modeRightMCIO">--</span>
+                                    <div class="mode-item">
+                                        <span class="mode-number-small">4</span>
+                                        <span class="mode-desc">Common Clock with Precoding</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Available Modes Table -->
-                    <div class="card bifurcation-modes-table">
+                    <!-- REFCLK Status Card -->
+                    <div class="card">
                         <div class="card-header">
                             <div class="card-title">
-                                <div class="card-icon">📋</div>
-                                Available Bifurcation Modes
+                                <div class="card-icon">📡</div>
+                                REFCLK Status Per Port Group
                             </div>
                         </div>
 
-                        <div class="bifurcation-table-container">
-                            <table class="bifurcation-table">
-                                <thead>
-                                    <tr>
-                                        <th>SBR Mode</th>
-                                        <th>Golden Finger</th>
-                                        <th>Straddle PCIE</th>
-                                        <th>Left MCIO</th>
-                                        <th>Right MCIO</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="bifurcationTableBody">
-                                    <tr data-mode="0">
-                                        <td><span class="mode-indicator">0</span></td>
-                                        <td><span class="lane-config">X16(SSC)</span></td>
-                                        <td><span class="lane-config">X16(CC)</span></td>
-                                        <td><span class="lane-config">X16(CC)</span></td>
-                                        <td><span class="lane-config">X16(CC)</span></td>
-                                    </tr>
-                                    <tr data-mode="1">
-                                        <td><span class="mode-indicator">1</span></td>
-                                        <td><span class="lane-config">X16(SSC)</span></td>
-                                        <td><span class="lane-config">X16(CC)</span></td>
-                                        <td><span class="lane-config">X8(CC)</span></td>
-                                        <td><span class="lane-config">X8(CC)</span></td>
-                                    </tr>
-                                    <tr data-mode="2">
-                                        <td><span class="mode-indicator">2</span></td>
-                                        <td><span class="lane-config">X16(SSC)</span></td>
-                                        <td><span class="lane-config">X16(CC)</span></td>
-                                        <td><span class="lane-config">X4(CC)</span></td>
-                                        <td><span class="lane-config">X4(CC)</span></td>
-                                    </tr>
-                                    <tr data-mode="3">
-                                        <td><span class="mode-indicator">3</span></td>
-                                        <td><span class="lane-config">X16(SSC)</span></td>
-                                        <td><span class="lane-config">X16(CC)</span></td>
-                                        <td><span class="lane-config">X2(CC)</span></td>
-                                        <td><span class="lane-config">X2(CC)</span></td>
-                                    </tr>
-                                    <tr data-mode="4">
-                                        <td><span class="mode-indicator">4</span></td>
-                                        <td><span class="lane-config">X16(SSC)</span></td>
-                                        <td><span class="lane-config">X16(CC)</span></td>
-                                        <td><span class="lane-config">X8(CC)</span></td>
-                                        <td><span class="lane-config">X16(CC)</span></td>
-                                    </tr>
-                                    <tr data-mode="5">
-                                        <td><span class="mode-indicator">5</span></td>
-                                        <td><span class="lane-config">X16(SSC)</span></td>
-                                        <td><span class="lane-config">X16(CC)</span></td>
-                                        <td><span class="lane-config">X4(CC)</span></td>
-                                        <td><span class="lane-config">X16(CC)</span></td>
-                                    </tr>
-                                    <tr data-mode="6">
-                                        <td><span class="mode-indicator">6</span></td>
-                                        <td><span class="lane-config">X16(SSC)</span></td>
-                                        <td><span class="lane-config">X16(CC)</span></td>
-                                        <td><span class="lane-config">X16(CC)</span></td>
-                                        <td><span class="lane-config">X4(CC)</span></td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div class="refclk-status-display">
+                            <div class="refclk-grid" id="refclkGrid">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SSC Spreading Status Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">📊</div>
+                                SSC Clock Spreading Status
+                            </div>
+                        </div>
+
+                        <div class="ssc-spread-display">
+                            <div class="ssc-spread-card">
+                                <div class="ssc-spread-header">
+                                    <span class="spread-percentage" id="sscPercentage">--</span>
+                                    <span class="spread-unit">%</span>
+                                </div>
+                                <div class="ssc-spread-details">
+                                    <div class="spread-detail-row">
+                                        <span class="detail-label">PCIe 6.x Spec Compliance:</span>
+                                        <span class="detail-value" id="pcie6xCompliance">--</span>
+                                    </div>
+                                    <div class="spread-detail-row">
+                                        <span class="detail-label">Spread Range:</span>
+                                        <span class="detail-value" id="spreadRange">--</span>
+                                    </div>
+                                    <div class="spread-detail-row">
+                                        <span class="detail-label">Modulation Type:</span>
+                                        <span class="detail-value" id="modulationType">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PCIe Clock Technology Explainer -->
+                <div class="card clock-explainer">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon">📚</div>
+                            PCIe 6.x Clock Technology Overview
+                        </div>
+                    </div>
+                    
+                    <div class="explainer-content">
+                        <div class="explainer-section">
+                            <h4>Common Clock vs SSC (Spread Spectrum Clocking)</h4>
+                            <div class="explainer-grid">
+                                <div class="explainer-item">
+                                    <div class="explainer-header">Common Clock</div>
+                                    <div class="explainer-text">
+                                        Uses a single, stable reference clock distributed to all PCIe devices. 
+                                        Provides precise timing but may be susceptible to electromagnetic interference (EMI) 
+                                        due to concentrated energy at specific frequencies.
+                                    </div>
+                                </div>
+                                <div class="explainer-item">
+                                    <div class="explainer-header">SSC (Spread Spectrum Clocking)</div>
+                                    <div class="explainer-text">
+                                        Modulates the reference clock frequency within a small range (typically ±0.5%) 
+                                        to spread electromagnetic energy across multiple frequencies. Reduces EMI peaks 
+                                        but requires more sophisticated clock recovery circuits.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="explainer-section">
+                            <h4>Precoding in PCIe 6.x</h4>
+                            <div class="explainer-text-block">
+                                Precoding is a signal processing technique introduced in PCIe 6.x to improve data integrity 
+                                at high speeds (64 GT/s). It applies mathematical transformations to transmitted data before 
+                                encoding, helping to compensate for channel impairments and crosstalk. When enabled, 
+                                precoding enhances signal quality but adds computational complexity to the transmitter and receiver.
+                            </div>
                         </div>
                     </div>
                 </div>

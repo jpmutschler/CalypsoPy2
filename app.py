@@ -252,13 +252,22 @@ class HardwareResponseParser:
             parsed_data['type'] = 'showport_response'
             return parsed_data
 
-        # Handle bifurcation showmode command
-        if dashboard == 'bifurcation' and 'showmode' in command.lower():
-            mode_match = re.search(r'SBR\s+mode:\s*(\d+)', raw_response, re.IGNORECASE)
-            if mode_match:
-                mode = int(mode_match.group(1))
-                parsed_data['parsed'] = {'sbr_mode': mode}
-                parsed_data['type'] = 'showmode_response'
+        # Handle clock dashboard commands
+        if dashboard == 'clock':
+            if 'showmode' in command.lower():
+                mode_match = re.search(r'SBR\s+mode:\s*(\d+)', raw_response, re.IGNORECASE)
+                if mode_match:
+                    mode = int(mode_match.group(1))
+                    parsed_data['parsed'] = {'firmware_config': mode}
+                    parsed_data['type'] = 'showmode_response'
+            elif 'clk' in command.lower():
+                # Parse REFCLK status per port group
+                parsed_data['parsed'] = {'refclk_status': raw_response}
+                parsed_data['type'] = 'clk_response'
+            elif 'spread' in command.lower():
+                # Parse SSC spread percentage
+                parsed_data['parsed'] = {'ssc_spread': raw_response}
+                parsed_data['type'] = 'spread_response'
 
         return parsed_data
 
@@ -276,7 +285,7 @@ class CalypsoPyManager:
         self.atlas3_parser = Atlas3Parser()  # Initialize the professional parser
 
         # Initialize dashboard states
-        dashboards = ['device_info', 'link_status', 'bifurcation', 'i2c', 'advanced', 'resets', 'firmware']
+        dashboards = ['device_info', 'link_status', 'clock', 'i2c', 'advanced', 'resets', 'firmware']
         for dashboard in dashboards:
             self.dashboard_states[dashboard] = {
                 'last_update': None,
@@ -413,8 +422,8 @@ class CalypsoPyManager:
                 start_time = time.time()
 
                 # Handle special commands (simulation for development without hardware)
-                if dashboard == 'bifurcation' or command.lower() in ['showmode', 'getconfig', 'checkstatus']:
-                    raw_response = self._simulate_bifurcation_response(command)
+                if dashboard == 'clock' or command.lower() in ['showmode', 'clk', 'spread']:
+                    raw_response = self._simulate_clock_response(command)
                 else:
                     # Send all other commands (including showport) to actual hardware
                     ser.reset_input_buffer()
@@ -533,16 +542,27 @@ Port Upstream------------------------------------------------------------------
 Golden finger: speed 06, width 08, max_width = 16
 Cmd>"""
 
-    def _simulate_bifurcation_response(self, command: str) -> str:
-        """Simulate bifurcation command responses"""
+    def _simulate_clock_response(self, command: str) -> str:
+        """Simulate clock command responses"""
         command_lower = command.lower().strip()
 
         if command_lower == 'showmode':
-            return "SBR mode: 1"
-        elif command_lower == 'getconfig':
-            return "PCIe Configuration:\nGolden Finger: X16(SSC)\nStraddle PCIE: X16(CC)\nLeft MCIO: X8(CC)\nRight MCIO: X8(CC)"
-        elif command_lower == 'checkstatus':
-            return "Bifurcation Status: Active\nMode: 1\nErrors: 0"
+            return "SBR mode: 2"
+        elif command_lower == 'clk':
+            return """REFCLK Status:
+Port Group 0: Enabled
+Port Group 1: Enabled  
+Port Group 2: Enabled
+Port Group 3: Enabled
+Port Group 4: Disabled
+Port Group 5: Disabled"""
+        elif command_lower == 'spread':
+            return """SSC Spread Status:
+Spread Spectrum Clocking: ENABLED
+Spread Percentage: -0.5%
+Modulation Frequency: 33kHz
+PCIe 6.x Compliance: PASS
+Spread Type: DOWN_SPREAD"""
         else:
             return f"Command '{command}' executed successfully"
 
@@ -1838,7 +1858,7 @@ if __name__ == '__main__':
     print("Serial Cables Gen6 PCIe Atlas 3 Host Card Development Interface")
     print("=" * 50)
     print("Web Interface: http://localhost:5000")
-    print("Dashboards: Device Info, Link Status, Bifurcation, I2C/I3C, Advanced, Resets, Firmware")
+    print("Dashboards: Device Info, Link Status, Clock, I2C/I3C, Advanced, Resets, Firmware")
     print("Link Status: PCIe port monitoring with showport command")
     print("=" * 50)
 
