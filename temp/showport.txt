@@ -1,0 +1,33 @@
+Cmd>showport
+
+Atlas3 chip ver: A0
+==============================================================================
+                                Upstream Ports
+==============================================================================
+USP00 | Port 032 | Speed: Gen3 | Width: 16 | Max: Gen6 x16 | Status: Degraded
+==============================================================================
+                                EXT MCIO Ports
+==============================================================================
+Con00 | Port 112 | Speed: Gen1 | Width:  0 | Max: Gen6 x2  | Status: Idle
+Con00 | Port 114 | Speed: Gen1 | Width:  0 | Max: Gen6 x2  | Status: Idle
+Con00 | Port 116 | Speed: Gen1 | Width:  0 | Max: Gen6 x2  | Status: Idle
+Con00 | Port 118 | Speed: Gen1 | Width:  0 | Max: Gen6 x2  | Status: Idle
+Con01 | Port 120 | Speed: Gen1 | Width:  0 | Max: Gen6 x2  | Status: Idle
+Con01 | Port 122 | Speed: Gen1 | Width:  0 | Max: Gen6 x2  | Status: Idle
+Con01 | Port 124 | Speed: Gen1 | Width:  0 | Max: Gen6 x2  | Status: Idle
+Con01 | Port 126 | Speed: Gen1 | Width:  0 | Max: Gen6 x2  | Status: Idle
+==============================================================================
+                                INT MCIO Ports
+==============================================================================
+Con02 | Port 128 | Speed: Gen1 | Width:  0 | Max: Gen6 x2  | Status: Idle
+Con02 | Port 130 | Speed: Gen1 | Width:  0 | Max: Gen6 x2  | Status: Idle
+Con02 | Port 132 | Speed: Gen1 | Width:  0 | Max: Gen6 x2  | Status: Idle
+Con02 | Port 134 | Speed: Gen1 | Width:  0 | Max: Gen6 x2  | Status: Idle
+Con03 | Port 136 | Speed: Gen1 | Width:  0 | Max: Gen6 x2  | Status: Idle
+Con03 | Port 138 | Speed: Gen1 | Width:  0 | Max: Gen6 x2  | Status: Idle
+Con03 | Port 140 | Speed: Gen1 | Width:  0 | Max: Gen6 x2  | Status: Idle
+Con03 | Port 142 | Speed: Gen1 | Width:  0 | Max: Gen6 x2  | Status: Idle
+==============================================================================
+                                Straddle Ports
+==============================================================================
+Con04 | Port 080 | Speed: Gen6 | Width:  4 | Max: Gen6 x16 | Status: Degraded

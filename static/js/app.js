@@ -771,9 +771,11 @@ class LinkStatusDashboard {
                 if (activePorts === 0) {
                     // Hide overlay for groups with no active ports
                     overlay.style.display = 'none';
+                    overlay.classList.remove('has-connection');
                 } else {
                     // Show overlay and set as active
                     overlay.style.display = 'block';
+                    overlay.classList.add('has-connection');
                     indicator.className = 'port-status-indicator active';
                 }
                 
