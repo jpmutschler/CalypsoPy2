@@ -1,0 +1,2777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CalypsoPy+ User's Manual</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --info-color: #3498db;
+            --danger-color: #e74c3c;
+            --light-bg: #ecf0f1;
+            --dark-bg: #34495e;
+            --text-color: #2c3e50;
+            --border-color: #bdc3c7;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #fff;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .header .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 0.2rem;
+        }
+
+        /* Search Bar */
+        .search-container {
+            position: fixed;
+            top: 80px;
+            left: 0;
+            right: 0;
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            z-index: 999;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .search-box {
+            display: flex;
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 5px 0 0 5px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: var(--secondary-color);
+        }
+
+        .search-clear {
+            padding: 0.75rem 1rem;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .search-clear:hover {
+            background: #2980b9;
+        }
+
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+        }
+
+        .search-result {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--light-bg);
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .search-result:hover {
+            background: var(--light-bg);
+        }
+
+        .search-result:last-child {
+            border-bottom: none;
+        }
+
+        .search-highlight {
+            background: yellow;
+            font-weight: bold;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background: var(--light-bg);
+            border-right: 1px solid var(--border-color);
+            position: fixed;
+            left: 0;
+            top: 140px;
+            bottom: 0;
+            overflow-y: auto;
+            padding: 1rem 0;
+            z-index: 998;
+        }
+
+        .toc {
+            list-style: none;
+        }
+
+        .toc-item {
+            margin: 0;
+        }
+
+        .toc-link {
+            display: block;
+            padding: 0.75rem 1.5rem;
+            color: var(--text-color);
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .toc-link:hover,
+        .toc-link.active {
+            background: white;
+            border-left-color: var(--secondary-color);
+            color: var(--secondary-color);
+        }
+
+        .toc-submenu {
+            list-style: none;
+            margin-left: 1rem;
+            display: none;
+        }
+
+        .toc-submenu.expanded {
+            display: block;
+        }
+
+        .toc-submenu .toc-link {
+            padding: 0.5rem 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .toc-toggle {
+            background: none;
+            border: none;
+            font-size: 0.8rem;
+            cursor: pointer;
+            float: right;
+            margin-right: 1rem;
+            margin-top: 0.25rem;
+            color: var(--text-color);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 300px;
+            margin-top: 140px;
+            padding: 2rem;
+            max-width: calc(100% - 300px);
+        }
+
+        .section {
+            margin-bottom: 3rem;
+            scroll-margin-top: 150px;
+        }
+
+        .section h2 {
+            color: var(--primary-color);
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--secondary-color);
+        }
+
+        .section h3 {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            margin: 2rem 0 1rem 0;
+        }
+
+        .section h4 {
+            color: var(--dark-bg);
+            font-size: 1.2rem;
+            margin: 1.5rem 0 0.75rem 0;
+        }
+
+        .section p {
+            margin-bottom: 1rem;
+            text-align: justify;
+        }
+
+        .section ul, .section ol {
+            margin: 1rem 0 1rem 2rem;
+        }
+
+        .section li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Info Boxes */
+        .info-box {
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+
+        .info-box.info {
+            background: #e8f4f8;
+            border-left-color: var(--info-color);
+        }
+
+        .info-box.warning {
+            background: #fef5e7;
+            border-left-color: var(--warning-color);
+        }
+
+        .info-box.danger {
+            background: #fdf2f2;
+            border-left-color: var(--danger-color);
+        }
+
+        .info-box.success {
+            background: #eafaf1;
+            border-left-color: var(--success-color);
+        }
+
+        .info-box .icon {
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        .info-box.info .icon::before { content: "ℹ️ "; }
+        .info-box.warning .icon::before { content: "⚠️ "; }
+        .info-box.danger .icon::before { content: "🚨 "; }
+        .info-box.success .icon::before { content: "✅ "; }
+
+        /* Screenshots */
+        .screenshot-placeholder {
+            background: var(--light-bg);
+            border: 2px dashed var(--border-color);
+            padding: 2rem;
+            text-align: center;
+            margin: 1.5rem 0;
+            border-radius: 5px;
+        }
+
+        .screenshot-placeholder .icon {
+            font-size: 3rem;
+            color: var(--border-color);
+            margin-bottom: 1rem;
+        }
+
+        .screenshot-placeholder .description {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 1.5rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background: var(--light-bg);
+        }
+
+        /* Code blocks */
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 1rem;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+
+        .inline-code {
+            background: var(--light-bg);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        /* Keyboard shortcuts */
+        .keyboard-shortcut {
+            display: inline-block;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            padding: 0.2rem 0.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin: 0 0.2rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                max-width: 100%;
+            }
+
+            .search-container {
+                padding: 1rem;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            .header, .search-container, .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin: 0;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>CalypsoPy+ User's Manual</h1>
+        <div class="subtitle">Professional PCIe Hardware Development Interface</div>
+    </div>
+
+    <!-- Search Container -->
+    <div class="search-container">
+        <div class="search-box">
+            <input type="text" class="search-input" placeholder="Search the manual... (Ctrl+F)" id="searchInput">
+            <button class="search-clear" id="searchClear">Clear</button>
+            <div class="search-results" id="searchResults"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <ul class="toc" id="tableOfContents">
+                <li class="toc-item">
+                    <a href="#getting-started" class="toc-link">📚 Getting Started</a>
+                    <button class="toc-toggle" onclick="toggleSubmenu(this)">▼</button>
+                    <ul class="toc-submenu">
+                        <li><a href="#welcome" class="toc-link">Welcome</a></li>
+                        <li><a href="#quick-start" class="toc-link">Quick Start</a></li>
+                        <li><a href="#system-requirements" class="toc-link">System Requirements</a></li>
+                    </ul>
+                </li>
+                <li class="toc-item">
+                    <a href="#connection-setup" class="toc-link">🔌 Connection Setup</a>
+                    <button class="toc-toggle" onclick="toggleSubmenu(this)">▼</button>
+                    <ul class="toc-submenu">
+                        <li><a href="#device-connection" class="toc-link">Device Connection</a></li>
+                        <li><a href="#connection-parameters" class="toc-link">Connection Parameters</a></li>
+                        <li><a href="#status-indicators" class="toc-link">Status Indicators</a></li>
+                    </ul>
+                </li>
+                <li class="toc-item">
+                    <a href="#device-information" class="toc-link">💻 Device Information</a>
+                    <button class="toc-toggle" onclick="toggleSubmenu(this)">▼</button>
+                    <ul class="toc-submenu">
+                        <li><a href="#hardware-overview" class="toc-link">Hardware Overview</a></li>
+                        <li><a href="#firmware-details" class="toc-link">Firmware Details</a></li>
+                        <li><a href="#device-identification" class="toc-link">Device Identification</a></li>
+                    </ul>
+                </li>
+                <li class="toc-item">
+                    <a href="#link-status" class="toc-link">📡 Link Status</a>
+                    <button class="toc-toggle" onclick="toggleSubmenu(this)">▼</button>
+                    <ul class="toc-submenu">
+                        <li><a href="#pcie-port-monitoring" class="toc-link">PCIe Port Monitoring</a></li>
+                        <li><a href="#link-details" class="toc-link">Link Details</a></li>
+                        <li><a href="#error-monitoring" class="toc-link">Error Monitoring</a></li>
+                    </ul>
+                </li>
+                <li class="toc-item">
+                    <a href="#bifurcation" class="toc-link">🔀 Bifurcation</a>
+                    <button class="toc-toggle" onclick="toggleSubmenu(this)">▼</button>
+                    <ul class="toc-submenu">
+                        <li><a href="#port-configuration" class="toc-link">Port Configuration</a></li>
+                        <li><a href="#mode-explanations" class="toc-link">Mode Explanations</a></li>
+                        <li><a href="#configuration-management" class="toc-link">Configuration Management</a></li>
+                    </ul>
+                </li>
+                <li class="toc-item">
+                    <a href="#registers" class="toc-link">📊 Registers</a>
+                    <button class="toc-toggle" onclick="toggleSubmenu(this)">▼</button>
+                    <ul class="toc-submenu">
+                        <li><a href="#memory-access" class="toc-link">Memory Access</a></li>
+                        <li><a href="#read-operations" class="toc-link">Read Operations</a></li>
+                        <li><a href="#write-operations" class="toc-link">Write Operations</a></li>
+                        <li><a href="#safety-features" class="toc-link">Safety Features</a></li>
+                    </ul>
+                </li>
+                <li class="toc-item">
+                    <a href="#firmware-updates" class="toc-link">🔄 Firmware Updates</a>
+                    <button class="toc-toggle" onclick="toggleSubmenu(this)">▼</button>
+                    <ul class="toc-submenu">
+                        <li><a href="#xmodem-process" class="toc-link">XMODEM Process</a></li>
+                        <li><a href="#update-targets" class="toc-link">Update Targets</a></li>
+                        <li><a href="#progress-monitoring" class="toc-link">Progress Monitoring</a></li>
+                    </ul>
+                </li>
+                <li class="toc-item">
+                    <a href="#testing-suite" class="toc-link">🧪 Testing Suite</a>
+                    <button class="toc-toggle" onclick="toggleSubmenu(this)">▼</button>
+                    <ul class="toc-submenu">
+                        <li><a href="#test-overview" class="toc-link">Test Overview</a></li>
+                        <li><a href="#pcie-discovery" class="toc-link">PCIe Discovery</a></li>
+                        <li><a href="#nvme-discovery" class="toc-link">NVMe Discovery</a></li>
+                        <li><a href="#performance-testing" class="toc-link">Performance Testing</a></li>
+                        <li><a href="#link-quality-testing" class="toc-link">Link Quality Testing</a></li>
+                    </ul>
+                </li>
+                <li class="toc-item">
+                    <a href="#analytics" class="toc-link">📈 Analytics</a>
+                    <button class="toc-toggle" onclick="toggleSubmenu(this)">▼</button>
+                    <ul class="toc-submenu">
+                        <li><a href="#performance-data" class="toc-link">Performance Data</a></li>
+                        <li><a href="#data-visualization" class="toc-link">Data Visualization</a></li>
+                        <li><a href="#export-options" class="toc-link">Export Options</a></li>
+                    </ul>
+                </li>
+                <li class="toc-item">
+                    <a href="#terminal" class="toc-link">💻 Terminal</a>
+                    <button class="toc-toggle" onclick="toggleSubmenu(this)">▼</button>
+                    <ul class="toc-submenu">
+                        <li><a href="#command-interface" class="toc-link">Command Interface</a></li>
+                        <li><a href="#keyboard-shortcuts" class="toc-link">Keyboard Shortcuts</a></li>
+                        <li><a href="#command-reference" class="toc-link">Command Reference</a></li>
+                    </ul>
+                </li>
+                <li class="toc-item">
+                    <a href="#troubleshooting" class="toc-link">🔧 Troubleshooting</a>
+                    <button class="toc-toggle" onclick="toggleSubmenu(this)">▼</button>
+                    <ul class="toc-submenu">
+                        <li><a href="#common-issues" class="toc-link">Common Issues</a></li>
+                        <li><a href="#emergency-recovery" class="toc-link">Emergency Recovery</a></li>
+                        <li><a href="#log-analysis" class="toc-link">Log Analysis</a></li>
+                    </ul>
+                </li>
+                <li class="toc-item">
+                    <a href="#advanced-features" class="toc-link">⚙️ Advanced Features</a>
+                    <button class="toc-toggle" onclick="toggleSubmenu(this)">▼</button>
+                    <ul class="toc-submenu">
+                        <li><a href="#api-integration" class="toc-link">API Integration</a></li>
+                        <li><a href="#scripting" class="toc-link">Scripting</a></li>
+                        <li><a href="#advanced-configuration-management" class="toc-link">Configuration Management</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Getting Started Section -->
+            <section id="getting-started" class="section">
+                <h2>📚 Getting Started</h2>
+                
+                <h3 id="welcome">Welcome to CalypsoPy+</h3>
+                <p>CalypsoPy+ is a professional PCIe hardware development interface designed for interfacing with Serial Cables Gen6 PCIe Atlas 3 Host Cards. This comprehensive web-based dashboard provides real-time hardware monitoring, firmware update capabilities, and extensive testing functionality for PCIe devices.</p>
+
+                <div class="info-box info">
+                    <span class="icon"></span>
+                    <strong>Professional Tool:</strong> CalypsoPy+ is designed for hardware engineers, validation teams, and PCIe development professionals working with Atlas 3 hardware.
+                </div>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Main dashboard overview showing all available modules</div>
+                </div>
+
+                <h3 id="quick-start">Quick Start Checklist</h3>
+                <ol>
+                    <li><strong>Verify System Requirements:</strong> Ensure your system meets the minimum requirements</li>
+                    <li><strong>Install Dependencies:</strong> Run <span class="inline-code">python start.py</span> to automatically check and install required packages</li>
+                    <li><strong>Connect Hardware:</strong> Connect your Atlas 3 device via serial cable</li>
+                    <li><strong>Launch Application:</strong> Start CalypsoPy+ and navigate to <span class="inline-code">http://localhost:5000</span></li>
+                    <li><strong>Establish Connection:</strong> Configure serial connection parameters and connect to device</li>
+                    <li><strong>Verify Connection:</strong> Check device information dashboard for successful communication</li>
+                </ol>
+
+                <div class="info-box success">
+                    <span class="icon"></span>
+                    <strong>Quick Tip:</strong> Use <span class="keyboard-shortcut">Ctrl+F</span> to search this manual for specific topics or commands.
+                </div>
+
+                <h3 id="system-requirements">System Requirements</h3>
+                
+                <h4>Hardware Requirements</h4>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Component</th>
+                                <th>Minimum</th>
+                                <th>Recommended</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>CPU</td>
+                                <td>Dual-core 2.0 GHz</td>
+                                <td>Quad-core 3.0 GHz+</td>
+                            </tr>
+                            <tr>
+                                <td>RAM</td>
+                                <td>4 GB</td>
+                                <td>8 GB+</td>
+                            </tr>
+                            <tr>
+                                <td>Storage</td>
+                                <td>1 GB free space</td>
+                                <td>5 GB+ for logs and results</td>
+                            </tr>
+                            <tr>
+                                <td>Network</td>
+                                <td>Local network access</td>
+                                <td>Gigabit Ethernet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h4>Software Requirements</h4>
+                <ul>
+                    <li><strong>Python 3.8+</strong> - Core runtime environment</li>
+                    <li><strong>Modern Web Browser</strong> - Chrome 90+, Firefox 88+, Edge 90+</li>
+                    <li><strong>Serial Port Access</strong> - Administrative privileges may be required</li>
+                    <li><strong>FIO (Flexible I/O Tester)</strong> - Required for performance testing (optional)</li>
+                </ul>
+
+                <h4>Atlas 3 Hardware</h4>
+                <ul>
+                    <li>Serial Cables Gen6 PCIe Atlas 3 Host Card</li>
+                    <li>Serial communication cable (115200-8-N-1)</li>
+                    <li>Proper grounding and power connections</li>
+                </ul>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: System requirements verification screen from start.py</div>
+                </div>
+            </section>
+
+            <!-- Connection Setup Section -->
+            <section id="connection-setup" class="section">
+                <h2>🔌 Connection Setup</h2>
+
+                <h3 id="device-connection">Device Connection</h3>
+                <p>CalypsoPy+ communicates with Atlas 3 hardware through serial communication. Proper connection setup is essential for reliable operation.</p>
+
+                <h4>Connection Process</h4>
+                <ol>
+                    <li><strong>Physical Connection:</strong> Connect the serial cable between your computer and the Atlas 3 device</li>
+                    <li><strong>Port Detection:</strong> The application will automatically scan for available serial ports</li>
+                    <li><strong>Parameter Configuration:</strong> Set connection parameters (typically auto-detected)</li>
+                    <li><strong>Connection Establishment:</strong> Click "Connect" to establish communication</li>
+                    <li><strong>Verification:</strong> Confirm successful connection through status indicators</li>
+                </ol>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Connection setup interface showing port selection and parameters</div>
+                </div>
+
+                <h3 id="connection-parameters">Connection Parameters</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Default Value</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Baud Rate</td>
+                                <td>115200</td>
+                                <td>Serial communication speed</td>
+                            </tr>
+                            <tr>
+                                <td>Data Bits</td>
+                                <td>8</td>
+                                <td>Number of data bits per frame</td>
+                            </tr>
+                            <tr>
+                                <td>Parity</td>
+                                <td>None</td>
+                                <td>Error checking method</td>
+                            </tr>
+                            <tr>
+                                <td>Stop Bits</td>
+                                <td>1</td>
+                                <td>Frame termination bits</td>
+                            </tr>
+                            <tr>
+                                <td>Timeout</td>
+                                <td>2 seconds</td>
+                                <td>Command response timeout</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="info-box warning">
+                    <span class="icon"></span>
+                    <strong>Important:</strong> Do not modify default connection parameters unless specifically required. Incorrect settings may prevent communication.
+                </div>
+
+                <h3 id="status-indicators">Status Indicators</h3>
+                <p>CalypsoPy+ provides visual indicators for connection status and device health:</p>
+
+                <h4>Connection Status</h4>
+                <ul>
+                    <li><strong>🔴 Disconnected:</strong> No active connection to device</li>
+                    <li><strong>🟡 Connecting:</strong> Attempting to establish connection</li>
+                    <li><strong>🟢 Connected:</strong> Active communication established</li>
+                    <li><strong>🔵 Busy:</strong> Command in progress, device responding</li>
+                    <li><strong>🟠 Error:</strong> Communication error detected</li>
+                </ul>
+
+                <h4>Device Health Indicators</h4>
+                <ul>
+                    <li><strong>Firmware Status:</strong> Current firmware version and health</li>
+                    <li><strong>Port Status:</strong> Individual PCIe port states</li>
+                    <li><strong>Link Quality:</strong> Signal integrity and error rates</li>
+                    <li><strong>Temperature:</strong> Device thermal status</li>
+                </ul>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Status indicators panel showing various connection and device states</div>
+                </div>
+
+                <div class="code-block">
+# Example: Manual connection using Python
+from app import CalypsoPyManager
+
+manager = CalypsoPyManager()
+manager.connect_device('COM3')  # Windows
+# manager.connect_device('/dev/ttyUSB0')  # Linux
+                </div>
+            </section>
+
+            <!-- Device Information Section -->
+            <section id="device-information" class="section">
+                <h2>💻 Device Information</h2>
+
+                <h3 id="hardware-overview">Hardware Overview</h3>
+                <p>The Device Information dashboard provides comprehensive details about your Atlas 3 hardware, including identification, capabilities, and current status.</p>
+
+                <h4>Device Identification</h4>
+                <p>The system automatically detects and displays:</p>
+                <ul>
+                    <li><strong>Device Model:</strong> Atlas 3 variant and generation</li>
+                    <li><strong>Serial Number:</strong> Unique device identifier</li>
+                    <li><strong>Hardware Revision:</strong> PCB version and design iteration</li>
+                    <li><strong>Manufacturing Date:</strong> Production timestamp</li>
+                    <li><strong>Capabilities Matrix:</strong> Supported features and modes</li>
+                </ul>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Device information panel showing hardware details and specifications</div>
+                </div>
+
+                <h3 id="firmware-details">Firmware Details</h3>
+                <p>CalypsoPy+ displays detailed firmware information for all programmable components:</p>
+
+                <h4>Firmware Components</h4>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Component</th>
+                                <th>Function</th>
+                                <th>Update Method</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>MCU Firmware</td>
+                                <td>Main control unit</td>
+                                <td>XMODEM over serial</td>
+                            </tr>
+                            <tr>
+                                <td>SBR0 Firmware</td>
+                                <td>Side-band controller 0</td>
+                                <td>XMODEM over serial</td>
+                            </tr>
+                            <tr>
+                                <td>SBR1 Firmware</td>
+                                <td>Side-band controller 1</td>
+                                <td>XMODEM over serial</td>
+                            </tr>
+                            <tr>
+                                <td>FPGA Configuration</td>
+                                <td>Programmable logic</td>
+                                <td>Via MCU firmware</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h4>Version Information</h4>
+                <p>For each firmware component, the system displays:</p>
+                <ul>
+                    <li><strong>Version Number:</strong> Semantic version (e.g., v2.1.3)</li>
+                    <li><strong>Build Date:</strong> Compilation timestamp</li>
+                    <li><strong>Git Hash:</strong> Source code revision</li>
+                    <li><strong>Feature Flags:</strong> Enabled capabilities</li>
+                    <li><strong>Compatibility:</strong> Hardware/software compatibility matrix</li>
+                </ul>
+
+                <div class="info-box info">
+                    <span class="icon"></span>
+                    <strong>Version Checking:</strong> The system automatically compares installed firmware versions against known releases and highlights update recommendations.
+                </div>
+
+                <h3 id="device-identification">Device Identification Commands</h3>
+                <p>CalypsoPy+ uses several commands to gather device information:</p>
+
+                <div class="code-block">
+# Primary identification commands
+showport          # Display port status and capabilities
+getversion        # Retrieve firmware versions
+getserial         # Get device serial number
+showmode          # Display current bifurcation mode
+getconfig         # Retrieve configuration settings
+                </div>
+
+                <h4>Cached Information</h4>
+                <p>To improve performance, device information is cached after initial retrieval. The cache includes:</p>
+                <ul>
+                    <li><strong>Static Information:</strong> Serial number, hardware revision (never expires)</li>
+                    <li><strong>Semi-Static Information:</strong> Firmware versions (expires after 1 hour)</li>
+                    <li><strong>Dynamic Information:</strong> Port status, link states (expires after 30 seconds)</li>
+                </ul>
+
+                <div class="info-box warning">
+                    <span class="icon"></span>
+                    <strong>Cache Refresh:</strong> Use the "Refresh" button to force update of cached information, especially after firmware updates.
+                </div>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Firmware details panel showing version information and update status</div>
+                </div>
+            </section>
+
+            <!-- Link Status Section -->
+            <section id="link-status" class="section">
+                <h2>📡 Link Status</h2>
+
+                <h3 id="pcie-port-monitoring">PCIe Port Monitoring</h3>
+                <p>The Link Status dashboard provides real-time monitoring of all PCIe ports on the Atlas 3 device, including link states, speeds, widths, and error conditions.</p>
+
+                <h4>Port Status Overview</h4>
+                <p>Each PCIe port displays comprehensive status information:</p>
+                <ul>
+                    <li><strong>Link State:</strong> Current LTSSM (Link Training and Status State Machine) state</li>
+                    <li><strong>Link Speed:</strong> Current generation (Gen3, Gen4, Gen5, Gen6)</li>
+                    <li><strong>Link Width:</strong> Number of active lanes (x1, x2, x4, x8, x16)</li>
+                    <li><strong>Link Direction:</strong> Upstream or downstream port</li>
+                    <li><strong>Device Presence:</strong> Connected device detection</li>
+                </ul>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Link status dashboard showing multiple PCIe ports with status indicators</div>
+                </div>
+
+                <h4>LTSSM States</h4>
+                <p>CalypsoPy+ monitors and displays all PCIe Link Training and Status State Machine states:</p>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>State</th>
+                                <th>Description</th>
+                                <th>Indicator</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Detect.Quiet</td>
+                                <td>Initial state, no device detected</td>
+                                <td>🔴 Red</td>
+                            </tr>
+                            <tr>
+                                <td>Detect.Active</td>
+                                <td>Actively detecting device presence</td>
+                                <td>🟡 Yellow</td>
+                            </tr>
+                            <tr>
+                                <td>Polling.Active</td>
+                                <td>Link training in progress</td>
+                                <td>🟡 Yellow</td>
+                            </tr>
+                            <tr>
+                                <td>Configuration.Linkwidth</td>
+                                <td>Negotiating link width</td>
+                                <td>🟡 Yellow</td>
+                            </tr>
+                            <tr>
+                                <td>L0</td>
+                                <td>Normal operation, link active</td>
+                                <td>🟢 Green</td>
+                            </tr>
+                            <tr>
+                                <td>L0s</td>
+                                <td>Standby state, quick recovery</td>
+                                <td>🔵 Blue</td>
+                            </tr>
+                            <tr>
+                                <td>L1</td>
+                                <td>Low power state</td>
+                                <td>🔵 Blue</td>
+                            </tr>
+                            <tr>
+                                <td>L2</td>
+                                <td>Deep low power state</td>
+                                <td>🟣 Purple</td>
+                            </tr>
+                            <tr>
+                                <td>Recovery</td>
+                                <td>Link recovery in progress</td>
+                                <td>🟠 Orange</td>
+                            </tr>
+                            <tr>
+                                <td>Disabled</td>
+                                <td>Link disabled</td>
+                                <td>⚫ Black</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 id="link-details">Link Details</h3>
+                <p>Clicking on any port provides detailed link information:</p>
+
+                <h4>Link Capabilities</h4>
+                <ul>
+                    <li><strong>Maximum Speed:</strong> Highest supported PCIe generation</li>
+                    <li><strong>Maximum Width:</strong> Maximum number of lanes</li>
+                    <li><strong>Supported Features:</strong> ASPM, hot-plug, ARI, etc.</li>
+                    <li><strong>Physical Layer:</strong> Electrical specifications and margins</li>
+                </ul>
+
+                <h4>Current Link Parameters</h4>
+                <ul>
+                    <li><strong>Negotiated Speed:</strong> Active PCIe generation</li>
+                    <li><strong>Negotiated Width:</strong> Active lane count</li>
+                    <li><strong>Link Training Time:</strong> Time to achieve L0 state</li>
+                    <li><strong>Retrain Count:</strong> Number of link retraining events</li>
+                </ul>
+
+                <h4>Real-time Monitoring</h4>
+                <p>The Link Status dashboard automatically refreshes every 2 seconds to provide real-time updates. Features include:</p>
+                <ul>
+                    <li><strong>Auto-refresh:</strong> Configurable refresh intervals (1-30 seconds)</li>
+                    <li><strong>Change Highlighting:</strong> Visual indication of status changes</li>
+                    <li><strong>History Tracking:</strong> Brief history of state transitions</li>
+                    <li><strong>Alert System:</strong> Notifications for critical state changes</li>
+                </ul>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Detailed port information popup showing link capabilities and current parameters</div>
+                </div>
+
+                <h3 id="error-monitoring">Error Monitoring</h3>
+                <p>CalypsoPy+ continuously monitors for link-related errors and anomalies:</p>
+
+                <h4>Error Categories</h4>
+                <ul>
+                    <li><strong>Link Training Errors:</strong> Failed negotiations, timeouts</li>
+                    <li><strong>Signal Integrity Issues:</strong> Poor signal quality, lane degradation</li>
+                    <li><strong>Protocol Violations:</strong> TLP errors, DLLP errors</li>
+                    <li><strong>Power Management Issues:</strong> ASPM failures, unexpected state transitions</li>
+                </ul>
+
+                <h4>Error Handling</h4>
+                <ul>
+                    <li><strong>Error Logging:</strong> All errors recorded with timestamps</li>
+                    <li><strong>Severity Classification:</strong> Info, Warning, Error, Critical</li>
+                    <li><strong>Automatic Recovery:</strong> Self-healing mechanisms where possible</li>
+                    <li><strong>User Notification:</strong> Pop-up alerts for serious issues</li>
+                </ul>
+
+                <div class="info-box danger">
+                    <span class="icon"></span>
+                    <strong>Critical Errors:</strong> Some errors may indicate hardware problems requiring immediate attention. Contact support if persistent critical errors occur.
+                </div>
+
+                <div class="code-block">
+# Example: Link status command output
+showport
+Port 0: L0, Gen4, x8, Downstream, Device Present
+Port 1: L0, Gen4, x4, Downstream, Device Present  
+Port 2: Detect.Quiet, Gen4, x4, Downstream, No Device
+Port 3: Disabled, -, -, -, -
+                </div>
+            </section>
+
+            <!-- Bifurcation Section -->
+            <section id="bifurcation" class="section">
+                <h2>🔀 Bifurcation</h2>
+
+                <h3 id="port-configuration">Port Configuration</h3>
+                <p>The Bifurcation dashboard allows configuration of PCIe port modes and lane distribution across the Atlas 3 device. This feature enables flexible adaptation to different hardware configurations and use cases.</p>
+
+                <h4>Understanding Bifurcation</h4>
+                <p>PCIe bifurcation allows a single physical PCIe slot to be divided into multiple logical slots with fewer lanes each. For example, a x16 slot can be bifurcated into:</p>
+                <ul>
+                    <li><strong>x16:</strong> Single port with all 16 lanes</li>
+                    <li><strong>x8+x8:</strong> Two ports with 8 lanes each</li>
+                    <li><strong>x8+x4+x4:</strong> One 8-lane and two 4-lane ports</li>
+                    <li><strong>x4+x4+x4+x4:</strong> Four 4-lane ports</li>
+                </ul>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Bifurcation configuration interface showing port layout and mode selection</div>
+                </div>
+
+                <h3 id="mode-explanations">Mode Explanations</h3>
+                <p>Atlas 3 supports multiple bifurcation modes optimized for different scenarios:</p>
+
+                <h4>Standard Modes</h4>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Mode</th>
+                                <th>Configuration</th>
+                                <th>Use Case</th>
+                                <th>Performance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Mode 0</td>
+                                <td>x16</td>
+                                <td>Single high-speed device</td>
+                                <td>Maximum bandwidth</td>
+                            </tr>
+                            <tr>
+                                <td>Mode 1</td>
+                                <td>x8+x8</td>
+                                <td>Two high-speed devices</td>
+                                <td>Balanced performance</td>
+                            </tr>
+                            <tr>
+                                <td>Mode 2</td>
+                                <td>x8+x4+x4</td>
+                                <td>Mixed device speeds</td>
+                                <td>Optimized allocation</td>
+                            </tr>
+                            <tr>
+                                <td>Mode 3</td>
+                                <td>x4+x4+x4+x4</td>
+                                <td>Multiple standard devices</td>
+                                <td>Maximum device count</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h4>Advanced Modes</h4>
+                <p>Additional modes are available for specialized applications:</p>
+                <ul>
+                    <li><strong>Custom Mode:</strong> User-defined lane allocation</li>
+                    <li><strong>Test Mode:</strong> Optimized for validation and testing</li>
+                    <li><strong>Debug Mode:</strong> Enhanced monitoring and logging</li>
+                    <li><strong>Failsafe Mode:</strong> Conservative settings for stability</li>
+                </ul>
+
+                <div class="info-box warning">
+                    <span class="icon"></span>
+                    <strong>Mode Changes:</strong> Changing bifurcation mode requires a device reset and may affect connected devices. Plan changes during maintenance windows.
+                </div>
+
+                <h3 id="configuration-management">Configuration Management</h3>
+                <p>CalypsoPy+ provides comprehensive tools for managing bifurcation configurations:</p>
+
+                <h4>Configuration Process</h4>
+                <ol>
+                    <li><strong>Current State Review:</strong> Display current mode and port allocation</li>
+                    <li><strong>Mode Selection:</strong> Choose desired bifurcation mode</li>
+                    <li><strong>Validation Check:</strong> Verify compatibility with connected devices</li>
+                    <li><strong>Configuration Apply:</strong> Apply new settings with automatic rollback</li>
+                    <li><strong>Verification:</strong> Confirm successful configuration change</li>
+                </ol>
+
+                <h4>Safety Features</h4>
+                <ul>
+                    <li><strong>Pre-change Validation:</strong> Check device compatibility</li>
+                    <li><strong>Automatic Rollback:</strong> Revert to previous configuration on failure</li>
+                    <li><strong>Configuration Backup:</strong> Save and restore known-good configurations</li>
+                    <li><strong>Device Protection:</strong> Prevent configurations that could damage hardware</li>
+                </ul>
+
+                <h4>Configuration Commands</h4>
+                <div class="code-block">
+# Bifurcation management commands
+showmode           # Display current bifurcation mode
+getconfig         # Get detailed configuration
+setmode [mode]    # Set bifurcation mode (0-3)
+saveconfig        # Save current configuration
+loadconfig        # Load saved configuration
+resetconfig       # Reset to factory defaults
+                </div>
+
+                <h4>Configuration Profiles</h4>
+                <p>Save and manage multiple configuration profiles for different use cases:</p>
+                <ul>
+                    <li><strong>Development Profile:</strong> Optimized for development work</li>
+                    <li><strong>Testing Profile:</strong> Configured for validation testing</li>
+                    <li><strong>Production Profile:</strong> Stable settings for production use</li>
+                    <li><strong>Custom Profiles:</strong> User-defined configurations with descriptive names</li>
+                </ul>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Configuration profiles management interface showing saved profiles and options</div>
+                </div>
+
+                <div class="info-box success">
+                    <span class="icon"></span>
+                    <strong>Best Practice:</strong> Always save working configurations as profiles before making changes. This enables quick recovery if issues arise.
+                </div>
+            </section>
+
+            <!-- Registers Section -->
+            <section id="registers" class="section">
+                <h2>📊 Registers</h2>
+
+                <h3 id="memory-access">Memory Access Operations</h3>
+                <p>The Registers dashboard provides direct access to Atlas 3 device memory spaces, enabling low-level debugging, configuration, and diagnostic operations. This powerful interface requires careful use and understanding of the hardware.</p>
+
+                <div class="info-box danger">
+                    <span class="icon"></span>
+                    <strong>DANGER:</strong> Direct register access can damage hardware or cause system instability. Only experienced users should perform register operations. Always verify addresses and values before writing.
+                </div>
+
+                <h4>Memory Spaces</h4>
+                <p>Atlas 3 provides access to multiple memory spaces:</p>
+                <ul>
+                    <li><strong>Configuration Space:</strong> PCIe configuration registers</li>
+                    <li><strong>Memory-Mapped I/O:</strong> Device control and status registers</li>
+                    <li><strong>Internal Registers:</strong> Vendor-specific control registers</li>
+                    <li><strong>Debug Registers:</strong> Diagnostic and test registers</li>
+                </ul>
+
+                <h3 id="read-operations">Read Operations</h3>
+                <p>Several read commands are available for accessing device memory:</p>
+
+                <h4>Memory Read Commands</h4>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Command</th>
+                                <th>Usage</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>mr</td>
+                                <td>mr &lt;address&gt;</td>
+                                <td>Read single 32-bit value</td>
+                            </tr>
+                            <tr>
+                                <td>mr16</td>
+                                <td>mr16 &lt;address&gt;</td>
+                                <td>Read single 16-bit value</td>
+                            </tr>
+                            <tr>
+                                <td>mr8</td>
+                                <td>mr8 &lt;address&gt;</td>
+                                <td>Read single 8-bit value</td>
+                            </tr>
+                            <tr>
+                                <td>dr</td>
+                                <td>dr &lt;start&gt; &lt;length&gt;</td>
+                                <td>Dump memory range (hex format)</td>
+                            </tr>
+                            <tr>
+                                <td>dp</td>
+                                <td>dp &lt;start&gt; &lt;length&gt;</td>
+                                <td>Dump memory range (pretty format)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h4>Read Examples</h4>
+                <div class="code-block">
+# Single register reads
+mr 0x1000          # Read 32-bit value at address 0x1000
+mr16 0x1004        # Read 16-bit value at address 0x1004
+mr8 0x1006         # Read 8-bit value at address 0x1006
+
+# Memory dumps
+dr 0x1000 0x100    # Dump 256 bytes starting at 0x1000
+dp 0x1000 0x40     # Pretty dump 64 bytes starting at 0x1000
+                </div>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Register read interface showing address input, read commands, and formatted output</div>
+                </div>
+
+                <h3 id="write-operations">Write Operations</h3>
+                <p>Write operations allow modification of device configuration and control registers:</p>
+
+                <h4>Memory Write Commands</h4>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Command</th>
+                                <th>Usage</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>mw</td>
+                                <td>mw &lt;address&gt; &lt;value&gt;</td>
+                                <td>Write 32-bit value</td>
+                            </tr>
+                            <tr>
+                                <td>mw16</td>
+                                <td>mw16 &lt;address&gt; &lt;value&gt;</td>
+                                <td>Write 16-bit value</td>
+                            </tr>
+                            <tr>
+                                <td>mw8</td>
+                                <td>mw8 &lt;address&gt; &lt;value&gt;</td>
+                                <td>Write 8-bit value</td>
+                            </tr>
+                            <tr>
+                                <td>fill</td>
+                                <td>fill &lt;start&gt; &lt;length&gt; &lt;pattern&gt;</td>
+                                <td>Fill memory region with pattern</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h4>Write Examples</h4>
+                <div class="code-block">
+# Single register writes
+mw 0x1000 0x12345678    # Write 32-bit value to address 0x1000
+mw16 0x1004 0x1234      # Write 16-bit value to address 0x1004
+mw8 0x1006 0x12         # Write 8-bit value to address 0x1006
+
+# Memory fill operations
+fill 0x2000 0x100 0xFF  # Fill 256 bytes with 0xFF pattern
+                </div>
+
+                <div class="info-box warning">
+                    <span class="icon"></span>
+                    <strong>Write Verification:</strong> The interface automatically performs read-back verification for write operations to ensure data integrity.
+                </div>
+
+                <h3 id="safety-features">Safety Features</h3>
+                <p>CalypsoPy+ includes multiple safety mechanisms to protect against dangerous register operations:</p>
+
+                <h4>Address Validation</h4>
+                <ul>
+                    <li><strong>Range Checking:</strong> Validates addresses are within accessible ranges</li>
+                    <li><strong>Protected Regions:</strong> Prevents access to critical system registers</li>
+                    <li><strong>Alignment Verification:</strong> Ensures proper address alignment for data width</li>
+                    <li><strong>Permission Checking:</strong> Verifies read/write permissions for each address</li>
+                </ul>
+
+                <h4>Operation Safeguards</h4>
+                <ul>
+                    <li><strong>Confirmation Dialogs:</strong> Require confirmation for critical write operations</li>
+                    <li><strong>Value Validation:</strong> Check data values for reasonableness</li>
+                    <li><strong>Atomic Operations:</strong> Ensure read-modify-write operations are atomic</li>
+                    <li><strong>Rollback Capability:</strong> Ability to undo recent write operations</li>
+                </ul>
+
+                <h4>Audit Trail</h4>
+                <p>All register operations are logged for debugging and compliance:</p>
+                <ul>
+                    <li><strong>Operation Logging:</strong> Timestamp, user, address, operation type</li>
+                    <li><strong>Value Tracking:</strong> Before/after values for write operations</li>
+                    <li><strong>Error Recording:</strong> Failed operations with error details</li>
+                    <li><strong>Export Capability:</strong> Export logs for analysis</li>
+                </ul>
+
+                <h4>Emergency Recovery</h4>
+                <p>Safety features for critical situations:</p>
+                <ul>
+                    <li><strong>Emergency Reset:</strong> Restore factory register settings</li>
+                    <li><strong>Safe Mode:</strong> Minimal register access for recovery</li>
+                    <li><strong>Backup/Restore:</strong> Save and restore register configurations</li>
+                    <li><strong>Remote Reset:</strong> Hardware reset via dedicated signals</li>
+                </ul>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Register write interface with safety confirmation dialog and validation warnings</div>
+                </div>
+
+                <div class="code-block">
+# Example: Safe register modification sequence
+mr 0x1000              # Read current value
+# Current: 0x12345678
+mw 0x1000 0x12345679   # Write new value (bit 0 set)
+mr 0x1000              # Verify write
+# Verified: 0x12345679
+                </div>
+            </section>
+
+            <!-- Firmware Updates Section -->
+            <section id="firmware-updates" class="section">
+                <h2>🔄 Firmware Updates</h2>
+
+                <h3 id="xmodem-process">XMODEM-Based Update Process</h3>
+                <p>CalypsoPy+ uses the robust XMODEM protocol for firmware updates, ensuring reliable file transfer even over noisy serial connections. The update process is designed for safety and includes comprehensive error checking and recovery mechanisms.</p>
+
+                <h4>Update Process Overview</h4>
+                <ol>
+                    <li><strong>Pre-Update Validation:</strong> Verify firmware file integrity and compatibility</li>
+                    <li><strong>Device Preparation:</strong> Put target device into update mode</li>
+                    <li><strong>XMODEM Transfer:</strong> Reliable file transfer with error correction</li>
+                    <li><strong>Verification:</strong> Confirm successful update and integrity</li>
+                    <li><strong>Reset and Validation:</strong> Restart device and verify operation</li>
+                </ol>
+
+                <div class="info-box danger">
+                    <span class="icon"></span>
+                    <strong>CRITICAL:</strong> Never interrupt firmware updates or power cycle the device during update. Interruption may render the device inoperable and require factory recovery.
+                </div>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Firmware update interface showing target selection, file selection, and progress indicators</div>
+                </div>
+
+                <h3 id="update-targets">Update Targets</h3>
+                <p>Atlas 3 devices contain multiple programmable components, each with its own firmware update process:</p>
+
+                <h4>MCU Firmware</h4>
+                <ul>
+                    <li><strong>Function:</strong> Main control unit managing device operation</li>
+                    <li><strong>Update Method:</strong> XMODEM over primary serial connection</li>
+                    <li><strong>File Format:</strong> Intel HEX (.hex) or binary (.bin)</li>
+                    <li><strong>Update Time:</strong> Typically 2-5 minutes</li>
+                    <li><strong>Recovery:</strong> Hardware-based recovery if update fails</li>
+                </ul>
+
+                <h4>SBR0 Firmware (Side-band Controller 0)</h4>
+                <ul>
+                    <li><strong>Function:</strong> First side-band management controller</li>
+                    <li><strong>Update Method:</strong> XMODEM via MCU relay</li>
+                    <li><strong>File Format:</strong> Binary (.bin) files only</li>
+                    <li><strong>Update Time:</strong> Typically 1-3 minutes</li>
+                    <li><strong>Dependencies:</strong> Requires compatible MCU firmware</li>
+                </ul>
+
+                <h4>SBR1 Firmware (Side-band Controller 1)</h4>
+                <ul>
+                    <li><strong>Function:</strong> Second side-band management controller</li>
+                    <li><strong>Update Method:</strong> XMODEM via MCU relay</li>
+                    <li><strong>File Format:</strong> Binary (.bin) files only</li>
+                    <li><strong>Update Time:</strong> Typically 1-3 minutes</li>
+                    <li><strong>Dependencies:</strong> Requires compatible MCU firmware</li>
+                </ul>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Target</th>
+                                <th>File Types</th>
+                                <th>Max Size</th>
+                                <th>Update Command</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>MCU</td>
+                                <td>.hex, .bin</td>
+                                <td>2 MB</td>
+                                <td>update mcu</td>
+                            </tr>
+                            <tr>
+                                <td>SBR0</td>
+                                <td>.bin</td>
+                                <td>1 MB</td>
+                                <td>update sbr0</td>
+                            </tr>
+                            <tr>
+                                <td>SBR1</td>
+                                <td>.bin</td>
+                                <td>1 MB</td>
+                                <td>update sbr1</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 id="progress-monitoring">Progress Monitoring</h3>
+                <p>CalypsoPy+ provides comprehensive monitoring throughout the update process:</p>
+
+                <h4>Progress Indicators</h4>
+                <ul>
+                    <li><strong>Overall Progress:</strong> Percentage completion of entire update</li>
+                    <li><strong>Transfer Progress:</strong> XMODEM packet transfer status</li>
+                    <li><strong>Speed Indication:</strong> Current transfer rate and ETA</li>
+                    <li><strong>Phase Indication:</strong> Current stage of update process</li>
+                </ul>
+
+                <h4>Real-time Status</h4>
+                <ul>
+                    <li><strong>Packet Count:</strong> Successful and failed packet counts</li>
+                    <li><strong>Retry Information:</strong> Automatic retry attempts and results</li>
+                    <li><strong>Error Details:</strong> Specific error messages and codes</li>
+                    <li><strong>Time Elapsed:</strong> Duration of current operation</li>
+                </ul>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Firmware update progress dialog showing progress bars, statistics, and status messages</div>
+                </div>
+
+                <h4>Update Phases</h4>
+                <p>The firmware update process consists of several distinct phases:</p>
+
+                <ol>
+                    <li><strong>Initialization:</strong> Prepare device and validate firmware file</li>
+                    <li><strong>Handshake:</strong> Establish XMODEM communication with target</li>
+                    <li><strong>Transfer:</strong> Send firmware data packets with error checking</li>
+                    <li><strong>Verification:</strong> Verify transferred data integrity</li>
+                    <li><strong>Finalization:</strong> Complete update and restart target</li>
+                    <li><strong>Validation:</strong> Confirm successful operation of new firmware</li>
+                </ol>
+
+                <h4>Error Handling</h4>
+                <p>Robust error handling ensures reliable updates:</p>
+                <ul>
+                    <li><strong>Automatic Retry:</strong> Failed packets automatically retransmitted</li>
+                    <li><strong>Checksum Validation:</strong> Every packet verified for integrity</li>
+                    <li><strong>Timeout Management:</strong> Appropriate timeouts for each phase</li>
+                    <li><strong>Graceful Failure:</strong> Safe failure modes that preserve device</li>
+                </ul>
+
+                <h4>Post-Update Verification</h4>
+                <p>After successful update, the system performs comprehensive verification:</p>
+                <ul>
+                    <li><strong>Version Verification:</strong> Confirm new firmware version</li>
+                    <li><strong>Functionality Test:</strong> Basic operational tests</li>
+                    <li><strong>Communication Test:</strong> Verify device communication</li>
+                    <li><strong>Configuration Preservation:</strong> Ensure settings retained</li>
+                </ul>
+
+                <div class="info-box success">
+                    <span class="icon"></span>
+                    <strong>Update Success:</strong> Successful updates are automatically logged with before/after version information and validation results.
+                </div>
+
+                <div class="code-block">
+# Example: Firmware update command sequence
+update mcu firmware_v2.1.3.hex    # Start MCU update
+# Progress monitoring automatically displayed
+# Verification performed upon completion
+
+getversion                         # Verify new version
+# MCU: v2.1.3, SBR0: v1.5.2, SBR1: v1.5.2
+                </div>
+
+                <h4>Recovery Procedures</h4>
+                <p>In case of update failures, several recovery options are available:</p>
+                <ul>
+                    <li><strong>Retry Update:</strong> Attempt update again with same firmware</li>
+                    <li><strong>Alternative Firmware:</strong> Try older or different firmware version</li>
+                    <li><strong>Hardware Recovery:</strong> Use dedicated recovery pins/jumpers</li>
+                    <li><strong>Factory Recovery:</strong> Return device to manufacturer for recovery</li>
+                </ul>
+
+                <div class="info-box warning">
+                    <span class="icon"></span>
+                    <strong>Recovery Mode:</strong> If device becomes unresponsive after failed update, refer to hardware recovery procedures in the troubleshooting section.
+                </div>
+            </section>
+
+            <!-- Testing Suite Section -->
+            <section id="testing-suite" class="section">
+                <h2>🧪 Testing Suite</h2>
+
+                <h3 id="test-overview">Comprehensive PCIe Testing Framework</h3>
+                <p>CalypsoPy+ includes an extensive testing suite designed for PCIe device validation, performance assessment, and quality assurance. The testing framework provides automated test execution, comprehensive reporting, and safety features to protect hardware during testing.</p>
+
+                <div class="info-box info">
+                    <span class="icon"></span>
+                    <strong>Atlas 3 Safety:</strong> All tests automatically filter to only test endpoint devices downstream of the Atlas 3 switch. The Atlas 3 itself and upstream devices are never tested for system stability.
+                </div>
+
+                <h4>Test Categories</h4>
+                <ul>
+                    <li><strong>Discovery Tests:</strong> PCIe topology and NVMe device enumeration</li>
+                    <li><strong>Performance Tests:</strong> Throughput and IOPS measurements</li>
+                    <li><strong>Link Quality Tests:</strong> Signal integrity and training analysis</li>
+                    <li><strong>Compliance Tests:</strong> PCIe specification compliance verification</li>
+                    <li><strong>Stress Tests:</strong> Long-duration reliability testing</li>
+                </ul>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Testing suite main interface showing available test categories and device selection</div>
+                </div>
+
+                <h3 id="pcie-discovery">PCIe Discovery</h3>
+                <p>PCIe discovery tests map the complete system topology and identify all connected devices:</p>
+
+                <h4>Discovery Process</h4>
+                <ol>
+                    <li><strong>Root Complex Scan:</strong> Identify PCIe root complex and host bridges</li>
+                    <li><strong>Bridge Enumeration:</strong> Map all PCIe-to-PCIe bridges</li>
+                    <li><strong>Switch Detection:</strong> Identify PCIe switches including Atlas 3</li>
+                    <li><strong>Endpoint Discovery:</strong> Find all endpoint devices</li>
+                    <li><strong>Capability Analysis:</strong> Assess device capabilities and features</li>
+                </ol>
+
+                <h4>Topology Mapping</h4>
+                <p>The discovery process creates a comprehensive topology map including:</p>
+                <ul>
+                    <li><strong>Bus Hierarchy:</strong> PCIe bus and device numbers</li>
+                    <li><strong>Device Tree:</strong> Hierarchical device relationships</li>
+                    <li><strong>Link Properties:</strong> Speed, width, and capabilities for each link</li>
+                    <li><strong>Address Mapping:</strong> Memory and I/O address allocations</li>
+                </ul>
+
+                <div class="code-block">
+# Example: PCIe topology discovery output
+PCIe Root Complex: 0000:00:00.0
+├── Host Bridge: 0000:00:01.0
+│   └── Atlas 3 Switch: 0000:01:00.0
+│       ├── Downstream Port 0: 0000:02:00.0
+│       │   └── NVMe Device: 0000:03:00.0
+│       └── Downstream Port 1: 0000:02:01.0
+│           └── NVMe Device: 0000:04:00.0
+                </div>
+
+                <h4>Device Filtering</h4>
+                <p>Critical safety feature that automatically excludes dangerous test targets:</p>
+                <ul>
+                    <li><strong>Atlas 3 Exclusion:</strong> The Atlas 3 switch itself is never tested</li>
+                    <li><strong>Bridge Exclusion:</strong> PCIe-to-PCIe bridges are excluded from testing</li>
+                    <li><strong>Upstream Exclusion:</strong> Devices upstream of Atlas 3 are excluded</li>
+                    <li><strong>System Device Exclusion:</strong> Critical system devices are protected</li>
+                </ul>
+
+                <div class="info-box warning">
+                    <span class="icon"></span>
+                    <strong>Non-Disableable Safety:</strong> Device filtering cannot be disabled and is enforced for all tests to prevent system damage.
+                </div>
+
+                <h3 id="nvme-discovery">NVMe Discovery</h3>
+                <p>Specialized discovery for NVMe storage devices connected downstream of Atlas 3:</p>
+
+                <h4>NVMe Identification</h4>
+                <ul>
+                    <li><strong>Controller Detection:</strong> Identify NVMe controllers and their capabilities</li>
+                    <li><strong>Namespace Enumeration:</strong> Discover all available namespaces</li>
+                    <li><strong>Feature Assessment:</strong> Analyze supported NVMe features</li>
+                    <li><strong>Performance Characteristics:</strong> Gather device performance specifications</li>
+                </ul>
+
+                <h4>SMART Data Collection</h4>
+                <p>Comprehensive health and performance monitoring:</p>
+                <ul>
+                    <li><strong>Health Status:</strong> Overall device health assessment</li>
+                    <li><strong>Temperature Monitoring:</strong> Device temperature readings</li>
+                    <li><strong>Wear Leveling:</strong> Endurance and wear indicators</li>
+                    <li><strong>Error Statistics:</strong> Read/write error counts and rates</li>
+                </ul>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: NVMe discovery results showing device details, SMART data, and health status</div>
+                </div>
+
+                <h3 id="performance-testing">Performance Testing</h3>
+                <p>Comprehensive performance testing using industry-standard FIO (Flexible I/O Tester) benchmarks:</p>
+
+                <h4>Sequential Performance Tests</h4>
+                <ul>
+                    <li><strong>Sequential Read:</strong> Large block sequential read performance</li>
+                    <li><strong>Sequential Write:</strong> Large block sequential write performance</li>
+                    <li><strong>Mixed Sequential:</strong> Combined read/write workloads</li>
+                    <li><strong>Queue Depth Scaling:</strong> Performance across different queue depths</li>
+                </ul>
+
+                <h4>Random Performance Tests</h4>
+                <ul>
+                    <li><strong>Random Read IOPS:</strong> 4K random read performance</li>
+                    <li><strong>Random Write IOPS:</strong> 4K random write performance</li>
+                    <li><strong>Mixed Random:</strong> Combined random read/write workloads</li>
+                    <li><strong>Latency Analysis:</strong> Response time characteristics</li>
+                </ul>
+
+                <h4>Test Parameters</h4>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Test Type</th>
+                                <th>Block Size</th>
+                                <th>Queue Depth</th>
+                                <th>Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Sequential Read</td>
+                                <td>1MB</td>
+                                <td>32</td>
+                                <td>60 seconds</td>
+                            </tr>
+                            <tr>
+                                <td>Sequential Write</td>
+                                <td>1MB</td>
+                                <td>32</td>
+                                <td>60 seconds</td>
+                            </tr>
+                            <tr>
+                                <td>Random Read</td>
+                                <td>4KB</td>
+                                <td>32</td>
+                                <td>60 seconds</td>
+                            </tr>
+                            <tr>
+                                <td>Random Write</td>
+                                <td>4KB</td>
+                                <td>32</td>
+                                <td>60 seconds</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="code-block">
+# Example: FIO performance test command
+fio --name=seq_read --filename=/dev/nvme0n1 --rw=read 
+    --bs=1M --iodepth=32 --runtime=60 --time_based 
+    --group_reporting --direct=1
+                </div>
+
+                <h3 id="link-quality-testing">Link Quality Testing</h3>
+                <p>Advanced testing to assess PCIe link health and signal integrity:</p>
+
+                <h4>Link Training Analysis</h4>
+                <ul>
+                    <li><strong>Training Time Measurement:</strong> Time to reach L0 state</li>
+                    <li><strong>Retrain Counting:</strong> Link retraining event monitoring</li>
+                    <li><strong>Speed Negotiation:</strong> Analysis of speed autonegotiation</li>
+                    <li><strong>Width Negotiation:</strong> Analysis of lane width negotiation</li>
+                </ul>
+
+                <h4>Error Monitoring</h4>
+                <ul>
+                    <li><strong>Correctable Errors:</strong> Monitor and count correctable errors</li>
+                    <li><strong>Uncorrectable Errors:</strong> Track serious error conditions</li>
+                    <li><strong>LTSSM State Tracking:</strong> Monitor link state transitions</li>
+                    <li><strong>Signal Quality Metrics:</strong> Electrical signal quality assessment</li>
+                </ul>
+
+                <h4>Long-term Monitoring</h4>
+                <ul>
+                    <li><strong>Extended Test Duration:</strong> Hours or days of continuous monitoring</li>
+                    <li><strong>Environmental Correlation:</strong> Track performance vs. temperature</li>
+                    <li><strong>Statistical Analysis:</strong> Performance distribution and outliers</li>
+                    <li><strong>Trend Analysis:</strong> Performance degradation over time</li>
+                </ul>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Link quality test results showing error rates, training times, and statistical analysis</div>
+                </div>
+
+                <h4>Test Execution and Results</h4>
+                <p>The testing framework provides comprehensive execution control and results management:</p>
+
+                <h4>Test Scheduling</h4>
+                <ul>
+                    <li><strong>Individual Tests:</strong> Run single tests on demand</li>
+                    <li><strong>Test Suites:</strong> Execute predefined test sequences</li>
+                    <li><strong>Automated Scheduling:</strong> Scheduled test execution</li>
+                    <li><strong>Conditional Testing:</strong> Tests based on discovery results</li>
+                </ul>
+
+                <h4>Results Export</h4>
+                <ul>
+                    <li><strong>CSV Export:</strong> Raw data for analysis</li>
+                    <li><strong>PDF Reports:</strong> Formatted test reports</li>
+                    <li><strong>JSON Data:</strong> Machine-readable results</li>
+                    <li><strong>HTML Dashboard:</strong> Interactive results viewer</li>
+                </ul>
+
+                <div class="info-box success">
+                    <span class="icon"></span>
+                    <strong>Root Privileges:</strong> Some tests require administrator/root privileges for direct hardware access. The system will prompt when elevated privileges are needed.
+                </div>
+            </section>
+
+            <!-- Analytics Section -->
+            <section id="analytics" class="section">
+                <h2>📈 Analytics</h2>
+
+                <h3 id="performance-data">Performance Data Analysis</h3>
+                <p>The Analytics dashboard provides comprehensive analysis and visualization of performance data collected from testing operations, device monitoring, and historical trends.</p>
+
+                <h4>Data Sources</h4>
+                <ul>
+                    <li><strong>Performance Tests:</strong> Results from sequential and random I/O tests</li>
+                    <li><strong>Link Quality Data:</strong> Error rates, training times, signal metrics</li>
+                    <li><strong>Device Monitoring:</strong> Real-time SMART data and health metrics</li>
+                    <li><strong>System Telemetry:</strong> Temperature, power, and environmental data</li>
+                </ul>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Analytics dashboard main view showing performance trends and key metrics</div>
+                </div>
+
+                <h3 id="data-visualization">Data Visualization</h3>
+                <p>Interactive charts and graphs provide insights into device performance and trends:</p>
+
+                <h4>Performance Charts</h4>
+                <ul>
+                    <li><strong>Throughput Trends:</strong> Sequential read/write performance over time</li>
+                    <li><strong>IOPS Analysis:</strong> Random I/O performance characteristics</li>
+                    <li><strong>Latency Distribution:</strong> Response time histograms and percentiles</li>
+                    <li><strong>Queue Depth Impact:</strong> Performance scaling with queue depth</li>
+                </ul>
+
+                <h4>Link Quality Visualizations</h4>
+                <ul>
+                    <li><strong>Error Rate Trends:</strong> Correctable and uncorrectable error rates</li>
+                    <li><strong>Training Time Analysis:</strong> Link training performance over time</li>
+                    <li><strong>State Transition Maps:</strong> LTSSM state change patterns</li>
+                    <li><strong>Signal Quality Metrics:</strong> Electrical performance indicators</li>
+                </ul>
+
+                <h4>Comparative Analysis</h4>
+                <ul>
+                    <li><strong>Device Comparison:</strong> Side-by-side performance comparison</li>
+                    <li><strong>Historical Comparison:</strong> Current vs. previous test results</li>
+                    <li><strong>Baseline Analysis:</strong> Performance against known baselines</li>
+                    <li><strong>Regression Detection:</strong> Identification of performance degradation</li>
+                </ul>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Performance visualization showing throughput trends and comparative analysis</div>
+                </div>
+
+                <h4>Interactive Features</h4>
+                <ul>
+                    <li><strong>Zoom and Pan:</strong> Detailed examination of specific time periods</li>
+                    <li><strong>Data Filtering:</strong> Focus on specific devices or test types</li>
+                    <li><strong>Annotation System:</strong> Add notes and markers to significant events</li>
+                    <li><strong>Real-time Updates:</strong> Live data updates during ongoing tests</li>
+                </ul>
+
+                <h3 id="export-options">Export and Reporting Options</h3>
+                <p>Comprehensive export capabilities for data analysis and reporting:</p>
+
+                <h4>Data Export Formats</h4>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Format</th>
+                                <th>Use Case</th>
+                                <th>Contents</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>CSV</td>
+                                <td>Data analysis in Excel/Python</td>
+                                <td>Raw performance data</td>
+                            </tr>
+                            <tr>
+                                <td>JSON</td>
+                                <td>API integration, automation</td>
+                                <td>Structured test results</td>
+                            </tr>
+                            <tr>
+                                <td>PDF</td>
+                                <td>Reports and documentation</td>
+                                <td>Formatted charts and analysis</td>
+                            </tr>
+                            <tr>
+                                <td>PNG/SVG</td>
+                                <td>Presentations and documentation</td>
+                                <td>Individual charts and graphs</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h4>Report Templates</h4>
+                <ul>
+                    <li><strong>Executive Summary:</strong> High-level performance overview</li>
+                    <li><strong>Technical Report:</strong> Detailed analysis with recommendations</li>
+                    <li><strong>Compliance Report:</strong> Standards compliance verification</li>
+                    <li><strong>Trend Analysis:</strong> Long-term performance trends</li>
+                </ul>
+
+                <h4>Automated Reporting</h4>
+                <ul>
+                    <li><strong>Scheduled Reports:</strong> Automatic generation and distribution</li>
+                    <li><strong>Threshold Alerts:</strong> Notifications when metrics exceed limits</li>
+                    <li><strong>Email Integration:</strong> Automatic report delivery</li>
+                    <li><strong>API Endpoints:</strong> Programmatic access to analytics data</li>
+                </ul>
+
+                <div class="code-block">
+# Example: Analytics API endpoint
+GET /api/analytics/performance?device=nvme0&start=2024-01-01&end=2024-01-31
+{
+  "device": "nvme0",
+  "period": "2024-01-01 to 2024-01-31",
+  "metrics": {
+    "avg_read_throughput": "3450 MB/s",
+    "avg_write_throughput": "2890 MB/s",
+    "avg_read_iops": "875000",
+    "avg_write_iops": "720000"
+  }
+}
+                </div>
+
+                <h4>Data Retention and Archival</h4>
+                <ul>
+                    <li><strong>Local Storage:</strong> Configurable retention periods</li>
+                    <li><strong>Data Compression:</strong> Efficient storage of historical data</li>
+                    <li><strong>Archive Export:</strong> Long-term data preservation</li>
+                    <li><strong>Cloud Integration:</strong> Optional cloud storage for analytics data</li>
+                </ul>
+
+                <div class="info-box info">
+                    <span class="icon"></span>
+                    <strong>Data Privacy:</strong> All analytics data remains local by default. Cloud integration is optional and requires explicit user configuration.
+                </div>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Export options interface showing format selection and report templates</div>
+                </div>
+            </section>
+
+            <!-- Terminal Section -->
+            <section id="terminal" class="section">
+                <h2>💻 Terminal</h2>
+
+                <h3 id="command-interface">Direct Command Interface</h3>
+                <p>The Terminal dashboard provides direct access to the Atlas 3 command interface, allowing experienced users to execute commands directly and observe raw device responses.</p>
+
+                <h4>Terminal Features</h4>
+                <ul>
+                    <li><strong>Direct Communication:</strong> Send raw commands to Atlas 3 device</li>
+                    <li><strong>Command History:</strong> Navigate through previously executed commands</li>
+                    <li><strong>Auto-completion:</strong> Command and parameter suggestions</li>
+                    <li><strong>Response Logging:</strong> All commands and responses logged</li>
+                </ul>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Terminal interface showing command prompt, history, and device responses</div>
+                </div>
+
+                <h3 id="keyboard-shortcuts">Keyboard Shortcuts</h3>
+                <p>Efficient terminal navigation with comprehensive keyboard shortcuts:</p>
+
+                <h4>Navigation Shortcuts</h4>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Shortcut</th>
+                                <th>Action</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="keyboard-shortcut">↑</span></td>
+                                <td>Previous Command</td>
+                                <td>Navigate to previous command in history</td>
+                            </tr>
+                            <tr>
+                                <td><span class="keyboard-shortcut">↓</span></td>
+                                <td>Next Command</td>
+                                <td>Navigate to next command in history</td>
+                            </tr>
+                            <tr>
+                                <td><span class="keyboard-shortcut">Tab</span></td>
+                                <td>Auto-complete</td>
+                                <td>Complete command or parameter</td>
+                            </tr>
+                            <tr>
+                                <td><span class="keyboard-shortcut">Ctrl+C</span></td>
+                                <td>Cancel Command</td>
+                                <td>Interrupt current command execution</td>
+                            </tr>
+                            <tr>
+                                <td><span class="keyboard-shortcut">Ctrl+L</span></td>
+                                <td>Clear Screen</td>
+                                <td>Clear terminal output</td>
+                            </tr>
+                            <tr>
+                                <td><span class="keyboard-shortcut">Ctrl+A</span></td>
+                                <td>Home</td>
+                                <td>Move cursor to beginning of line</td>
+                            </tr>
+                            <tr>
+                                <td><span class="keyboard-shortcut">Ctrl+E</span></td>
+                                <td>End</td>
+                                <td>Move cursor to end of line</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h4>Editing Shortcuts</h4>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Shortcut</th>
+                                <th>Action</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="keyboard-shortcut">Ctrl+U</span></td>
+                                <td>Clear Line</td>
+                                <td>Clear entire command line</td>
+                            </tr>
+                            <tr>
+                                <td><span class="keyboard-shortcut">Ctrl+K</span></td>
+                                <td>Delete to End</td>
+                                <td>Delete from cursor to end of line</td>
+                            </tr>
+                            <tr>
+                                <td><span class="keyboard-shortcut">Ctrl+W</span></td>
+                                <td>Delete Word</td>
+                                <td>Delete word before cursor</td>
+                            </tr>
+                            <tr>
+                                <td><span class="keyboard-shortcut">Alt+D</span></td>
+                                <td>Delete Word Forward</td>
+                                <td>Delete word after cursor</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 id="command-reference">Command Reference</h3>
+                <p>Comprehensive reference for Atlas 3 commands available through the terminal:</p>
+
+                <h4>Device Information Commands</h4>
+                <div class="code-block">
+help              # Display available commands
+getversion        # Get firmware versions
+getserial         # Get device serial number
+showport          # Display port status
+showmode          # Display bifurcation mode
+getconfig         # Get device configuration
+                </div>
+
+                <h4>Configuration Commands</h4>
+                <div class="code-block">
+setmode [0-3]     # Set bifurcation mode
+saveconfig        # Save current configuration
+loadconfig        # Load saved configuration
+resetconfig       # Reset to factory defaults
+                </div>
+
+                <h4>Memory Access Commands</h4>
+                <div class="code-block">
+mr [addr]         # Memory read (32-bit)
+mr16 [addr]       # Memory read (16-bit)
+mr8 [addr]        # Memory read (8-bit)
+mw [addr] [val]   # Memory write (32-bit)
+mw16 [addr] [val] # Memory write (16-bit)
+mw8 [addr] [val]  # Memory write (8-bit)
+dr [start] [len]  # Dump memory range
+dp [start] [len]  # Pretty dump memory range
+                </div>
+
+                <h4>Firmware Update Commands</h4>
+                <div class="code-block">
+update mcu        # Start MCU firmware update
+update sbr0       # Start SBR0 firmware update
+update sbr1       # Start SBR1 firmware update
+                </div>
+
+                <h4>Testing Commands</h4>
+                <div class="code-block">
+test pcie         # Run PCIe discovery test
+test nvme         # Run NVMe discovery test
+test performance  # Run performance test suite
+test linkquality  # Run link quality tests
+                </div>
+
+                <h4>System Commands</h4>
+                <div class="code-block">
+reset             # Reset device
+reboot            # Reboot device
+status            # Get system status
+log               # Display system log
+clear             # Clear terminal
+exit              # Close terminal session
+                </div>
+
+                <h4>Command Syntax and Parameters</h4>
+                <ul>
+                    <li><strong>Addresses:</strong> Use hexadecimal format (0x1000) or decimal</li>
+                    <li><strong>Values:</strong> Hexadecimal (0xFF) or decimal formats accepted</li>
+                    <li><strong>Ranges:</strong> Length in bytes, automatically aligned</li>
+                    <li><strong>Modes:</strong> Numeric values 0-3 for bifurcation modes</li>
+                </ul>
+
+                <div class="info-box warning">
+                    <span class="icon"></span>
+                    <strong>Command Safety:</strong> Some commands can affect device operation or configuration. Use caution with write operations and configuration changes.
+                </div>
+
+                <h4>Command Output and Logging</h4>
+                <ul>
+                    <li><strong>Formatted Output:</strong> Commands return structured, readable responses</li>
+                    <li><strong>Error Messages:</strong> Clear error descriptions for failed commands</li>
+                    <li><strong>Session Logging:</strong> All terminal activity logged to files</li>
+                    <li><strong>Copy/Paste:</strong> Full support for copying command output</li>
+                </ul>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Terminal showing command execution with formatted output and error handling</div>
+                </div>
+
+                <div class="info-box success">
+                    <span class="icon"></span>
+                    <strong>Power User Tip:</strong> Use the terminal for scripting and automation by combining commands with logging and output redirection.
+                </div>
+            </section>
+
+            <!-- Troubleshooting Section -->
+            <section id="troubleshooting" class="section">
+                <h2>🔧 Troubleshooting</h2>
+
+                <h3 id="common-issues">Common Issues and Solutions</h3>
+                <p>This section covers the most frequently encountered issues and their solutions when using CalypsoPy+ with Atlas 3 hardware.</p>
+
+                <h4>Connection Issues</h4>
+
+                <h5>Device Not Detected</h5>
+                <p><strong>Symptoms:</strong> No serial ports detected or device not responding</p>
+                <p><strong>Solutions:</strong></p>
+                <ol>
+                    <li>Verify physical serial cable connection</li>
+                    <li>Check device power status and indicators</li>
+                    <li>Restart CalypsoPy+ application</li>
+                    <li>Try different USB/serial port</li>
+                    <li>Verify driver installation for USB-to-serial adapters</li>
+                </ol>
+
+                <h5>Communication Timeouts</h5>
+                <p><strong>Symptoms:</strong> Commands time out or return "No response" errors</p>
+                <p><strong>Solutions:</strong></p>
+                <ol>
+                    <li>Check serial connection parameters (115200-8-N-1)</li>
+                    <li>Verify device is not in firmware update mode</li>
+                    <li>Increase timeout values in connection settings</li>
+                    <li>Reset device using hardware reset button</li>
+                    <li>Check for electromagnetic interference</li>
+                </ol>
+
+                <h5>Intermittent Connection Drops</h5>
+                <p><strong>Symptoms:</strong> Connection established but drops randomly</p>
+                <p><strong>Solutions:</strong></p>
+                <ol>
+                    <li>Check cable quality and connections</li>
+                    <li>Verify stable power supply to device</li>
+                    <li>Disable aggressive power management on host system</li>
+                    <li>Update USB/serial drivers</li>
+                    <li>Try different cable or serial adapter</li>
+                </ol>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Connection troubleshooting interface showing diagnostic tools and status</div>
+                </div>
+
+                <h4>Firmware Update Issues</h4>
+
+                <h5>Update Fails to Start</h5>
+                <p><strong>Symptoms:</strong> Firmware update process won't initiate</p>
+                <p><strong>Solutions:</strong></p>
+                <ol>
+                    <li>Verify firmware file format and integrity</li>
+                    <li>Check device is in normal operation mode</li>
+                    <li>Ensure no other applications are using serial port</li>
+                    <li>Restart device and retry update</li>
+                    <li>Verify sufficient power supply to device</li>
+                </ol>
+
+                <h5>Update Interrupted</h5>
+                <p><strong>Symptoms:</strong> Update process stops mid-transfer</p>
+                <p><strong>Solutions:</strong></p>
+                <ol>
+                    <li><strong>DO NOT POWER CYCLE DEVICE</strong></li>
+                    <li>Retry update immediately</li>
+                    <li>If retry fails, attempt recovery mode</li>
+                    <li>Check hardware recovery procedures</li>
+                    <li>Contact support if device becomes unresponsive</li>
+                </ol>
+
+                <div class="info-box danger">
+                    <span class="icon"></span>
+                    <strong>CRITICAL:</strong> Never power cycle device during firmware update. This may render the device inoperable.
+                </div>
+
+                <h4>Performance Test Issues</h4>
+
+                <h5>Tests Fail to Run</h5>
+                <p><strong>Symptoms:</strong> Performance tests won't execute or fail immediately</p>
+                <p><strong>Solutions:</strong></p>
+                <ol>
+                    <li>Verify administrator/root privileges</li>
+                    <li>Check FIO installation and accessibility</li>
+                    <li>Ensure target devices are accessible</li>
+                    <li>Verify no other applications are using test devices</li>
+                    <li>Check available disk space for test files</li>
+                </ol>
+
+                <h5>Inconsistent Results</h5>
+                <p><strong>Symptoms:</strong> Performance results vary significantly between runs</p>
+                <p><strong>Solutions:</strong></p>
+                <ol>
+                    <li>Ensure system is idle during testing</li>
+                    <li>Disable background applications and services</li>
+                    <li>Check thermal throttling on devices</li>
+                    <li>Verify consistent power delivery</li>
+                    <li>Allow device to cool between test runs</li>
+                </ol>
+
+                <h3 id="emergency-recovery">Emergency Recovery Procedures</h3>
+                <p>Procedures for recovering from critical failures or device lockups:</p>
+
+                <h4>Software Recovery</h4>
+
+                <h5>Application Crashes</h5>
+                <ol>
+                    <li>Check log files in <span class="inline-code">logs/calypso_py.log</span></li>
+                    <li>Restart CalypsoPy+ application</li>
+                    <li>If persistent, delete cache files and restart</li>
+                    <li>Reinstall application if crashes continue</li>
+                </ol>
+
+                <h5>Device Communication Lost</h5>
+                <ol>
+                    <li>Attempt to reconnect through application</li>
+                    <li>Close application and restart</li>
+                    <li>Power cycle Atlas 3 device</li>
+                    <li>If unsuccessful, proceed to hardware recovery</li>
+                </ol>
+
+                <h4>Hardware Recovery</h4>
+
+                <h5>Device Unresponsive</h5>
+                <p><strong>WARNING:</strong> Use only as last resort when device does not respond to software commands</p>
+                <ol>
+                    <li>Locate hardware reset button on Atlas 3 device</li>
+                    <li>Hold reset button for 10 seconds while powered</li>
+                    <li>Release reset button and wait 30 seconds</li>
+                    <li>Attempt to reconnect through CalypsoPy+</li>
+                    <li>If still unresponsive, contact technical support</li>
+                </ol>
+
+                <h5>Firmware Recovery Mode</h5>
+                <p>For devices with corrupted firmware:</p>
+                <ol>
+                    <li>Power off device completely</li>
+                    <li>Locate recovery jumper on device (refer to hardware manual)</li>
+                    <li>Install recovery jumper</li>
+                    <li>Power on device (should enter recovery mode)</li>
+                    <li>Attempt firmware update with recovery firmware</li>
+                    <li>Remove recovery jumper after successful update</li>
+                </ol>
+
+                <div class="info-box warning">
+                    <span class="icon"></span>
+                    <strong>Recovery Mode:</strong> Recovery procedures may void warranty. Contact support before attempting hardware recovery.
+                </div>
+
+                <h3 id="log-analysis">Log Analysis and Diagnostics</h3>
+                <p>CalypsoPy+ maintains comprehensive logs for troubleshooting and analysis:</p>
+
+                <h4>Log File Locations</h4>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Log File</th>
+                                <th>Location</th>
+                                <th>Contents</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Application Log</td>
+                                <td>logs/calypso_py.log</td>
+                                <td>General application events and errors</td>
+                            </tr>
+                            <tr>
+                                <td>Communication Log</td>
+                                <td>logs/serial_comm.log</td>
+                                <td>All serial communication traffic</td>
+                            </tr>
+                            <tr>
+                                <td>Test Results</td>
+                                <td>logs/test_results.log</td>
+                                <td>Detailed test execution logs</td>
+                            </tr>
+                            <tr>
+                                <td>Error Log</td>
+                                <td>logs/errors.log</td>
+                                <td>Error conditions and exceptions</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h4>Log Analysis Tools</h4>
+                <ul>
+                    <li><strong>Built-in Viewer:</strong> View logs directly in CalypsoPy+ interface</li>
+                    <li><strong>Filter Options:</strong> Filter by severity, time range, or component</li>
+                    <li><strong>Search Functionality:</strong> Search for specific events or errors</li>
+                    <li><strong>Export Capability:</strong> Export logs for external analysis</li>
+                </ul>
+
+                <h4>Common Log Patterns</h4>
+
+                <h5>Connection Issues</h5>
+                <div class="code-block">
+ERROR: Serial port timeout after 2000ms
+ERROR: Device not responding to command 'showport'
+WARNING: Communication retry attempt 3/5
+                </div>
+
+                <h5>Firmware Update Issues</h5>
+                <div class="code-block">
+ERROR: XMODEM handshake failed
+ERROR: Packet transmission timeout
+WARNING: CRC mismatch, retransmitting packet 123
+                </div>
+
+                <h5>Performance Test Issues</h5>
+                <div class="code-block">
+ERROR: FIO executable not found
+ERROR: Insufficient permissions for device access
+WARNING: Test device temperature exceeded threshold
+                </div>
+
+                <h4>Diagnostic Commands</h4>
+                <p>Use these commands for additional diagnostic information:</p>
+
+                <div class="code-block">
+# System diagnostics
+python start.py --check-dependencies
+python -m tests.test_runner --diagnostic
+
+# Device diagnostics  
+showport --verbose
+getversion --all
+status --detailed
+                </div>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Log analysis interface showing filtered logs with error highlighting</div>
+                </div>
+
+                <h4>Getting Support</h4>
+                <p>When contacting technical support, provide the following information:</p>
+                <ul>
+                    <li><strong>System Information:</strong> OS version, Python version, CalypsoPy+ version</li>
+                    <li><strong>Hardware Details:</strong> Atlas 3 model, firmware versions, connected devices</li>
+                    <li><strong>Error Description:</strong> Detailed description of the problem</li>
+                    <li><strong>Log Files:</strong> Relevant log file excerpts or complete logs</li>
+                    <li><strong>Reproduction Steps:</strong> Steps to reproduce the issue</li>
+                </ul>
+
+                <div class="info-box info">
+                    <span class="icon"></span>
+                    <strong>Support Contacts:</strong> Refer to your Atlas 3 documentation for specific technical support contact information and procedures.
+                </div>
+            </section>
+
+            <!-- Advanced Features Section -->
+            <section id="advanced-features" class="section">
+                <h2>⚙️ Advanced Features</h2>
+
+                <h3 id="api-integration">API Integration</h3>
+                <p>CalypsoPy+ provides RESTful APIs for integration with external systems, automation frameworks, and custom applications.</p>
+
+                <h4>API Endpoints</h4>
+                <p>Comprehensive API coverage for all major functionality:</p>
+
+                <h5>Device Management</h5>
+                <div class="code-block">
+GET  /api/device/status         # Get device status
+POST /api/device/connect        # Connect to device
+POST /api/device/disconnect     # Disconnect from device
+GET  /api/device/info          # Get device information
+GET  /api/device/firmware      # Get firmware versions
+                </div>
+
+                <h5>Configuration Management</h5>
+                <div class="code-block">
+GET  /api/config               # Get current configuration
+POST /api/config               # Update configuration
+GET  /api/config/bifurcation   # Get bifurcation mode
+POST /api/config/bifurcation   # Set bifurcation mode
+                </div>
+
+                <h5>Testing Operations</h5>
+                <div class="code-block">
+POST /api/test/start           # Start test execution
+GET  /api/test/status          # Get test status
+GET  /api/test/results         # Get test results
+POST /api/test/cancel          # Cancel running test
+                </div>
+
+                <h5>Analytics and Data</h5>
+                <div class="code-block">
+GET  /api/analytics/performance # Get performance data
+GET  /api/analytics/health     # Get device health data
+GET  /api/analytics/export     # Export analytics data
+POST /api/analytics/report     # Generate custom report
+                </div>
+
+                <h4>Authentication and Security</h4>
+                <ul>
+                    <li><strong>API Key Authentication:</strong> Secure API access with generated keys</li>
+                    <li><strong>Role-Based Access:</strong> Different permission levels for API operations</li>
+                    <li><strong>Rate Limiting:</strong> Prevent API abuse with configurable limits</li>
+                    <li><strong>HTTPS Support:</strong> Encrypted API communications</li>
+                </ul>
+
+                <h4>Example API Usage</h4>
+                <div class="code-block">
+# Python example: Get device status
+import requests
+
+api_key = "your_api_key_here"
+headers = {"Authorization": f"Bearer {api_key}"}
+
+response = requests.get(
+    "http://localhost:5000/api/device/status",
+    headers=headers
+)
+
+if response.status_code == 200:
+    status = response.json()
+    print(f"Device connected: {status['connected']}")
+    print(f"Firmware version: {status['firmware']['mcu']}")
+                </div>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: API documentation interface showing available endpoints and examples</div>
+                </div>
+
+                <h3 id="scripting">Scripting and Automation</h3>
+                <p>Advanced scripting capabilities for automated testing, configuration management, and monitoring:</p>
+
+                <h4>Python Scripting Interface</h4>
+                <p>Direct Python access to CalypsoPy+ functionality:</p>
+
+                <div class="code-block">
+# Example: Automated test execution script
+from app import CalypsoPyManager
+from tests.test_runner import TestRunner
+
+# Initialize manager and connect to device
+manager = CalypsoPyManager()
+manager.connect_device("COM3")
+
+# Run performance test suite
+test_runner = TestRunner()
+results = test_runner.run_performance_tests()
+
+# Export results
+test_runner.export_results(results, "results.csv")
+
+# Disconnect
+manager.disconnect_device()
+                </div>
+
+                <h4>Configuration Scripts</h4>
+                <p>Automate device configuration for different use cases:</p>
+
+                <div class="code-block">
+# Example: Configuration deployment script
+def deploy_test_configuration():
+    """Deploy standardized test configuration"""
+    
+    # Set bifurcation mode for testing
+    manager.execute_command("setmode 3")  # x4+x4+x4+x4
+    
+    # Save configuration
+    manager.execute_command("saveconfig")
+    
+    # Verify configuration
+    response = manager.execute_command("showmode")
+    assert "Mode 3" in response
+    
+    print("Test configuration deployed successfully")
+                </div>
+
+                <h4>Monitoring Scripts</h4>
+                <p>Continuous monitoring and alerting automation:</p>
+
+                <div class="code-block">
+# Example: Health monitoring script
+import time
+from datetime import datetime
+
+def monitor_device_health():
+    """Continuous device health monitoring"""
+    
+    while True:
+        # Get device status
+        status = manager.get_device_status()
+        
+        # Check for error conditions
+        if status['error_count'] > threshold:
+            send_alert(f"Error threshold exceeded: {status['error_count']}")
+        
+        # Check temperature
+        if status['temperature'] > max_temp:
+            send_alert(f"Temperature warning: {status['temperature']}°C")
+        
+        # Log status
+        log_health_data(status)
+        
+        time.sleep(60)  # Check every minute
+                </div>
+
+                <h3 id="advanced-configuration-management">Advanced Configuration Management</h3>
+                <p>Sophisticated configuration management for complex deployments:</p>
+
+                <h4>Configuration Profiles</h4>
+                <ul>
+                    <li><strong>Profile Templates:</strong> Predefined configurations for common use cases</li>
+                    <li><strong>Environment-Specific:</strong> Different profiles for dev/test/production</li>
+                    <li><strong>Version Control:</strong> Track configuration changes over time</li>
+                    <li><strong>Rollback Capability:</strong> Quickly revert to previous configurations</li>
+                </ul>
+
+                <h4>Bulk Configuration Management</h4>
+                <p>Manage multiple devices with centralized configuration:</p>
+
+                <div class="code-block">
+# Example: Multi-device configuration script
+devices = [
+    {"name": "atlas3-dev-01", "port": "COM3"},
+    {"name": "atlas3-dev-02", "port": "COM4"},
+    {"name": "atlas3-test-01", "port": "COM5"}
+]
+
+for device in devices:
+    manager = CalypsoPyManager()
+    manager.connect_device(device["port"])
+    
+    # Apply standard configuration
+    apply_configuration_profile(manager, "development")
+    
+    # Verify configuration
+    verify_configuration(manager, "development")
+    
+    manager.disconnect_device()
+    print(f"Configured {device['name']} successfully")
+                </div>
+
+                <h4>Configuration Validation</h4>
+                <ul>
+                    <li><strong>Pre-deployment Validation:</strong> Test configurations before applying</li>
+                    <li><strong>Compatibility Checking:</strong> Verify firmware and hardware compatibility</li>
+                    <li><strong>Dependency Resolution:</strong> Ensure all required components are configured</li>
+                    <li><strong>Compliance Verification:</strong> Check against organizational standards</li>
+                </ul>
+
+                <h4>Remote Management</h4>
+                <p>Manage CalypsoPy+ deployments remotely:</p>
+
+                <ul>
+                    <li><strong>Web-based Interface:</strong> Remote access through web browser</li>
+                    <li><strong>SSH Tunneling:</strong> Secure remote access to local installations</li>
+                    <li><strong>RESTful APIs:</strong> Programmatic remote management</li>
+                    <li><strong>Status Dashboards:</strong> Centralized monitoring of multiple installations</li>
+                </ul>
+
+                <h4>Integration Examples</h4>
+
+                <h5>Jenkins CI/CD Integration</h5>
+                <div class="code-block">
+# Jenkinsfile example for automated testing
+pipeline {
+    agent any
+    
+    stages {
+        stage('Hardware Test') {
+            steps {
+                script {
+                    // Run CalypsoPy+ tests
+                    sh 'python tests/test_runner.py --automated'
+                    
+                    // Export results
+                    sh 'python scripts/export_results.py --format junit'
+                    
+                    // Archive results
+                    archiveArtifacts artifacts: 'test_results/**'
+                }
+            }
+        }
+    }
+}
+                </div>
+
+                <h5>Grafana Dashboard Integration</h5>
+                <div class="code-block">
+# InfluxDB integration for Grafana dashboards
+from influxdb import InfluxDBClient
+
+def publish_metrics_to_influxdb():
+    """Publish performance metrics to InfluxDB"""
+    
+    client = InfluxDBClient(host='localhost', port=8086, database='calypso')
+    
+    # Get performance data
+    performance = manager.get_performance_data()
+    
+    # Format for InfluxDB
+    points = [
+        {
+            "measurement": "throughput",
+            "fields": {
+                "read_mbps": performance['read_throughput'],
+                "write_mbps": performance['write_throughput']
+            },
+            "time": datetime.utcnow()
+        }
+    ]
+    
+    client.write_points(points)
+                </div>
+
+                <div class="screenshot-placeholder">
+                    <div class="icon">📸</div>
+                    <div class="description">Screenshot: Advanced configuration management interface showing profiles, validation, and deployment options</div>
+                </div>
+
+                <div class="info-box success">
+                    <span class="icon"></span>
+                    <strong>Enterprise Features:</strong> Contact support for information about enterprise-grade features including centralized management, advanced reporting, and custom integrations.
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const searchClear = document.getElementById('searchClear');
+        const searchResults = document.getElementById('searchResults');
+        const tocLinks = document.querySelectorAll('.toc-link');
+        const sections = document.querySelectorAll('.section');
+
+        // Search implementation
+        function performSearch(query) {
+            if (!query.trim()) {
+                searchResults.style.display = 'none';
+                clearHighlights();
+                return;
+            }
+
+            const results = [];
+            sections.forEach(section => {
+                const text = section.textContent.toLowerCase();
+                if (text.includes(query.toLowerCase())) {
+                    const title = section.querySelector('h2, h3, h4')?.textContent || 'Section';
+                    results.push({
+                        title: title,
+                        id: section.id,
+                        element: section
+                    });
+                }
+            });
+
+            displaySearchResults(results, query);
+            highlightSearchTerms(query);
+        }
+
+        function displaySearchResults(results, query) {
+            searchResults.innerHTML = '';
+            
+            if (results.length === 0) {
+                searchResults.innerHTML = '<div class="search-result">No results found</div>';
+            } else {
+                results.forEach(result => {
+                    const div = document.createElement('div');
+                    div.className = 'search-result';
+                    div.textContent = result.title;
+                    div.onclick = () => {
+                        scrollToSection(result.id);
+                        searchResults.style.display = 'none';
+                    };
+                    searchResults.appendChild(div);
+                });
+            }
+            
+            searchResults.style.display = 'block';
+        }
+
+        function highlightSearchTerms(query) {
+            clearHighlights();
+            
+            const regex = new RegExp(`(${query})`, 'gi');
+            sections.forEach(section => {
+                const walker = document.createTreeWalker(
+                    section,
+                    NodeFilter.SHOW_TEXT,
+                    null,
+                    false
+                );
+
+                const textNodes = [];
+                let node;
+                while (node = walker.nextNode()) {
+                    textNodes.push(node);
+                }
+
+                textNodes.forEach(textNode => {
+                    if (regex.test(textNode.textContent)) {
+                        const span = document.createElement('span');
+                        span.innerHTML = textNode.textContent.replace(regex, '<span class="search-highlight">$1</span>');
+                        textNode.parentNode.replaceChild(span, textNode);
+                    }
+                });
+            });
+        }
+
+        function clearHighlights() {
+            document.querySelectorAll('.search-highlight').forEach(highlight => {
+                const parent = highlight.parentNode;
+                parent.replaceChild(document.createTextNode(highlight.textContent), highlight);
+                parent.normalize();
+            });
+        }
+
+        // Event listeners
+        searchInput.addEventListener('input', (e) => {
+            performSearch(e.target.value);
+        });
+
+        searchClear.addEventListener('click', () => {
+            searchInput.value = '';
+            searchResults.style.display = 'none';
+            clearHighlights();
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'f') {
+                e.preventDefault();
+                searchInput.focus();
+            }
+            if (e.key === 'Escape') {
+                searchInput.value = '';
+                searchResults.style.display = 'none';
+                clearHighlights();
+            }
+        });
+
+        // Click outside to close search results
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-box')) {
+                searchResults.style.display = 'none';
+            }
+        });
+
+        // Table of contents functionality
+        function scrollToSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth' });
+                updateActiveLink(sectionId);
+            }
+        }
+
+        function updateActiveLink(activeSectionId) {
+            tocLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${activeSectionId}`) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        // Smooth scrolling for TOC links
+        tocLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = link.getAttribute('href').substring(1);
+                scrollToSection(sectionId);
+            });
+        });
+
+        // Submenu toggle functionality
+        function toggleSubmenu(button) {
+            const submenu = button.parentNode.querySelector('.toc-submenu');
+            submenu.classList.toggle('expanded');
+            button.textContent = submenu.classList.contains('expanded') ? '▲' : '▼';
+        }
+
+        // Scroll spy to highlight current section
+        function handleScroll() {
+            const scrollPosition = window.scrollY + 200;
+            
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                const sectionTop = rect.top + window.scrollY;
+                const sectionBottom = sectionTop + rect.height;
+                
+                if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
+                    updateActiveLink(section.id);
+                }
+            });
+        }
+
+        window.addEventListener('scroll', handleScroll);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Expand Getting Started by default
+            const firstToggle = document.querySelector('.toc-toggle');
+            if (firstToggle) {
+                toggleSubmenu(firstToggle);
+            }
+            
+            // Set initial active link
+            handleScroll();
+        });
+
+        // Print functionality
+        function printManual() {
+            window.print();
+        }
+
+        // Mobile menu toggle (for responsive design)
+        function toggleMobileMenu() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('mobile-open');
+        }
+    </script>
+</body>
+</html>
