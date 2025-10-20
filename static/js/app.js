@@ -12,6 +12,7 @@ let currentDashboard = 'connection';
 let currentPort = null;
 let isConnected = false;
 let isDeveloperMode = false;
+let lastSysinfoData = null;
 let systemMetrics = {
     totalCommands: 0,
     successfulCommands: 0,
@@ -713,7 +714,7 @@ class LinkStatusDashboard {
                     const activeGroupPorts = group.ports.filter(p => p.status && p.status.toLowerCase() !== 'idle');
                     activePorts += activeGroupPorts.length;
                     
-                    // Find Golden Finger port status
+                    // Find Golden Finger port for speed display
                     if (group.name && group.name.includes('Gold Finger') && activeGroupPorts.length > 0) {
                         goldenFingerPort = activeGroupPorts[0]; // Should only be one golden finger port
                     }
@@ -737,7 +738,7 @@ class LinkStatusDashboard {
         if (totalPortsEl) totalPortsEl.textContent = totalPorts;
         if (activePortsEl) activePortsEl.textContent = activePorts;
         if (goldenFingerStatusEl) {
-            goldenFingerStatusEl.textContent = goldenFingerPort ? goldenFingerPort.status : 'Idle';
+            goldenFingerStatusEl.textContent = goldenFingerPort ? goldenFingerPort.current_speed : '--';
         }
         if (maxSpeedEl) {
             maxSpeedEl.textContent = activePorts > 0 ? maxSpeedDetected : '--';
@@ -773,10 +774,21 @@ class LinkStatusDashboard {
                     overlay.style.display = 'none';
                     overlay.classList.remove('has-connection');
                 } else {
-                    // Show overlay and set as active
+                    // Show overlay and set indicator based on port statuses
                     overlay.style.display = 'block';
                     overlay.classList.add('has-connection');
-                    indicator.className = 'port-status-indicator active';
+                    
+                    // Check if any ports have 'Connected' status specifically
+                    const hasConnectedPorts = group.ports.some(p => p.status && p.status.toLowerCase() === 'connected');
+                    const hasActivePorts = group.ports.some(p => p.status && p.status.toLowerCase() === 'active');
+                    
+                    if (hasConnectedPorts) {
+                        indicator.className = 'port-status-indicator connected';
+                    } else if (hasActivePorts) {
+                        indicator.className = 'port-status-indicator active';
+                    } else {
+                        indicator.className = 'port-status-indicator active'; // Default for any non-idle ports
+                    }
                 }
                 
                 // Update connected devices display only for active ports
@@ -862,16 +874,28 @@ class LinkStatusDashboard {
                     <div class="port-detail-item">
                         <div class="port-detail-header">
                             <span class="port-detail-name">Port ${port.port_number}</span>
-                            <span class="port-detail-status ${this.getStatusClass(port.status)}">
+                            <span class="port-detail-status ${this.getStatusClass(port.status)} ${port.status && port.status.toLowerCase() === 'connected' ? 'connected-tooltip' : ''}">
                                 ${port.status || 'Unknown'}
                             </span>
                         </div>
                         ${port.status && port.status.toLowerCase() !== 'idle' ? `
                             <div class="port-detail-specs">
-                                <span class="port-spec">Speed: ${port.current_speed || '--'}</span>
-                                <span class="port-spec">Width: x${port.current_width || 0}</span>
-                                <span class="port-spec">Max Speed: ${port.max_speed || '--'}</span>
-                                <span class="port-spec">Max Width: x${port.max_width || 0}</span>
+                                <div class="port-spec">
+                                    <span class="port-spec-label">Speed</span>
+                                    <span class="port-spec-value speed">${port.current_speed || '--'}</span>
+                                </div>
+                                <div class="port-spec">
+                                    <span class="port-spec-label">Width</span>
+                                    <span class="port-spec-value width">x${port.current_width || 0}</span>
+                                </div>
+                                <div class="port-spec">
+                                    <span class="port-spec-label">Max Speed</span>
+                                    <span class="port-spec-value speed">${port.max_speed || '--'}</span>
+                                </div>
+                                <div class="port-spec">
+                                    <span class="port-spec-label">Max Width</span>
+                                    <span class="port-spec-value width">x${port.max_width || 0}</span>
+                                </div>
                             </div>
                         ` : ''}
                     </div>
@@ -886,7 +910,8 @@ class LinkStatusDashboard {
         if (!status) return 'idle';
         const statusLower = status.toLowerCase();
         if (statusLower === 'idle') return 'idle';
-        if (statusLower.includes('active') || statusLower.includes('connected')) return 'active';
+        if (statusLower === 'connected') return 'connected';
+        if (statusLower.includes('active')) return 'active';
         if (statusLower.includes('error') || statusLower.includes('fail')) return 'error';
         return 'idle';
     }
@@ -1091,6 +1116,9 @@ function parseSysinfoData(parsedData) {
         return;
     }
 
+    // Store the data globally for export functionality
+    lastSysinfoData = parsedData;
+
     const deviceInfo = parsedData.device_info;
     const thermalData = parsedData.thermal_data || {};
     const voltageRails = parsedData.voltage_rails || [];
@@ -1225,12 +1253,13 @@ function parseSysinfoData(parsedData) {
                         
                         // Clean any ANSI codes from status
                         const cleanStatus = port.status ? port.status.replace(/\x1b\[[0-9;]*m/g, '') : 'Unknown';
+                        const tooltipClass = cleanStatus.toLowerCase() === 'connected' ? 'connected-tooltip' : '';
                         
                         portItem.innerHTML = `
                             <div class="port-label">${port.connector || 'N/A'} | Port ${port.port_number || 'N/A'}</div>
                             <div class="port-speed">${port.current_speed || 'N/A'} x${port.current_width || 0}</div>
                             <div class="port-max">Max: ${port.max_speed || 'N/A'} x${port.max_width || 0}</div>
-                            <div class="port-status active">${cleanStatus}</div>
+                            <div class="port-status active ${tooltipClass}">${cleanStatus}</div>
                         `;
                         portGrid.appendChild(portItem);
                     });
@@ -1345,35 +1374,163 @@ function exportDeviceInfo() {
     const filename = `CalypsoPy_DeviceInfo_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.txt`;
 
     let reportContent = '';
-    reportContent += '='.repeat(60) + '\n';
-    reportContent += 'CalypsoPy+ Device Information Report\n';
+    reportContent += '='.repeat(80) + '\n';
+    reportContent += 'CalypsoPy+ Comprehensive Device Information Report\n';
     reportContent += 'Generated by Serial Cables Professional Interface\n';
-    reportContent += '='.repeat(60) + '\n';
+    reportContent += '='.repeat(80) + '\n';
     reportContent += `Report Generated: ${timestamp}\n`;
     reportContent += `Connection Port: ${currentPort || 'Unknown'}\n`;
     reportContent += `Connection Settings: 115200-8-N-1\n`;
     reportContent += '\n';
 
+    // Export comprehensive sysinfo data if available
+    if (lastSysinfoData) {
+        const data = lastSysinfoData;
+        
+        // Device Information
+        if (data.device_info) {
+            reportContent += 'DEVICE INFORMATION\n';
+            reportContent += '-'.repeat(40) + '\n';
+            reportContent += `Company: ${data.device_info.company || 'Unknown'}\n`;
+            reportContent += `Model: ${data.device_info.model || 'Unknown'}\n`;
+            reportContent += `Serial Number: ${data.device_info.serial_number || 'Unknown'}\n`;
+            reportContent += `MCU Version: ${data.device_info.mcu_version || 'Unknown'}\n`;
+            reportContent += `MCU Build Time: ${data.device_info.mcu_build_time || 'Unknown'}\n`;
+            reportContent += `SBR Version: ${data.device_info.sbr_version || 'Unknown'}\n`;
+            reportContent += '\n';
+        }
+
+        // Thermal Status
+        if (data.thermal_data && Object.keys(data.thermal_data).length > 0) {
+            reportContent += 'THERMAL STATUS\n';
+            reportContent += '-'.repeat(40) + '\n';
+            if (data.thermal_data.switch_temperature) {
+                reportContent += `Switch Temperature: ${data.thermal_data.switch_temperature.value}°C (Status: ${data.thermal_data.switch_temperature.status})\n`;
+            }
+            if (data.thermal_data.fan_speed) {
+                reportContent += `Fan Speed: ${data.thermal_data.fan_speed.value} ${data.thermal_data.fan_speed.unit} (Status: ${data.thermal_data.fan_speed.status})\n`;
+            }
+            reportContent += '\n';
+        }
+
+        // Voltage Rails
+        if (data.voltage_rails && data.voltage_rails.length > 0) {
+            reportContent += 'VOLTAGE RAILS\n';
+            reportContent += '-'.repeat(40) + '\n';
+            data.voltage_rails.forEach(rail => {
+                reportContent += `${rail.rail_name}: ${rail.measured_voltage_v}V (Nominal: ${rail.nominal_voltage}V, Tolerance: ${rail.tolerance_percent}%, Status: ${rail.status})\n`;
+            });
+            reportContent += '\n';
+        }
+
+        // Power Consumption
+        if (data.power_consumption && Object.keys(data.power_consumption).length > 0) {
+            reportContent += 'POWER CONSUMPTION\n';
+            reportContent += '-'.repeat(40) + '\n';
+            if (data.power_consumption.power_voltage) {
+                reportContent += `Power Voltage: ${data.power_consumption.power_voltage.value}V\n`;
+            }
+            if (data.power_consumption.load_current) {
+                reportContent += `Load Current: ${data.power_consumption.load_current.value}A (${data.power_consumption.load_current.current_ma}mA)\n`;
+            }
+            if (data.power_consumption.load_power) {
+                reportContent += `Load Power: ${data.power_consumption.load_power.value}W\n`;
+            }
+            reportContent += '\n';
+        }
+
+        // Port Configuration
+        if (data.port_summary && Object.keys(data.port_summary).length > 0) {
+            reportContent += 'PORT CONFIGURATION\n';
+            reportContent += '-'.repeat(40) + '\n';
+            if (data.port_summary.atlas3_version) {
+                reportContent += `Atlas3 Chip Version: ${data.port_summary.atlas3_version}\n`;
+            }
+            reportContent += `Total Ports: ${data.port_summary.total_ports || 0}\n`;
+            reportContent += `Active Ports: ${data.port_summary.active_ports || 0}\n`;
+            reportContent += '\n';
+
+            // Active Port Details
+            const addPortDetails = (ports, sectionName) => {
+                if (ports && ports.length > 0) {
+                    const activePorts = ports.filter(port => 
+                        port.status && port.status.toLowerCase() !== 'idle' && port.is_active
+                    );
+                    if (activePorts.length > 0) {
+                        reportContent += `${sectionName}:\n`;
+                        activePorts.forEach(port => {
+                            const cleanStatus = port.status ? port.status.replace(/\x1b\[[0-9;]*m/g, '') : 'Unknown';
+                            reportContent += `  ${port.connector || 'N/A'} | Port ${port.port_number}: ${port.current_speed} x${port.current_width} (Max: ${port.max_speed} x${port.max_width}) - ${cleanStatus}\n`;
+                        });
+                        reportContent += '\n';
+                    }
+                }
+            };
+
+            addPortDetails(data.port_summary.upstream_ports, 'Upstream Ports');
+            addPortDetails(data.port_summary.ext_mcio_ports, 'EXT MCIO Ports');
+            addPortDetails(data.port_summary.int_mcio_ports, 'INT MCIO Ports');
+            addPortDetails(data.port_summary.straddle_ports, 'Straddle Ports');
+        }
+
+        // Clock Status
+        if (data.clock_status && Object.keys(data.clock_status).length > 0) {
+            reportContent += 'CLOCK STATUS\n';
+            reportContent += '-'.repeat(40) + '\n';
+            reportContent += `PCIe Straddle Clock: ${data.clock_status.pcie_straddle_clock ? 'Enabled' : 'Disabled'}\n`;
+            reportContent += `EXT MCIO Clock: ${data.clock_status.ext_mcio_clock ? 'Enabled' : 'Disabled'}\n`;
+            reportContent += `INT MCIO Clock: ${data.clock_status.int_mcio_clock ? 'Enabled' : 'Disabled'}\n`;
+            reportContent += '\n';
+        }
+
+        // Spread Status
+        if (data.spread_status && Object.keys(data.spread_status).length > 0) {
+            reportContent += 'SPREAD SPECTRUM STATUS\n';
+            reportContent += '-'.repeat(40) + '\n';
+            reportContent += `Status: ${data.spread_status.status || 'Unknown'}\n`;
+            reportContent += `Enabled: ${data.spread_status.enabled ? 'Yes' : 'No'}\n`;
+            reportContent += '\n';
+        }
+
+        // BIST Results
+        if (data.bist_results && data.bist_results.devices && data.bist_results.devices.length > 0) {
+            reportContent += 'BUILT-IN SELF TEST (BIST) RESULTS\n';
+            reportContent += '-'.repeat(40) + '\n';
+            reportContent += `Total Devices: ${data.bist_results.total_devices || 0}\n`;
+            reportContent += `Passed: ${data.bist_results.passed_devices || 0}\n`;
+            reportContent += `Failed: ${data.bist_results.failed_devices || 0}\n`;
+            reportContent += '\nDevice Details:\n';
+            data.bist_results.devices.forEach(device => {
+                const cleanStatus = device.status.replace(/\x1b\[[0-9;]*m/g, '');
+                reportContent += `  ${device.channel} | ${device.device} | ${device.address} | ${cleanStatus}\n`;
+            });
+            reportContent += '\n';
+        }
+    } else {
+        reportContent += 'No device information available. Please run "sysinfo" command first.\n\n';
+    }
+
+    // Additional dashboard data
     if (linkStatusDashboard && linkStatusDashboard.portData) {
-        reportContent += 'LINK STATUS\n';
-        reportContent += '-'.repeat(30) + '\n';
+        reportContent += 'LINK STATUS SUMMARY\n';
+        reportContent += '-'.repeat(40) + '\n';
         reportContent += `Summary: ${linkStatusDashboard.getStatusSummary()}\n`;
         reportContent += '\n';
     }
 
     if (bifurcationDashboard && bifurcationDashboard.currentMode !== null) {
         reportContent += 'PCIE BIFURCATION\n';
-        reportContent += '-'.repeat(30) + '\n';
+        reportContent += '-'.repeat(40) + '\n';
         reportContent += `Current SBR Mode: ${bifurcationDashboard.currentMode}\n`;
         reportContent += `Configuration: ${bifurcationDashboard.getStatusSummary()}\n`;
         reportContent += '\n';
     }
 
-    reportContent += '='.repeat(60) + '\n';
-    reportContent += 'End of CalypsoPy+ Device Report\n';
+    reportContent += '='.repeat(80) + '\n';
+    reportContent += 'End of CalypsoPy+ Comprehensive Device Report\n';
     reportContent += `Report File: ${filename}\n`;
     reportContent += 'Visit: https://serial-cables.com for more information\n';
-    reportContent += '='.repeat(60) + '\n';
+    reportContent += '='.repeat(80) + '\n';
 
     const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
     const url = window.URL.createObjectURL(blob);

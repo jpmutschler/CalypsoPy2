@@ -4,9 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fc3e30f9-c418-4920-a510-76a20644706b" name="Changes" comment="Parsing engine and details added">
-      <change afterPath="$PROJECT_DIR$/temp/showport.txt" afterDir="false" />
+    <list default="true" id="fc3e30f9-c418-4920-a510-76a20644706b" name="Changes" comment="Link Status formatting updates">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CLAUDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/CLAUDE.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlas3_parser.py" beforeDir="false" afterPath="$PROJECT_DIR$/atlas3_parser.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/logs/calypso_py.log" beforeDir="false" afterPath="$PROJECT_DIR$/logs/calypso_py.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/css/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/static/css/styles.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/js/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/js/app.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -115,7 +119,7 @@
       <workItem from="1760486924033" duration="1821000" />
       <workItem from="1760623535737" duration="1591000" />
       <workItem from="1760731352418" duration="11457000" />
-      <workItem from="1760977989062" duration="7850000" />
+      <workItem from="1760977989062" duration="14207000" />
     </task>
     <task id="LOCAL-00001" summary="Initial Push of CalypsoPy+">
       <option name="closed" value="true" />
@@ -477,7 +481,15 @@
       <option name="project" value="LOCAL" />
       <updated>1760984238195</updated>
     </task>
-    <option name="localTasksCounter" value="46" />
+    <task id="LOCAL-00046" summary="Link Status formatting updates">
+      <option name="closed" value="true" />
+      <created>1760987156322</created>
+      <option name="number" value="00046" />
+      <option name="presentableId" value="LOCAL-00046" />
+      <option name="project" value="LOCAL" />
+      <updated>1760987156322</updated>
+    </task>
+    <option name="localTasksCounter" value="47" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -495,7 +507,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Link Status Added" />
     <MESSAGE value="Debug" />
     <MESSAGE value="Firmware Update Dashboard Implementation" />
     <MESSAGE value="Link Status dashboard" />
@@ -520,10 +531,11 @@
     <MESSAGE value="COM Device debug" />
     <MESSAGE value="New MCU FW parsing debug. Fixed sysinfo and showport" />
     <MESSAGE value="Parsing engine and details added" />
-    <option name="LAST_COMMIT_MESSAGE" value="Parsing engine and details added" />
+    <MESSAGE value="Link Status formatting updates" />
+    <option name="LAST_COMMIT_MESSAGE" value="Link Status formatting updates" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/CalypsoPy_$start.coverage" NAME="start Coverage Results" MODIFIED="1760983520266" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/CalypsoPy_$start.coverage" NAME="start Coverage Results" MODIFIED="1760991953786" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/CalypsoPy_$COMportTest.coverage" NAME="COMportTest Coverage Results" MODIFIED="1758721173617" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

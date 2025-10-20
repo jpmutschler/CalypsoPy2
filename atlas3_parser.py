@@ -433,10 +433,10 @@ class Atlas3Parser:
                         status = 'Idle'
                         is_active = False
                     elif width_info['lanes'] > 0 and speed_info['speed_gts'] > 0:
-                        # Check if running below max capability (degraded)
+                        # Check if running below max capability (connected at reduced speed/width)
                         if (speed_info['speed_gts'] < max_speed_info['speed_gts'] or 
                             width_info['lanes'] < max_width_info['lanes']):
-                            status = 'Degraded'
+                            status = 'Connected'
                         else:
                             status = 'Active'
                         is_active = True
@@ -487,9 +487,9 @@ class Atlas3Parser:
                         status = 'Idle'
                         is_active = False
                     elif width_info['lanes'] > 0 and speed_info['speed_gts'] > 0:
-                        # Check if running below max capability (degraded)
+                        # Check if running below max capability (connected at reduced width)
                         if width_info['lanes'] < max_width:
-                            status = 'Degraded'
+                            status = 'Connected'
                         else:
                             status = 'Active'
                         is_active = True
@@ -522,6 +522,11 @@ class Atlas3Parser:
                 max_speed = port_match.group(5)
                 max_width = int(port_match.group(6))
                 status = port_match.group(7)
+                
+                # Clean ANSI escape sequences from status and translate terminology
+                status = re.sub(r'\x1b\[[0-9;]*m', '', status).strip()
+                if status.lower() == 'degraded':
+                    status = 'Connected'
                 
                 port_data = {
                     'connector': connector,
@@ -668,6 +673,13 @@ class Atlas3Parser:
                     max_width = int(port_match.group(6))
                     status = port_match.group(7)
                     
+                    # Clean ANSI escape sequences from status
+                    status = re.sub(r'\x1b\[[0-9;]*m', '', status).strip()
+                    
+                    # Translate hardware status terminology
+                    if status.lower() == 'degraded':
+                        status = 'Connected'
+                    
                     # Filter out ports with Gen1 & Width: 0 (no device connected)
                     # Only include status for these ports
                     is_connected = not (speed == 'Gen1' and width == 0)
@@ -721,15 +733,15 @@ class Atlas3Parser:
                     
                     # Determine status based on speed/width patterns
                     # If speed is Gen1 and width is 0, it's definitely Idle
-                    # If speed > Gen1 and width > 0, it's likely Active or Degraded
+                    # If speed > Gen1 and width > 0, it's likely Active or Connected
                     if speed_info['generation'] == 'Gen1' and width_info['lanes'] == 0:
                         status = 'Idle'
                         is_active = False
                     elif width_info['lanes'] > 0 and speed_info['speed_gts'] > 0:
-                        # Check if running below max capability (degraded)
+                        # Check if running below max capability (connected at reduced speed/width)
                         if (speed_info['speed_gts'] < max_speed_info['speed_gts'] or 
                             width_info['lanes'] < max_width_info['lanes']):
-                            status = 'Degraded'
+                            status = 'Connected'
                         else:
                             status = 'Active'
                         is_active = True
@@ -785,9 +797,9 @@ class Atlas3Parser:
                         status = 'Idle'
                         is_active = False
                     elif width_info['lanes'] > 0 and speed_info['speed_gts'] > 0:
-                        # Check if running below max capability (degraded)
+                        # Check if running below max capability (connected at reduced width)
                         if width_info['lanes'] < max_width:
-                            status = 'Degraded'
+                            status = 'Connected'
                         else:
                             status = 'Active'
                         is_active = True

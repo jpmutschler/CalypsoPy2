@@ -6991,14 +6991,14 @@ Testing Dashboard Styles
     justify-content: center;
     align-items: center;
     margin-bottom: 20px;
-    min-height: 600px;
-    padding: 200px 40px;
+    min-height: 550px;
+    padding: 60px 30px;
 }
 
 .hostcard-image {
     width: 90%;
     height: auto;
-    max-width: 700px;
+    max-width: 800px;
     max-height: 500px;
     object-fit: contain;
     border-radius: 8px;
@@ -7222,6 +7222,11 @@ Testing Dashboard Styles
     animation: pulse-red 2s ease-in-out infinite;
 }
 
+.port-status-indicator.connected {
+    background: #28a745;
+    animation: pulse-green 2s ease-in-out infinite;
+}
+
 @keyframes pulse-green {
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.7; transform: scale(1.1); }
@@ -7337,13 +7342,39 @@ Testing Dashboard Styles
 }
 
 .port-spec {
-    font-size: 10px;
-    padding: 2px 6px;
-    background: #f8fafc;
-    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    font-size: 11px;
+    text-align: center;
+    min-width: 60px;
+}
+
+.port-spec-label {
     color: var(--secondary-gray);
     font-weight: 500;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.port-spec-value {
+    color: var(--dark-black);
+    font-weight: 700;
     font-family: 'Monaco', monospace;
+    font-size: 12px;
+}
+
+.port-spec-value.speed {
+    color: var(--primary-red);
+}
+
+.port-spec-value.width {
+    color: #2563eb;
 }
 
 .port-detail-item:last-child {
@@ -7377,6 +7408,58 @@ Testing Dashboard Styles
 .port-detail-status.error {
     background: #f8d7da;
     color: #721c24;
+}
+
+.port-detail-status.connected {
+    background: #d4edda;
+    color: #155724;
+}
+
+/* Tooltip styles for Connected status */
+.connected-tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.connected-tooltip::after {
+    content: "Device is connected but running at less than maximum speed or width capability";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+    z-index: 1000;
+    pointer-events: none;
+    margin-bottom: 5px;
+}
+
+.connected-tooltip::before {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.9);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.connected-tooltip:hover::after,
+.connected-tooltip:hover::before {
+    opacity: 1;
+    visibility: visible;
 }
 
 /* Atlas 3 version display */
@@ -7436,11 +7519,12 @@ Testing Dashboard Styles
     }
     
     .card-image-container {
-        min-height: 300px;
+        min-height: 400px;
+        padding: 40px 20px;
     }
     
     .hostcard-image {
-        max-height: 300px;
+        max-height: 400px;
     }
 }
 
@@ -7480,11 +7564,12 @@ Testing Dashboard Styles
     }
     
     .card-image-container {
-        min-height: 250px;
+        min-height: 350px;
+        padding: 30px 15px;
     }
     
     .hostcard-image {
-        max-height: 250px;
+        max-height: 350px;
     }
 }
 
@@ -7492,7 +7577,7 @@ Testing Dashboard Styles
 .physical-layout-card {
     width: 100%;
     margin-bottom: 25px;
-    min-height: 500px;
+    min-height: 450px;
 }
 
 .port-groups-card {

@@ -134,3 +134,4 @@ Each dashboard has specialized command handling:
 - **Non-Disableable Safety**: Device filtering checkboxes are permanently enabled for system stability
 - **Device Exclusion Display**: UI clearly shows which devices are excluded and why
 - Make sure to update the __init__.py file to adjust for newly added Python scripts
+- Update Readme.md and the User's Manual with all new changes
