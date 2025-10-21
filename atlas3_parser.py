@@ -45,6 +45,10 @@ class Atlas3Parser:
             return self.parse_showport(raw_response)
         elif self.last_command.startswith('showmode'):
             return self.parse_showmode(raw_response)
+        elif self.last_command == 'clk':
+            return self.parse_clk(raw_response)
+        elif self.last_command == 'spread':
+            return self.parse_spread(raw_response)
         elif self.last_command.startswith('mr '):
             return self.parse_memory_read(raw_response, command)
         elif self.last_command.startswith('mw '):
@@ -895,7 +899,25 @@ class Atlas3Parser:
     
     def parse_showmode(self, raw_response: str) -> Dict[str, Any]:
         """Parse showmode command for bifurcation status"""
-        return {'command': 'showmode', 'success': True, 'data': 'Not implemented yet'}
+        parsed = {
+            'command': 'showmode',
+            'success': True,
+            'timestamp': self.parse_timestamp.isoformat(),
+            'firmware_config': None,
+            'raw_response': raw_response
+        }
+        
+        try:
+            # Extract SBR mode number
+            mode_match = re.search(r'SBR\s+mode:\s*(\d+)', raw_response, re.IGNORECASE)
+            if mode_match:
+                parsed['firmware_config'] = int(mode_match.group(1))
+        except Exception as e:
+            logger.error(f"Error parsing showmode response: {e}")
+            parsed['success'] = False
+            parsed['error'] = str(e)
+        
+        return parsed
     
     def parse_memory_read(self, raw_response: str, command: str) -> Dict[str, Any]:
         """Parse memory read (mr) command response"""
@@ -912,6 +934,91 @@ class Atlas3Parser:
     def parse_dump_port(self, raw_response: str, command: str) -> Dict[str, Any]:
         """Parse dump port (dp) command response"""
         return {'command': 'dump_port', 'success': True, 'data': 'Not implemented yet'}
+    
+    def parse_clk(self, raw_response: str) -> Dict[str, Any]:
+        """Parse clk command for REFCLK status"""
+        parsed = {
+            'command': 'clk',
+            'success': True,
+            'timestamp': self.parse_timestamp.isoformat(),
+            'refclk_status': raw_response,
+            'port_groups': [],
+            'raw_response': raw_response
+        }
+        
+        try:
+            # Parse port group status
+            lines = raw_response.split('\n')
+            for line in lines:
+                match = re.search(r'Port Group (\d+):\s*(\w+)', line, re.IGNORECASE)
+                if match:
+                    group_num = int(match.group(1))
+                    status = match.group(2).lower()
+                    parsed['port_groups'].append({
+                        'group': group_num,
+                        'status': status,
+                        'enabled': status == 'enabled'
+                    })
+        except Exception as e:
+            logger.error(f"Error parsing clk response: {e}")
+            parsed['success'] = False
+            parsed['error'] = str(e)
+        
+        return parsed
+    
+    def parse_spread(self, raw_response: str) -> Dict[str, Any]:
+        """Parse spread command for SSC spread spectrum status"""
+        parsed = {
+            'command': 'spread',
+            'success': True,
+            'timestamp': self.parse_timestamp.isoformat(),
+            'ssc_spread': raw_response,
+            'spread_enabled': False,
+            'spread_percentage': None,
+            'modulation_frequency': None,
+            'pcie6x_compliance': None,
+            'spread_type': None,
+            'raw_response': raw_response
+        }
+        
+        try:
+            lines = raw_response.split('\n')
+            for line in lines:
+                line = line.strip()
+                
+                # Parse Spread Spectrum Clocking status
+                if 'Spread Spectrum Clocking:' in line:
+                    status = line.split(':', 1)[1].strip().upper()
+                    parsed['spread_enabled'] = status == 'ENABLED'
+                
+                # Parse Spread Percentage
+                elif 'Spread Percentage:' in line:
+                    percentage_match = re.search(r'([+-]?[\d.]+)%', line)
+                    if percentage_match:
+                        parsed['spread_percentage'] = percentage_match.group(1)
+                
+                # Parse Modulation Frequency
+                elif 'Modulation Frequency:' in line:
+                    freq_match = re.search(r'([\d.]+)\s*(\w+)', line.split(':', 1)[1])
+                    if freq_match:
+                        parsed['modulation_frequency'] = f"{freq_match.group(1)} {freq_match.group(2)}"
+                
+                # Parse PCIe 6.x Compliance
+                elif 'PCIe 6.x Compliance:' in line:
+                    compliance = line.split(':', 1)[1].strip().upper()
+                    parsed['pcie6x_compliance'] = compliance
+                
+                # Parse Spread Type
+                elif 'Spread Type:' in line:
+                    spread_type = line.split(':', 1)[1].strip()
+                    parsed['spread_type'] = spread_type
+                    
+        except Exception as e:
+            logger.error(f"Error parsing spread response: {e}")
+            parsed['success'] = False
+            parsed['error'] = str(e)
+        
+        return parsed
     
     def parse_generic(self, raw_response: str, command: str) -> Dict[str, Any]:
         """Generic parser for unknown commands"""

@@ -481,21 +481,47 @@ class ClockDashboard {
     }
 
     handleShowModeResponse(data) {
-        if (data.parsed?.firmware_config !== undefined) {
-            this.firmwareConfig = data.parsed.firmware_config;
+        // Handle both old format (data.parsed.firmware_config) and new Atlas3Parser format (data.firmware_config)
+        const firmwareConfig = data.parsed?.firmware_config ?? data.firmware_config;
+        if (firmwareConfig !== undefined) {
+            this.firmwareConfig = firmwareConfig;
             this.updateFirmwareDisplay();
         }
     }
 
     handleClkResponse(data) {
-        if (data.parsed?.refclk_status) {
-            this.parseRefclkStatus(data.parsed.refclk_status);
+        // Handle both old format (data.parsed.refclk_status) and new Atlas3Parser format
+        const refclkStatus = data.parsed?.refclk_status ?? data.refclk_status;
+        const portGroups = data.port_groups; // New structured format from Atlas3Parser
+        
+        if (portGroups && Array.isArray(portGroups)) {
+            // Use the new structured format
+            this.refclkData = portGroups;
+            this.updateRefclkGrid();
+            this.updateRefclkStatus();
+        } else if (refclkStatus) {
+            // Fallback to old parsing method
+            this.parseRefclkStatus(refclkStatus);
         }
     }
 
     handleSpreadResponse(data) {
-        if (data.parsed?.ssc_spread) {
-            this.parseSSCSpread(data.parsed.ssc_spread);
+        // Handle both old format (data.parsed.ssc_spread) and new Atlas3Parser format
+        const sscSpread = data.parsed?.ssc_spread ?? data.ssc_spread;
+        
+        if (data.spread_enabled !== undefined) {
+            // Use new structured format from Atlas3Parser
+            this.sscData = {
+                enabled: data.spread_enabled,
+                percentage: data.spread_percentage,
+                frequency: data.modulation_frequency,
+                compliance: data.pcie6x_compliance,
+                type: data.spread_type
+            };
+            this.updateSSCDisplay();
+        } else if (sscSpread) {
+            // Fallback to old parsing method
+            this.parseSSCSpread(sscSpread);
         }
     }
 

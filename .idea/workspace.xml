@@ -4,13 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fc3e30f9-c418-4920-a510-76a20644706b" name="Changes" comment="Link Status formatting updates">
+    <list default="true" id="fc3e30f9-c418-4920-a510-76a20644706b" name="Changes" comment="Clock Dashboard">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/logs/calypso_py.log" beforeDir="false" afterPath="$PROJECT_DIR$/logs/calypso_py.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/css/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/static/css/styles.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/js/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/js/app.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atlas3_parser.py" beforeDir="false" afterPath="$PROJECT_DIR$/atlas3_parser.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -118,7 +114,8 @@
       <workItem from="1760486924033" duration="1821000" />
       <workItem from="1760623535737" duration="1591000" />
       <workItem from="1760731352418" duration="11457000" />
-      <workItem from="1760977989062" duration="16831000" />
+      <workItem from="1760977989062" duration="18304000" />
+      <workItem from="1761060349091" duration="3247000" />
     </task>
     <task id="LOCAL-00001" summary="Initial Push of CalypsoPy+">
       <option name="closed" value="true" />
@@ -496,7 +493,15 @@
       <option name="project" value="LOCAL" />
       <updated>1760995676301</updated>
     </task>
-    <option name="localTasksCounter" value="48" />
+    <task id="LOCAL-00048" summary="Clock Dashboard">
+      <option name="closed" value="true" />
+      <created>1760998331429</created>
+      <option name="number" value="00048" />
+      <option name="presentableId" value="LOCAL-00048" />
+      <option name="project" value="LOCAL" />
+      <updated>1760998331429</updated>
+    </task>
+    <option name="localTasksCounter" value="49" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -514,7 +519,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Debug" />
     <MESSAGE value="Firmware Update Dashboard Implementation" />
     <MESSAGE value="Link Status dashboard" />
     <MESSAGE value="Resets dashboard" />
@@ -539,7 +543,8 @@
     <MESSAGE value="New MCU FW parsing debug. Fixed sysinfo and showport" />
     <MESSAGE value="Parsing engine and details added" />
     <MESSAGE value="Link Status formatting updates" />
-    <option name="LAST_COMMIT_MESSAGE" value="Link Status formatting updates" />
+    <MESSAGE value="Clock Dashboard" />
+    <option name="LAST_COMMIT_MESSAGE" value="Clock Dashboard" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/CalypsoPy_$start.coverage" NAME="start Coverage Results" MODIFIED="1760997351251" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
