@@ -516,7 +516,8 @@ class PCIeDiscovery:
         topology = {
             'bridges': [],
             'endpoints': [],
-            'atlas3_devices': []
+            'atlas3_devices': [],
+            'nvme_devices': []
         }
 
         # Run lspci command
@@ -525,7 +526,7 @@ class PCIeDiscovery:
             logger.warning("lspci command failed")
             return topology
 
-        # Parse lspci output to find Atlas 3 devices
+        # Parse lspci output to find Atlas 3 devices and NVMe controllers
         current_device = {}
         for line in output.split('\n'):
             if line and not line.startswith('\t') and not line.startswith(' '):
@@ -540,7 +541,8 @@ class PCIeDiscovery:
                         'address': parts[0],
                         'type': parts[1],
                         'description': parts[2] if len(parts) > 2 else '',
-                        'details': []
+                        'details': [],
+                        'raw_line': line
                     }
                 else:
                     current_device = {}
@@ -557,14 +559,131 @@ class PCIeDiscovery:
     def _categorize_device(self, device: Dict[str, Any], topology: Dict[str, Any]):
         """Categorize a PCIe device"""
         desc = device.get('description', '').lower()
+        device_type = device.get('type', '').lower()
         
-        # Check if it's an Atlas 3 device (you may need to adjust the criteria)
-        if 'atlas' in desc or 'serial cables' in desc:
-            topology['atlas3_devices'].append(device)
-        elif 'bridge' in device.get('type', '').lower():
-            topology['bridges'].append(device)
+        # Check if it's an Atlas 3 device (Broadcom/LSI Device c040)
+        if ('broadcom' in desc and 'device c040' in desc) or ('lsi' in desc and 'device c040' in desc):
+            # This is an Atlas 3 switch device
+            atlas3_device = {
+                'address': device['address'],
+                'type': device_type,
+                'description': device['description'],
+                'vendor': 'Broadcom/LSI',
+                'device_id': 'c040',
+                'is_atlas3_switch': True,
+                'details': self._extract_device_details(device)
+            }
+            topology['atlas3_devices'].append(atlas3_device)
+        elif 'non-volatile memory controller' in desc or 'nvme' in desc:
+            # This is an NVMe controller
+            nvme_device = {
+                'address': device['address'],
+                'type': device_type,
+                'description': device['description'],
+                'vendor': self._extract_vendor(device['description']),
+                'is_nvme_controller': True,
+                'details': self._extract_device_details(device)
+            }
+            topology['nvme_devices'].append(nvme_device)
+        elif 'bridge' in device_type:
+            # PCIe Bridge
+            bridge_device = {
+                'address': device['address'],
+                'type': device_type,
+                'description': device['description'],
+                'is_atlas3_related': ('broadcom' in desc and 'device c040' in desc) or ('lsi' in desc and 'device c040' in desc),
+                'details': self._extract_device_details(device)
+            }
+            topology['bridges'].append(bridge_device)
         else:
-            topology['endpoints'].append(device)
+            # Other endpoint device
+            endpoint_device = {
+                'address': device['address'],
+                'type': device_type,
+                'description': device['description'],
+                'details': self._extract_device_details(device)
+            }
+            topology['endpoints'].append(endpoint_device)
+
+    def _extract_vendor(self, description: str) -> str:
+        """Extract vendor name from device description"""
+        if 'micron' in description.lower():
+            return 'Micron Technology Inc'
+        elif 'samsung' in description.lower():
+            return 'Samsung'
+        elif 'intel' in description.lower():
+            return 'Intel'
+        elif 'western digital' in description.lower() or 'wd' in description.lower():
+            return 'Western Digital'
+        elif 'seagate' in description.lower():
+            return 'Seagate'
+        elif 'broadcom' in description.lower():
+            return 'Broadcom'
+        elif 'lsi' in description.lower():
+            return 'LSI/Broadcom'
+        else:
+            # Try to extract first part before colon
+            parts = description.split(':')
+            if len(parts) > 1:
+                return parts[0].strip()
+            return 'Unknown'
+    
+    def _extract_device_details(self, device: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract structured details from lspci device output"""
+        details = {
+            'link_speed': None,
+            'link_width': None,
+            'max_link_speed': None,
+            'max_link_width': None,
+            'capabilities': [],
+            'kernel_driver': None,
+            'subsystem': None
+        }
+        
+        for line in device.get('details', []):
+            line_lower = line.lower()
+            
+            # Extract link status information
+            if 'lnksta:' in line_lower:
+                # Parse link status: "LnkSta: Speed 32GT/s (downgraded), Width x16"
+                speed_match = re.search(r'speed\s+([0-9.]+gt/s)', line_lower)
+                if speed_match:
+                    details['link_speed'] = speed_match.group(1)
+                
+                width_match = re.search(r'width\s+x(\d+)', line_lower)
+                if width_match:
+                    details['link_width'] = int(width_match.group(1))
+            
+            # Extract link capabilities
+            elif 'lnkcap:' in line_lower:
+                # Parse link capabilities: "LnkCap: Port #32, Speed 64GT/s, Width x16"
+                speed_match = re.search(r'speed\s+([0-9.]+gt/s)', line_lower)
+                if speed_match:
+                    details['max_link_speed'] = speed_match.group(1)
+                
+                width_match = re.search(r'width\s+x(\d+)', line_lower)
+                if width_match:
+                    details['max_link_width'] = int(width_match.group(1))
+            
+            # Extract kernel driver
+            elif 'kernel driver in use:' in line_lower:
+                driver_match = re.search(r'kernel driver in use:\s*(\S+)', line_lower)
+                if driver_match:
+                    details['kernel_driver'] = driver_match.group(1)
+            
+            # Extract subsystem
+            elif 'subsystem:' in line_lower:
+                subsystem_match = re.search(r'subsystem:\s*(.+)', line_lower)
+                if subsystem_match:
+                    details['subsystem'] = subsystem_match.group(1).strip()
+            
+            # Extract capabilities
+            elif 'capabilities:' in line_lower:
+                cap_match = re.search(r'capabilities:\s*\[.*?\]\s*(.+)', line_lower)
+                if cap_match:
+                    details['capabilities'].append(cap_match.group(1).strip())
+        
+        return details
 
     def run_discovery_test(self) -> Dict[str, Any]:
         """
@@ -589,16 +708,32 @@ class PCIeDiscovery:
             topology = self.discover_pcie_topology()
             result['topology'] = topology
 
+            # Count Atlas 3 related bridges (all bridges with Broadcom/LSI Device c040)
+            atlas3_bridge_count = sum(1 for bridge in topology['bridges'] if bridge.get('is_atlas3_related', False))
+            
             # Summary
             result['summary'] = {
-                'bridge_count': len(topology['bridges']),
-                'endpoint_count': len(topology['endpoints']),
-                'atlas3_device_count': len(topology['atlas3_devices'])
+                'total_bridge_count': len(topology['bridges']),
+                'atlas3_bridge_count': atlas3_bridge_count,
+                'atlas3_switch_count': len(topology['atlas3_devices']),
+                'nvme_controller_count': len(topology['nvme_devices']),
+                'other_endpoint_count': len(topology['endpoints'])
             }
 
-            if not topology['atlas3_devices']:
+            # Validation checks
+            if not topology['atlas3_devices'] and atlas3_bridge_count == 0:
                 result['warnings'].append("No Atlas 3 devices detected in PCIe topology")
                 result['status'] = 'warning'
+            else:
+                result['atlas3_detected'] = True
+                
+                # Log discovered devices
+                if topology['atlas3_devices']:
+                    logger.info(f"Found {len(topology['atlas3_devices'])} Atlas 3 switch device(s)")
+                if atlas3_bridge_count > 0:
+                    logger.info(f"Found {atlas3_bridge_count} Atlas 3 bridge(s)")
+                if topology['nvme_devices']:
+                    logger.info(f"Found {len(topology['nvme_devices'])} NVMe controller(s) downstream")
 
         except Exception as e:
             logger.error(f"PCIe discovery test failed: {e}")

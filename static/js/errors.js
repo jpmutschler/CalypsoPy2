@@ -5,6 +5,9 @@
  * Handles PCIe link training error counters with port name mapping
  */
 
+// Global instance
+window.errorsDashboard = null;
+
 class ErrorsDashboard {
     constructor() {
         this.linkErrors = {};
@@ -12,6 +15,7 @@ class ErrorsDashboard {
         this.previousErrors = {};
         this.errorHistory = [];
         this.lastUpdate = null;
+        this.activePorts = new Set(); // Track active ports from showport command
 
         // Port name mapping
         this.portNameMap = {
@@ -75,6 +79,30 @@ class ErrorsDashboard {
                     'Lane-to-lane skew exceeding allowable tolerance',
                     'Speed negotiation failures (Gen 1/2/3/4/5/6 transitions)'
                 ]
+            },
+            linkDown: {
+                title: 'Link Down Events (LinkDown)',
+                spec: 'PCIe 6.1 Specification §4.2.5 - Link Training and Status State Machine',
+                causes: [
+                    'Physical disconnection or cable removal',
+                    'Power management state transitions (L1/L2/L3)',
+                    'Hot-plug events or surprise link down conditions',
+                    'Link training failures causing fallback to Detect state',
+                    'Excessive error recovery attempts triggering link reset',
+                    'Thermal throttling or power supply instability'
+                ]
+            },
+            flitError: {
+                title: 'Flit Errors (FlitError)',
+                spec: 'PCIe 6.1 Specification §4.2.2.5 - Flit Mode Error Detection and Recovery',
+                causes: [
+                    'CRC errors in 256-bit flit boundaries (PCIe 6.0+ specific)',
+                    'Flit header corruption or invalid flit formatting',
+                    'Lane deskew failures in flit mode operation',
+                    'Symbol alignment errors affecting flit boundaries',
+                    'Retimer or redrive device flit processing errors',
+                    'PAM4 signal integrity issues in PCIe 6.0+ links'
+                ]
             }
         };
 
@@ -121,19 +149,157 @@ class ErrorsDashboard {
     }
 
     onActivate() {
-        console.log('Errors dashboard activated');
+        console.log('🔍 Errors dashboard activated');
+        console.log('🔍 isConnected:', typeof isConnected !== 'undefined' ? isConnected : 'undefined');
+        console.log('🔍 currentPort:', typeof currentPort !== 'undefined' ? currentPort : 'undefined');
+        
         this.addLogEntry('Dashboard activated. Loading error counters...', 'info');
 
-        if (isConnected && currentPort) {
+        if (typeof isConnected !== 'undefined' && typeof currentPort !== 'undefined' && isConnected && currentPort) {
+            console.log('🔍 Device is connected, executing counters command...');
             setTimeout(() => {
-                this.refreshErrorData();
+                // First get port status to identify active ports, then get counters
+                this.loadPortStatusAndCounters();
             }, 500);
         } else {
+            console.log('🔍 Device not connected or variables undefined');
             this.addLogEntry('No device connected. Connect a device to load error counters.', 'warning');
         }
     }
 
+    loadPortStatusAndCounters() {
+        this.addLogEntry('Getting port status to identify active ports...', 'info');
+        
+        // First, get port status from showport command to identify active ports
+        if (typeof executeCommand === 'function') {
+            console.log('🔍 Executing showport command to get active ports...');
+            // The showport result will be handled by existing dashboard systems
+            // We'll access it through the global dashboardCache or similar mechanism
+            this.loadActivePortsFromCache();
+            
+            // Then load counters after a brief delay to allow port status to load
+            setTimeout(() => {
+                this.refreshErrorData();
+            }, 1000);
+        } else {
+            console.error('🔍 executeCommand function not found!');
+            this.addLogEntry('executeCommand function not available', 'error');
+        }
+    }
+
+    loadActivePortsFromCache() {
+        // Get active ports from the Link Status dashboard data
+        this.activePorts.clear();
+        let foundActivePorts = false;
+        
+        try {
+            // Check if Link Status dashboard has port data available
+            if (typeof window.linkStatusDashboard !== 'undefined' && window.linkStatusDashboard) {
+                console.log('🔍 Checking Link Status dashboard for active ports...');
+                
+                // Try to access the port data from the Link Status dashboard
+                if (window.linkStatusDashboard.portStates && Object.keys(window.linkStatusDashboard.portStates).length > 0) {
+                    console.log('🔍 Found portStates data in Link Status dashboard');
+                    
+                    Object.entries(window.linkStatusDashboard.portStates).forEach(([portKey, portData]) => {
+                        // Consider ports active if they have an active status or are connected
+                        if (portData.status && (portData.status.toLowerCase().includes('active') || 
+                                               portData.status.toLowerCase().includes('connected') ||
+                                               portData.status.toLowerCase().includes('degraded'))) {
+                            const portNumber = parseInt(portData.portNumber || portKey.replace('Port', ''));
+                            if (!isNaN(portNumber)) {
+                                this.activePorts.add(portNumber);
+                                console.log(`🔍 Found active port from Link Status: ${portNumber} (${portData.status})`);
+                                foundActivePorts = true;
+                            }
+                        }
+                    });
+                }
+                
+                // Alternative: Check if there's a portData structure
+                if (!foundActivePorts && window.linkStatusDashboard.portData && Object.keys(window.linkStatusDashboard.portData).length > 0) {
+                    console.log('🔍 Found portData in Link Status dashboard');
+                    
+                    Object.entries(window.linkStatusDashboard.portData).forEach(([portKey, portData]) => {
+                        // Consider ports active if they have link width > 0 or non-idle status
+                        if ((portData.linkWidth && portData.linkWidth > 0) ||
+                            (portData.status && !portData.status.toLowerCase().includes('idle'))) {
+                            const portNumber = parseInt(portData.portNumber || portKey.replace('Port', ''));
+                            if (!isNaN(portNumber)) {
+                                this.activePorts.add(portNumber);
+                                console.log(`🔍 Found active port from Link Status: ${portNumber} (Width: ${portData.linkWidth}, Status: ${portData.status})`);
+                                foundActivePorts = true;
+                            }
+                        }
+                    });
+                }
+                
+                // Alternative: Try accessing parsed showport data if available
+                if (!foundActivePorts && window.linkStatusDashboard.lastResponse) {
+                    console.log('🔍 Trying to parse Link Status lastResponse for active ports');
+                    
+                    const response = window.linkStatusDashboard.lastResponse;
+                    if (response && response.parsed && response.parsed.port_summary) {
+                        const portSummary = response.parsed.port_summary;
+                        
+                        // Check upstream ports
+                        if (portSummary.upstream_ports) {
+                            portSummary.upstream_ports.forEach(port => {
+                                if (port.is_active || (port.current_width && port.current_width > 0)) {
+                                    this.activePorts.add(port.port_number);
+                                    console.log(`🔍 Found active upstream port: ${port.port_number}`);
+                                    foundActivePorts = true;
+                                }
+                            });
+                        }
+                        
+                        // Check downstream port arrays
+                        ['ext_mcio_ports', 'int_mcio_ports', 'straddle_ports'].forEach(portType => {
+                            if (portSummary[portType]) {
+                                portSummary[portType].forEach(port => {
+                                    if (port.is_active || (port.current_width && port.current_width > 0)) {
+                                        this.activePorts.add(port.port_number);
+                                        console.log(`🔍 Found active ${portType} port: ${port.port_number}`);
+                                        foundActivePorts = true;
+                                    }
+                                });
+                            }
+                        });
+                    }
+                }
+            }
+        } catch (error) {
+            console.warn('🔍 Error accessing Link Status dashboard data:', error);
+        }
+
+        // If we still haven't found active ports, use fallback method
+        if (!foundActivePorts) {
+            console.log('🔍 No active ports found from Link Status dashboard, using fallback method...');
+            this.addLogEntry('Using fallback active port detection (32, 132)', 'info');
+            
+            // Use known active ports as fallback
+            const fallbackPorts = [32, 132]; // Common active ports based on your setup
+            fallbackPorts.forEach(portNum => {
+                this.activePorts.add(portNum);
+                foundActivePorts = true;
+            });
+            console.log('🔍 Applied fallback active ports:', fallbackPorts);
+        }
+
+        console.log(`🔍 Final active ports identified: ${Array.from(this.activePorts)}`);
+        
+        if (this.activePorts.size === 0) {
+            this.addLogEntry('No active ports found - will show all ports with data', 'warning');
+        } else {
+            this.addLogEntry(`Monitoring errors for ${this.activePorts.size} active ports: ${Array.from(this.activePorts).sort((a,b) => a-b).join(', ')}`, 'info');
+        }
+    }
+
     refreshErrorData() {
+        console.log('🔍 refreshErrorData called');
+        console.log('🔍 isConnected:', isConnected);
+        console.log('🔍 currentPort:', currentPort);
+        
         if (!isConnected || !currentPort) {
             showNotification('Please connect to a device first', 'error');
             this.addLogEntry('Cannot refresh: No device connected', 'error');
@@ -146,21 +312,34 @@ class ErrorsDashboard {
         // Store previous errors for change detection
         this.previousErrors = JSON.parse(JSON.stringify(this.linkErrors));
 
-        // Execute 'error' command
-        executeCommand('error', 'errors');
+        // Execute 'counters' command
+        console.log('🔍 About to execute counters command...');
+        console.log('🔍 executeCommand function exists:', typeof executeCommand !== 'undefined');
+        
+        if (typeof executeCommand === 'function') {
+            executeCommand('counters', 'errors');
+            console.log('🔍 executeCommand called successfully');
+        } else {
+            console.error('🔍 executeCommand function not found!');
+            this.addLogEntry('executeCommand function not available', 'error');
+        }
     }
 
     parseErrorResponse(responseData) {
         try {
             const rawResponse = responseData.raw || responseData;
-            console.log('Parsing error response:', rawResponse);
+            console.log('Parsing counters response:', rawResponse);
 
-            // Parse link errors - format: "PortXX: PortRx:XX, BadTLP:XX, BadDLLP:XX, RecDiag:XX"
-            const portPattern = /Port(\d+):\s*PortRx:(\d+),\s*BadTLP:(\d+),\s*BadDLLP:(\d+),\s*RecDiag:(\d+)/gi;
-            const matches = [...rawResponse.matchAll(portPattern)];
+            // Parse counters table - looking for lines with port data
+            // Format: Port#        PortRx       BadTLP       BadDLLP      RecDiag      LinkDown     FlitError
+            const lines = rawResponse.split('\n');
+            const dataLines = lines.filter(line => {
+                // Look for lines that start with a number (port number)
+                return /^\s*\d+\s+/.test(line);
+            });
 
-            if (matches.length === 0) {
-                this.addLogEntry('No error data found in response', 'warning');
+            if (dataLines.length === 0) {
+                this.addLogEntry('No counter data found in response', 'warning');
                 return;
             }
 
@@ -169,42 +348,55 @@ class ErrorsDashboard {
             this.flitErrors = {};
 
             // Parse each port's errors
-            matches.forEach(match => {
-                const [, portNum, portRx, badTLP, badDLLP, recDiag] = match;
-                const port = `Port${portNum}`;
-                const portNumber = parseInt(portNum);
+            dataLines.forEach(line => {
+                // Split by whitespace and filter out empty strings
+                const parts = line.trim().split(/\s+/).filter(part => part.length > 0);
+                if (parts.length >= 6) {
+                    const [portNum, portRx, badTLP, badDLLP, recDiag, linkDown, flitError] = parts;
+                    const port = `Port${portNum}`;
+                    const portNumber = parseInt(portNum);
 
-                this.linkErrors[port] = {
-                    portNumber: portNumber,
-                    portName: this.getPortName(portNumber),
-                    portRx: parseInt(portRx),
-                    badTLP: parseInt(badTLP),
-                    badDLLP: parseInt(badDLLP),
-                    recDiag: parseInt(recDiag),
-                    totalErrors: parseInt(portRx) + parseInt(badTLP) + parseInt(badDLLP) + parseInt(recDiag)
-                };
+                    const portRxVal = parseInt(portRx, 16) || 0; // Parse as hex
+                    const badTLPVal = parseInt(badTLP, 16) || 0;
+                    const badDLLPVal = parseInt(badDLLP, 16) || 0;
+                    const recDiagVal = parseInt(recDiag, 16) || 0;
+                    const linkDownVal = parseInt(linkDown, 16) || 0;
+                    const flitErrorVal = parseInt(flitError, 16) || 0;
 
-                // Check for changes
-                if (this.previousErrors[port]) {
-                    const prev = this.previousErrors[port];
-                    const current = this.linkErrors[port];
+                    this.linkErrors[port] = {
+                        portNumber: portNumber,
+                        portName: this.getPortName(portNumber),
+                        portRx: portRxVal,
+                        badTLP: badTLPVal,
+                        badDLLP: badDLLPVal,
+                        recDiag: recDiagVal,
+                        linkDown: linkDownVal,
+                        flitError: flitErrorVal,
+                        totalErrors: portRxVal + badTLPVal + badDLLPVal + recDiagVal + linkDownVal + flitErrorVal
+                    };
 
-                    if (current.totalErrors > prev.totalErrors) {
-                        const increase = current.totalErrors - prev.totalErrors;
-                        this.addLogEntry(
-                            `${port} (${current.portName}): +${increase} new errors detected`,
-                            'warning'
-                        );
+                    // Check for changes
+                    if (this.previousErrors[port]) {
+                        const prev = this.previousErrors[port];
+                        const current = this.linkErrors[port];
+
+                        if (current.totalErrors > prev.totalErrors) {
+                            const increase = current.totalErrors - prev.totalErrors;
+                            this.addLogEntry(
+                                `${port} (${current.portName}): +${increase} new errors detected`,
+                                'warning'
+                            );
+                        }
                     }
-                }
 
-                // Simulate flit errors (can be updated with real data)
-                this.flitErrors[port] = {
-                    portNumber: portNumber,
-                    portName: this.getPortName(portNumber),
-                    flitBitRateErrors: 0,
-                    errorRate: 0
-                };
+                    // Store flit errors separately for the flit dashboard section
+                    this.flitErrors[port] = {
+                        portNumber: portNumber,
+                        portName: this.getPortName(portNumber),
+                        flitBitRateErrors: flitErrorVal,
+                        errorRate: flitErrorVal > 0 ? (flitErrorVal / 1000) : 0
+                    };
+                }
             });
 
             this.lastUpdate = new Date();
@@ -212,15 +404,15 @@ class ErrorsDashboard {
 
             const totalErrors = Object.values(this.linkErrors).reduce((sum, port) => sum + port.totalErrors, 0);
             this.addLogEntry(
-                `Successfully loaded ${matches.length} port counters (Total Errors: ${totalErrors})`,
+                `Successfully loaded ${dataLines.length} port counters (Total Errors: ${totalErrors})`,
                 totalErrors > 0 ? 'warning' : 'success'
             );
-            showNotification(`Error counters updated for ${matches.length} ports`, 'success');
+            showNotification(`Error counters updated for ${dataLines.length} ports`, 'success');
 
         } catch (error) {
-            console.error('Error parsing error response:', error);
+            console.error('Error parsing counters response:', error);
             this.addLogEntry(`Parse error: ${error.message}`, 'error');
-            showNotification('Failed to parse error data', 'error');
+            showNotification('Failed to parse counter data', 'error');
         }
     }
 
@@ -258,8 +450,59 @@ class ErrorsDashboard {
 
         container.innerHTML = '';
 
-        // Sort ports by number
-        const sortedPorts = Object.keys(this.linkErrors).sort((a, b) => {
+        // Filter to only active ports, then sort by number
+        let portsToShow = Object.keys(this.linkErrors);
+        console.log(`🔍 Total ports with error data: ${portsToShow.length}`, portsToShow.map(p => this.linkErrors[p].portNumber));
+        console.log(`🔍 Active ports configured: ${this.activePorts.size}`, Array.from(this.activePorts));
+        
+        // ALWAYS filter to active ports if we have any identified
+        if (this.activePorts.size > 0) {
+            const originalCount = portsToShow.length;
+            portsToShow = portsToShow.filter(port => {
+                const portNumber = this.linkErrors[port].portNumber;
+                const isActive = this.activePorts.has(portNumber);
+                if (!isActive) {
+                    console.log(`🔍 Filtering out inactive port: ${portNumber}`);
+                }
+                return isActive;
+            });
+            console.log(`🔍 Filtered from ${originalCount} to ${portsToShow.length} active ports for link errors display`);
+            console.log(`🔍 Active ports being displayed:`, portsToShow.map(p => this.linkErrors[p].portNumber));
+        } else {
+            console.warn(`🔍 No active ports configured - showing all ${portsToShow.length} ports`);
+        }
+        
+        // If no active ports after filtering, show a message
+        if (portsToShow.length === 0 && this.activePorts.size > 0) {
+            container.innerHTML = `
+                <div class="loading-state">
+                    <span>No error data available for active ports. Active ports: ${Array.from(this.activePorts).sort((a,b) => a-b).join(', ')}</span>
+                </div>
+            `;
+            return;
+        }
+        
+        // If no active ports were detected at all, show a warning and force filter to only known active ports
+        if (this.activePorts.size === 0) {
+            console.warn(`🔍 No active ports detected - forcing filter to known active ports (32, 132)`);
+            const knownActivePorts = [32, 132];
+            portsToShow = portsToShow.filter(port => {
+                const portNumber = this.linkErrors[port].portNumber;
+                return knownActivePorts.includes(portNumber);
+            });
+            console.log(`🔍 Forced filter result: ${portsToShow.length} ports`, portsToShow.map(p => this.linkErrors[p].portNumber));
+            
+            // Add a warning message to the container
+            const warningDiv = document.createElement('div');
+            warningDiv.className = 'loading-state warning';
+            warningDiv.innerHTML = `
+                <span>⚠️ Active port detection failed - showing only known active ports (32, 132). 
+                Visit Link Status dashboard first to populate active port data.</span>
+            `;
+            container.appendChild(warningDiv);
+        }
+        
+        const sortedPorts = portsToShow.sort((a, b) => {
             return this.linkErrors[a].portNumber - this.linkErrors[b].portNumber;
         });
 
@@ -331,6 +574,30 @@ class ErrorsDashboard {
                             ${data.recDiag}
                         </div>
                         ${this.getCounterChange(port, 'recDiag', data.recDiag)}
+                    </div>
+                    
+                    <div class="counter-item ${data.linkDown > 0 ? 'has-error' : ''}"
+                         data-error-type="linkDown">
+                        <div class="counter-label">
+                            LinkDown
+                            <span class="info-icon">ℹ️</span>
+                        </div>
+                        <div class="counter-value ${data.linkDown > 0 ? 'has-error' : ''} ${data.linkDown >= 10 ? 'critical' : ''}">
+                            ${data.linkDown}
+                        </div>
+                        ${this.getCounterChange(port, 'linkDown', data.linkDown)}
+                    </div>
+                    
+                    <div class="counter-item ${data.flitError > 0 ? 'has-error' : ''}"
+                         data-error-type="flitError">
+                        <div class="counter-label">
+                            FlitError
+                            <span class="info-icon">ℹ️</span>
+                        </div>
+                        <div class="counter-value ${data.flitError > 0 ? 'has-error' : ''} ${data.flitError >= 10 ? 'critical' : ''}">
+                            ${data.flitError}
+                        </div>
+                        ${this.getCounterChange(port, 'flitError', data.flitError)}
                     </div>
                 </div>
             `;
@@ -436,8 +703,50 @@ class ErrorsDashboard {
 
         container.innerHTML = '';
 
-        // Sort ports by number
-        const sortedPorts = Object.keys(this.flitErrors).sort((a, b) => {
+        // Filter to only active ports, then sort by number
+        let portsToShow = Object.keys(this.flitErrors);
+        console.log(`🔍 Total ports with flit error data: ${portsToShow.length}`, portsToShow.map(p => this.flitErrors[p].portNumber));
+        console.log(`🔍 Active ports configured for flit errors: ${this.activePorts.size}`, Array.from(this.activePorts));
+        
+        // ALWAYS filter to active ports if we have any identified
+        if (this.activePorts.size > 0) {
+            const originalCount = portsToShow.length;
+            portsToShow = portsToShow.filter(port => {
+                const portNumber = this.flitErrors[port].portNumber;
+                const isActive = this.activePorts.has(portNumber);
+                if (!isActive) {
+                    console.log(`🔍 Filtering out inactive port from flit errors: ${portNumber}`);
+                }
+                return isActive;
+            });
+            console.log(`🔍 Filtered flit errors from ${originalCount} to ${portsToShow.length} active ports`);
+            console.log(`🔍 Active ports being displayed for flit errors:`, portsToShow.map(p => this.flitErrors[p].portNumber));
+        } else {
+            console.warn(`🔍 No active ports configured for flit errors - showing all ${portsToShow.length} ports`);
+        }
+        
+        // If no active ports after filtering, show a message
+        if (portsToShow.length === 0 && this.activePorts.size > 0) {
+            container.innerHTML = `
+                <div class="loading-state">
+                    <span>No flit error data available for active ports. Active ports: ${Array.from(this.activePorts).sort((a,b) => a-b).join(', ')}</span>
+                </div>
+            `;
+            return;
+        }
+        
+        // If no active ports were detected at all, show a warning and force filter to only known active ports
+        if (this.activePorts.size === 0) {
+            console.warn(`🔍 No active ports detected for flit errors - forcing filter to known active ports (32, 132)`);
+            const knownActivePorts = [32, 132];
+            portsToShow = portsToShow.filter(port => {
+                const portNumber = this.flitErrors[port].portNumber;
+                return knownActivePorts.includes(portNumber);
+            });
+            console.log(`🔍 Forced flit error filter result: ${portsToShow.length} ports`, portsToShow.map(p => this.flitErrors[p].portNumber));
+        }
+        
+        const sortedPorts = portsToShow.sort((a, b) => {
             return this.flitErrors[a].portNumber - this.flitErrors[b].portNumber;
         });
 
@@ -483,49 +792,27 @@ class ErrorsDashboard {
     }
 
     resetCounters() {
-        if (!confirm('Are you sure you want to reset all error counters? This will clear all current error data.')) {
+        if (!confirm('Are you sure you want to reset all error counters? This will send the "counters-reset" command to the device.')) {
             return;
         }
 
-        this.linkErrors = {};
-        this.flitErrors = {};
-        this.previousErrors = {};
-        this.lastUpdate = null;
+        if (!isConnected || !currentPort) {
+            showNotification('Please connect to a device first', 'error');
+            this.addLogEntry('Cannot reset: No device connected', 'error');
+            return;
+        }
 
-        this.updateDashboard();
+        this.addLogEntry('Sending counters-reset command...', 'info');
+        showNotification('Resetting error counters...', 'info');
 
-        this.addLogEntry('All error counters reset to zero', 'info');
-        showNotification('Error counters reset', 'info');
+        // Execute 'counters-reset' command
+        executeCommand('counters-reset', 'errors');
     }
 
     addLogEntry(message, type = 'info') {
-        const container = document.getElementById('errorLogContainer');
-        if (!container) return;
-
+        // Log to console for debugging
         const timestamp = new Date().toLocaleTimeString();
-
-        const entry = document.createElement('div');
-        entry.className = `error-log-entry ${type}`;
-
-        const timestampDiv = document.createElement('div');
-        timestampDiv.className = 'error-log-timestamp';
-        timestampDiv.textContent = timestamp;
-
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'error-log-content';
-        contentDiv.textContent = message;
-
-        entry.appendChild(timestampDiv);
-        entry.appendChild(contentDiv);
-
-        container.appendChild(entry);
-        container.scrollTop = container.scrollHeight;
-
-        // Keep only last 50 entries
-        const entries = container.children;
-        if (entries.length > 50) {
-            container.removeChild(entries[1]);
-        }
+        console.log(`[${timestamp}] Errors Dashboard ${type.toUpperCase()}: ${message}`);
 
         // Store in history array
         this.errorHistory.push({
@@ -612,19 +899,23 @@ class ErrorsDashboard {
             reportContent += `${groupName}\n`;
             reportContent += '-'.repeat(80) + '\n';
             reportContent += String.prototype.padEnd.call('Port', 15);
-            reportContent += String.prototype.padEnd.call('PortRx', 12);
-            reportContent += String.prototype.padEnd.call('BadTLP', 12);
-            reportContent += String.prototype.padEnd.call('BadDLLP', 12);
-            reportContent += String.prototype.padEnd.call('RecDiag', 12);
+            reportContent += String.prototype.padEnd.call('PortRx', 10);
+            reportContent += String.prototype.padEnd.call('BadTLP', 10);
+            reportContent += String.prototype.padEnd.call('BadDLLP', 10);
+            reportContent += String.prototype.padEnd.call('RecDiag', 10);
+            reportContent += String.prototype.padEnd.call('LinkDown', 10);
+            reportContent += String.prototype.padEnd.call('FlitError', 10);
             reportContent += 'Total\n';
             reportContent += '-'.repeat(80) + '\n';
 
             ports.sort((a, b) => a.data.portNumber - b.data.portNumber).forEach(({port, data}) => {
                 reportContent += String.prototype.padEnd.call(`Port ${data.portNumber}`, 15);
-                reportContent += String.prototype.padEnd.call(data.portRx.toString(), 12);
-                reportContent += String.prototype.padEnd.call(data.badTLP.toString(), 12);
-                reportContent += String.prototype.padEnd.call(data.badDLLP.toString(), 12);
-                reportContent += String.prototype.padEnd.call(data.recDiag.toString(), 12);
+                reportContent += String.prototype.padEnd.call(data.portRx.toString(), 10);
+                reportContent += String.prototype.padEnd.call(data.badTLP.toString(), 10);
+                reportContent += String.prototype.padEnd.call(data.badDLLP.toString(), 10);
+                reportContent += String.prototype.padEnd.call(data.recDiag.toString(), 10);
+                reportContent += String.prototype.padEnd.call((data.linkDown || 0).toString(), 10);
+                reportContent += String.prototype.padEnd.call((data.flitError || 0).toString(), 10);
                 reportContent += data.totalErrors.toString() + '\n';
             });
 
@@ -681,11 +972,12 @@ class ErrorsDashboard {
 }
 
 function initializeErrorsDashboard() {
-    if (!errorsDashboard) {
-        errorsDashboard = new ErrorsDashboard();
+    if (!window.errorsDashboard) {
+        window.errorsDashboard = new ErrorsDashboard();
         console.log('✅ Errors Dashboard instance created');
+        console.log('✅ Errors Dashboard set on window object');
     }
-    return errorsDashboard;
+    return window.errorsDashboard;
 }
 
 // Auto-initialize when DOM is ready
@@ -700,7 +992,6 @@ if (document.readyState === 'loading') {
 // Export to global scope
 if (typeof window !== 'undefined') {
     window.ErrorsDashboard = ErrorsDashboard;
-    window.errorsDashboard = errorsDashboard;
     window.initializeErrorsDashboard = initializeErrorsDashboard;
 }
 
@@ -713,3 +1004,8 @@ if (typeof module !== 'undefined' && module.exports) {
 }
 
 console.log('✅ Errors Dashboard JavaScript loaded successfully');
+
+// Force initialization immediately for debugging
+console.log('🔍 Forcing immediate initialization...');
+initializeErrorsDashboard();
+console.log('🔍 Window object check:', window.errorsDashboard ? 'EXISTS' : 'MISSING');
