@@ -50,7 +50,17 @@ class NVMeDiscovery:
 
     def __init__(self):
         self.has_nvme_cli = self._check_nvme_cli()
-        self.has_root = os.geteuid() == 0
+        # Check for root/admin permissions (cross-platform)
+        try:
+            self.has_root = os.geteuid() == 0  # Unix/Linux
+        except AttributeError:
+            # Windows - check if running as administrator
+            try:
+                import ctypes
+                self.has_root = ctypes.windll.shell32.IsUserAnAdmin() != 0
+            except:
+                self.has_root = False
+        
         self.has_sudo = self._check_sudo()
         logger.info(f"NVMe Discovery initialized (nvme-cli: {self.has_nvme_cli}, "
                     f"permissions: {'root' if self.has_root else 'sudo' if self.has_sudo else 'user'})")
@@ -466,7 +476,17 @@ class PCIeDiscovery:
     """
 
     def __init__(self):
-        self.has_root = os.geteuid() == 0
+        # Check for root/admin permissions (cross-platform)
+        try:
+            self.has_root = os.geteuid() == 0  # Unix/Linux
+        except AttributeError:
+            # Windows - check if running as administrator
+            try:
+                import ctypes
+                self.has_root = ctypes.windll.shell32.IsUserAnAdmin() != 0
+            except:
+                self.has_root = False
+        
         self.has_sudo = self._check_sudo()
         self.permission_level = 'root' if self.has_root else 'sudo' if self.has_sudo else 'user'
         logger.info(f"PCIe Discovery initialized (permissions: {self.permission_level})")
@@ -517,6 +537,7 @@ class PCIeDiscovery:
             'bridges': [],
             'endpoints': [],
             'atlas3_devices': [],
+            'atlas3_switch_ports': [],
             'nvme_devices': []
         }
 
@@ -557,50 +578,96 @@ class PCIeDiscovery:
         return topology
 
     def _categorize_device(self, device: Dict[str, Any], topology: Dict[str, Any]):
-        """Categorize a PCIe device"""
+        """Categorize a PCIe device with proper Atlas 3 topology understanding"""
         desc = device.get('description', '').lower()
         device_type = device.get('type', '').lower()
+        address = device.get('address', '')
         
         # Check if it's an Atlas 3 device (Broadcom/LSI Device c040)
-        if ('broadcom' in desc and 'device c040' in desc) or ('lsi' in desc and 'device c040' in desc):
-            # This is an Atlas 3 switch device
-            atlas3_device = {
-                'address': device['address'],
-                'type': device_type,
-                'description': device['description'],
-                'vendor': 'Broadcom/LSI',
-                'device_id': 'c040',
-                'is_atlas3_switch': True,
-                'details': self._extract_device_details(device)
-            }
-            topology['atlas3_devices'].append(atlas3_device)
+        is_atlas3_device = ('broadcom' in desc and 'device c040' in desc) or ('lsi' in desc and 'device c040' in desc)
+        
+        if is_atlas3_device:
+            # Atlas 3 devices: Distinguish between root bridge and switch ports
+            if address == '01:00.0':
+                # This is the Atlas 3 Root Bridge (the actual PCI Bridge)
+                atlas3_bridge = {
+                    'address': address,
+                    'type': device_type,
+                    'description': device['description'],
+                    'vendor': 'Broadcom/LSI',
+                    'device_id': 'c040',
+                    'is_atlas3_root_bridge': True,
+                    'atlas3_component': 'root_bridge',
+                    'details': self._extract_device_details(device)
+                }
+                # Add to both atlas3_devices and set as root bridge
+                topology['atlas3_devices'].append(atlas3_bridge)
+                topology['atlas3_root_bridge'] = atlas3_bridge
+            elif address.startswith('02:') and re.match(r'02:0[0-9a-f]\.0', address):
+                # These are Atlas 3 Switch Ports (02:00.0 through 02:10.0 - placeholder/unused ports)
+                atlas3_port = {
+                    'address': address,
+                    'type': device_type,
+                    'description': device['description'],
+                    'vendor': 'Broadcom/LSI',
+                    'device_id': 'c040',
+                    'is_atlas3_switch_port': True,
+                    'atlas3_component': 'switch_port',
+                    'port_number': int(address.split(':')[1].split('.')[0], 16),  # Convert hex to decimal
+                    'details': self._extract_device_details(device)
+                }
+                topology['atlas3_devices'].append(atlas3_port)
+                
+                # Initialize switch ports list if not exists
+                if 'atlas3_switch_ports' not in topology:
+                    topology['atlas3_switch_ports'] = []
+                topology['atlas3_switch_ports'].append(atlas3_port)
+            else:
+                # Other Atlas 3 device (unexpected address)
+                atlas3_device = {
+                    'address': address,
+                    'type': device_type,
+                    'description': device['description'],
+                    'vendor': 'Broadcom/LSI',
+                    'device_id': 'c040',
+                    'is_atlas3_device': True,
+                    'atlas3_component': 'unknown',
+                    'details': self._extract_device_details(device)
+                }
+                topology['atlas3_devices'].append(atlas3_device)
         elif 'non-volatile memory controller' in desc or 'nvme' in desc:
-            # This is an NVMe controller
+            # This is an NVMe controller (downstream endpoint)
             nvme_device = {
-                'address': device['address'],
+                'address': address,
                 'type': device_type,
                 'description': device['description'],
                 'vendor': self._extract_vendor(device['description']),
                 'is_nvme_controller': True,
+                'is_downstream_endpoint': True,
                 'details': self._extract_device_details(device)
             }
             topology['nvme_devices'].append(nvme_device)
-        elif 'bridge' in device_type:
-            # PCIe Bridge
+        elif 'bridge' in desc or device_type in ['pci', 'host']:
+            # PCIe Bridge (non-Atlas 3)
             bridge_device = {
-                'address': device['address'],
+                'address': address,
                 'type': device_type,
                 'description': device['description'],
-                'is_atlas3_related': ('broadcom' in desc and 'device c040' in desc) or ('lsi' in desc and 'device c040' in desc),
+                'is_atlas3_related': False,  # Not an Atlas 3 device
                 'details': self._extract_device_details(device)
             }
             topology['bridges'].append(bridge_device)
+            
+            # Check if this should be the system root bridge
+            if address == '00:00.0' or 'host bridge' in desc:
+                topology['system_root_bridge'] = bridge_device
         else:
             # Other endpoint device
             endpoint_device = {
-                'address': device['address'],
+                'address': address,
                 'type': device_type,
                 'description': device['description'],
+                'is_downstream_endpoint': True,
                 'details': self._extract_device_details(device)
             }
             topology['endpoints'].append(endpoint_device)
@@ -708,32 +775,42 @@ class PCIeDiscovery:
             topology = self.discover_pcie_topology()
             result['topology'] = topology
 
-            # Count Atlas 3 related bridges (all bridges with Broadcom/LSI Device c040)
-            atlas3_bridge_count = sum(1 for bridge in topology['bridges'] if bridge.get('is_atlas3_related', False))
+            # Count Atlas 3 components correctly
+            atlas3_root_bridge_count = 1 if topology.get('atlas3_root_bridge') else 0
+            atlas3_switch_port_count = len(topology.get('atlas3_switch_ports', []))
             
-            # Summary
+            # Summary with correct Atlas 3 topology understanding
             result['summary'] = {
                 'total_bridge_count': len(topology['bridges']),
-                'atlas3_bridge_count': atlas3_bridge_count,
-                'atlas3_switch_count': len(topology['atlas3_devices']),
+                'non_atlas3_bridge_count': len(topology['bridges']),  # Now excludes Atlas 3 devices
+                'atlas3_root_bridge_count': atlas3_root_bridge_count,
+                'atlas3_switch_port_count': atlas3_switch_port_count,
+                'atlas3_total_devices': len(topology['atlas3_devices']),
                 'nvme_controller_count': len(topology['nvme_devices']),
                 'other_endpoint_count': len(topology['endpoints'])
             }
 
             # Validation checks
-            if not topology['atlas3_devices'] and atlas3_bridge_count == 0:
+            if not topology['atlas3_devices']:
                 result['warnings'].append("No Atlas 3 devices detected in PCIe topology")
                 result['status'] = 'warning'
             else:
                 result['atlas3_detected'] = True
                 
-                # Log discovered devices
-                if topology['atlas3_devices']:
-                    logger.info(f"Found {len(topology['atlas3_devices'])} Atlas 3 switch device(s)")
-                if atlas3_bridge_count > 0:
-                    logger.info(f"Found {atlas3_bridge_count} Atlas 3 bridge(s)")
+                # Log discovered devices with correct Atlas 3 understanding
+                if topology.get('atlas3_root_bridge'):
+                    logger.info(f"Found Atlas 3 Root Bridge at {topology['atlas3_root_bridge']['address']}")
+                if atlas3_switch_port_count > 0:
+                    logger.info(f"Found {atlas3_switch_port_count} Atlas 3 Switch Ports (placeholder/unused)")
                 if topology['nvme_devices']:
                     logger.info(f"Found {len(topology['nvme_devices'])} NVMe controller(s) downstream")
+                    
+                # Add Atlas 3 architecture explanation to summary
+                result['atlas3_architecture'] = {
+                    'explanation': 'Atlas 3 enumerates as 1 root bridge (01:00.0) + 17 switch ports (02:00.0-02:10.0)',
+                    'root_bridge_address': topology.get('atlas3_root_bridge', {}).get('address'),
+                    'switch_port_addresses': [port['address'] for port in topology.get('atlas3_switch_ports', [])]
+                }
 
         except Exception as e:
             logger.error(f"PCIe discovery test failed: {e}")

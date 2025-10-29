@@ -765,62 +765,63 @@ class TestingDashboard {
         if (result.topology) {
             const topo = result.topology;
 
-            // PCIe Infrastructure section (Root Bridge + Atlas 3 Switch side by side)
+            // PCIe Infrastructure section with proper Atlas 3 topology understanding
             html += '<div class="results-section">';
             html += '<h3>🔧 PCIe Infrastructure</h3>';
             html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">';
             
-            // Root Bridge Tile
-            if (topo.root_bridge) {
+            // System Root Bridge Tile
+            if (topo.system_root_bridge) {
                 html += '<div class="controller-card">';
-                html += '<div class="controller-card-header">🔌 Root Bridge</div>';
+                html += '<div class="controller-card-header">🔌 System Root Bridge</div>';
                 html += '<div class="controller-card-body">';
                 html += `<div class="results-detail-item" style="margin-bottom: 10px;">`;
-                html += `<div class="results-detail-label">Device</div>`;
-                html += `<div class="results-detail-value">${topo.root_bridge.bdf || 'N/A'}</div>`;
+                html += `<div class="results-detail-label">Address</div>`;
+                html += `<div class="results-detail-value">${topo.system_root_bridge.address || 'N/A'}</div>`;
                 html += `</div>`;
-                if (topo.root_bridge.link_speed) {
+                html += `<div class="results-detail-item" style="margin-bottom: 10px;">`;
+                html += `<div class="results-detail-label">Description</div>`;
+                html += `<div class="results-detail-value">${topo.system_root_bridge.description || 'N/A'}</div>`;
+                html += `</div>`;
+                if (topo.system_root_bridge.details && topo.system_root_bridge.details.link_speed) {
                     html += `<div class="results-detail-item" style="margin-bottom: 10px;">`;
                     html += `<div class="results-detail-label">Link Speed</div>`;
-                    html += `<div class="results-detail-value">${this.formatLinkSpeedWithGen(topo.root_bridge.link_speed)}</div>`;
+                    html += `<div class="results-detail-value">${this.formatLinkSpeedWithGen(topo.system_root_bridge.details.link_speed)}</div>`;
                     html += `</div>`;
                 }
-                if (topo.root_bridge.link_width) {
+                if (topo.system_root_bridge.details && topo.system_root_bridge.details.link_width) {
                     html += `<div class="results-detail-item" style="margin-bottom: 10px;">`;
                     html += `<div class="results-detail-label">Link Width</div>`;
-                    html += `<div class="results-detail-value">${topo.root_bridge.link_width}</div>`;
-                    html += `</div>`;
-                }
-                // Add PCIe Generation if available
-                if (topo.root_bridge.pcie_generation) {
-                    html += `<div class="results-detail-item">`;
-                    html += `<div class="results-detail-label">PCIe Generation</div>`;
-                    html += `<div class="results-detail-value">${topo.root_bridge.pcie_generation} <span class="compliance-badge">Compliant</span></div>`;
+                    html += `<div class="results-detail-value">x${topo.system_root_bridge.details.link_width}</div>`;
                     html += `</div>`;
                 }
                 html += '</div>';
                 html += '</div>';
             }
 
-            // Atlas 3 Switch Tile
-            if (topo.atlas_switch) {
+            // Atlas 3 Root Bridge Tile
+            if (topo.atlas3_root_bridge) {
                 html += '<div class="switch-card">';
-                html += '<h4>🔄 Serial Cables Atlas 3 Switch (1000:c040)</h4>';
+                html += '<h4>🔄 Atlas 3 Root Bridge (Broadcom/LSI c040)</h4>';
                 html += '<div style="margin-top: 15px;">';
                 html += `<div class="results-detail-item" style="margin-bottom: 10px;">`;
                 html += `<div class="results-detail-label">PCI Address</div>`;
-                html += `<div class="results-detail-value">${topo.atlas_switch.bdf || 'N/A'}</div>`;
+                html += `<div class="results-detail-value">${topo.atlas3_root_bridge.address}</div>`;
                 html += `</div>`;
-                if (topo.atlas_switch.link_speed) {
+                html += `<div class="results-detail-item" style="margin-bottom: 10px;">`;
+                html += `<div class="results-detail-label">Component Type</div>`;
+                html += `<div class="results-detail-value">Atlas 3 Root Bridge</div>`;
+                html += `</div>`;
+                if (topo.atlas3_root_bridge.details && topo.atlas3_root_bridge.details.link_speed) {
                     html += `<div class="results-detail-item" style="margin-bottom: 10px;">`;
                     html += `<div class="results-detail-label">Link Speed</div>`;
-                    html += `<div class="results-detail-value">${this.formatLinkSpeedWithGen(topo.atlas_switch.link_speed)}</div>`;
+                    html += `<div class="results-detail-value">${this.formatLinkSpeedWithGen(topo.atlas3_root_bridge.details.link_speed)}</div>`;
                     html += `</div>`;
                 }
-                if (topo.atlas_switch.link_width) {
+                if (topo.atlas3_root_bridge.details && topo.atlas3_root_bridge.details.link_width) {
                     html += `<div class="results-detail-item" style="margin-bottom: 10px;">`;
                     html += `<div class="results-detail-label">Link Width</div>`;
-                    html += `<div class="results-detail-value">${topo.atlas_switch.link_width}</div>`;
+                    html += `<div class="results-detail-value">x${topo.atlas3_root_bridge.details.link_width}</div>`;
                     html += `</div>`;
                 }
                 if (topo.downstream_ports) {
@@ -959,19 +960,30 @@ class TestingDashboard {
     generateTopologyTree(topo) {
         let html = '<div class="topology-tree">';
         
-        // Root Complex
-        if (topo.root_bridge) {
+        // System Root Complex
+        if (topo.system_root_bridge) {
             html += '<div class="topology-node root">';
-            html += `📍 Root Complex (${topo.root_bridge.bdf}) - PCIe 6.0 x16 @ ${this.formatLinkSpeedWithGen(topo.root_bridge.link_speed || '32.0 GT/s x16')} <span class="status-up">UP</span>`;
+            html += `📍 System Root Complex (${topo.system_root_bridge.address}) - ${this.formatLinkSpeedWithGen(topo.system_root_bridge.details?.link_speed || '32.0 GT/s x16')} <span class="status-up">UP</span>`;
             html += '</div>';
             html += '<div style="margin-left: 10px;">│</div>';
         }
         
-        // Atlas 3 Switch
-        if (topo.atlas_switch) {
+        // Atlas 3 Root Bridge
+        if (topo.atlas3_root_bridge) {
             html += '<div class="topology-node switch">';
-            html += `🔄 Atlas 3 Switch (${topo.atlas_switch.bdf}) - 1000:c040 <span class="status-up">UP</span>`;
+            html += `🔄 Atlas 3 Root Bridge (${topo.atlas3_root_bridge.address}) - Broadcom/LSI c040 <span class="status-up">UP</span>`;
             html += '</div>';
+        }
+        
+        // Atlas 3 Switch Ports
+        if (topo.atlas3_switch_ports && topo.atlas3_switch_ports.length > 0) {
+            html += '<div style="margin-left: 20px;">├── Atlas 3 Switch Ports</div>';
+            topo.atlas3_switch_ports.slice(0, 5).forEach((port, index) => {
+                html += `<div style="margin-left: 40px;">├── Port ${port.port_number} (${port.address}) - Placeholder/Unused <span class="status-down">UNUSED</span></div>`;
+            });
+            if (topo.atlas3_switch_ports.length > 5) {
+                html += `<div style="margin-left: 40px;">└── ... ${topo.atlas3_switch_ports.length - 5} more switch ports</div>`;
+            }
         }
         
         // Downstream ports and devices
