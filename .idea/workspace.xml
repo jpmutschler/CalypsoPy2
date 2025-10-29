@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fc3e30f9-c418-4920-a510-76a20644706b" name="Changes" comment="Error dashboard debug and Testing Socket fixes" />
+    <list default="true" id="fc3e30f9-c418-4920-a510-76a20644706b" name="Changes" comment="Testing Engine fixes">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -115,23 +117,7 @@
       <workItem from="1760731352418" duration="11457000" />
       <workItem from="1760977989062" duration="18304000" />
       <workItem from="1761060349091" duration="8499000" />
-      <workItem from="1761667119967" duration="16538000" />
-    </task>
-    <task id="LOCAL-00004" summary="Initial Push of CalypsoPy+">
-      <option name="closed" value="true" />
-      <created>1758649071202</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1758649071202</updated>
-    </task>
-    <task id="LOCAL-00005" summary="Initial Push of CalypsoPy+">
-      <option name="closed" value="true" />
-      <created>1758649505748</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1758649505748</updated>
+      <workItem from="1761667119967" duration="18300000" />
     </task>
     <task id="LOCAL-00006" summary="Initial Push of CalypsoPy+">
       <option name="closed" value="true" />
@@ -509,7 +495,23 @@
       <option name="project" value="LOCAL" />
       <updated>1761756324479</updated>
     </task>
-    <option name="localTasksCounter" value="53" />
+    <task id="LOCAL-00053" summary="Testing Socket fixes">
+      <option name="closed" value="true" />
+      <created>1761756757689</created>
+      <option name="number" value="00053" />
+      <option name="presentableId" value="LOCAL-00053" />
+      <option name="project" value="LOCAL" />
+      <updated>1761756757689</updated>
+    </task>
+    <task id="LOCAL-00054" summary="Testing Engine fixes">
+      <option name="closed" value="true" />
+      <created>1761757526168</created>
+      <option name="number" value="00054" />
+      <option name="presentableId" value="LOCAL-00054" />
+      <option name="project" value="LOCAL" />
+      <updated>1761757526168</updated>
+    </task>
+    <option name="localTasksCounter" value="55" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -527,8 +529,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Terminal dashboard" />
-    <MESSAGE value="Advanced dashboard" />
     <MESSAGE value="PCIe/NVMe Testing dashboard" />
     <MESSAGE value="PCIe/NVMe Testing dashboard w/ Topology Mapping" />
     <MESSAGE value="Link Training Time Test added in PCIe/NVMe Tests" />
@@ -552,7 +552,9 @@
     <MESSAGE value="Errors Dashboard rework" />
     <MESSAGE value="Testing Engine and PCIe Discovery Test reqork" />
     <MESSAGE value="Error dashboard debug and Testing Socket fixes" />
-    <option name="LAST_COMMIT_MESSAGE" value="Error dashboard debug and Testing Socket fixes" />
+    <MESSAGE value="Testing Socket fixes" />
+    <MESSAGE value="Testing Engine fixes" />
+    <option name="LAST_COMMIT_MESSAGE" value="Testing Engine fixes" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/CalypsoPy_$start.coverage" NAME="start Coverage Results" MODIFIED="1761673587066" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
