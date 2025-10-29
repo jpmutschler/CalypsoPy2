@@ -812,9 +812,12 @@ socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=
 calypso_manager = CalypsoPyManager()
 
 # Initialize testing engine with COM manager integration
+testing_engine = None
 if TESTING_AVAILABLE:
     testing_engine = TestingEngine(com_manager=calypso_manager, socket_io=socketio)
     logger.info("Testing Engine initialized with COM manager integration")
+else:
+    logger.warning("Testing engine not available - TESTING_AVAILABLE is False")
 
 
 @app.route('/')
