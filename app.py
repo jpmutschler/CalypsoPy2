@@ -60,7 +60,7 @@ try:
     from tests.test_runner import TestRunner
     from tests.pcie_discovery import PCIeDiscovery
     from tests.nvme_discovery import NVMeDiscovery
-    from tests.testing_engine import TestingEngine
+    from tests.unified_testing_engine import UnifiedTestingEngine
     TESTING_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Testing modules not available: {e}")
@@ -117,21 +117,6 @@ class CalypsoPyCache:
                 'size': len(self.cache),
                 'max_size': self.max_size
             }
-
-try:
-    from tests.test_runner import TestRunner
-    from tests.pcie_discovery import PCIeDiscovery
-    from tests.nvme_discovery import NVMeDiscovery
-    from tests.testing_engine import TestingEngine
-    TESTING_AVAILABLE = True
-except ImportError as e:
-    logger.warning(f"Testing modules not available: {e}")
-    TESTING_AVAILABLE = False
-
-# Initialize test runner (add near other global instances)
-if TESTING_AVAILABLE:
-    test_runner = TestRunner()
-    logger.info("Test Runner initialized")
 
 class HardwareResponseParser:
     """Enhanced response parser with showport support"""
@@ -811,11 +796,11 @@ socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=
 # Global manager instance
 calypso_manager = CalypsoPyManager()
 
-# Initialize testing engine with COM manager integration
+# Initialize unified testing engine with COM manager integration
 testing_engine = None
 if TESTING_AVAILABLE:
-    testing_engine = TestingEngine(com_manager=calypso_manager, socket_io=socketio)
-    logger.info("Testing Engine initialized with COM manager integration")
+    testing_engine = UnifiedTestingEngine(com_manager=calypso_manager, socket_io=socketio)
+    logger.info("Unified Testing Engine initialized with COM manager integration")
 else:
     logger.warning("Testing engine not available - TESTING_AVAILABLE is False")
 
@@ -1091,8 +1076,8 @@ def handle_run_test_engine(data):
     logger.info(f"WebSocket: Running test {test_id} with testing engine")
 
     try:
-        # Start test execution with testing engine
-        success = testing_engine.start_test_execution(test_id, options)
+        # Start test execution with unified testing engine
+        success = testing_engine.start_test(test_id, options)
         
         if not success:
             emit('test_error', {'message': f'Failed to start test {test_id}'})
@@ -1100,39 +1085,10 @@ def handle_run_test_engine(data):
 
         emit('test_started', {
             'test_id': test_id,
-            'message': f'Test {test_id} started with testing engine'
+            'message': f'Test {test_id} started with unified testing engine'
         })
 
-        # Monitor test progress
-        def monitor_test():
-            import time
-            while True:
-                status = testing_engine.get_test_status(test_id)
-                if not status:
-                    break
-                    
-                emit('test_progress', {
-                    'test_id': test_id,
-                    'status': status['status'],
-                    'phase': status['phase'],
-                    'commands_completed': status['commands_completed'],
-                    'error_snapshots': status['error_snapshots']
-                })
-                
-                if status['status'] in ['completed', 'failed', 'stopped']:
-                    result = testing_engine.get_test_result(test_id)
-                    emit('test_complete', {
-                        'test_id': test_id,
-                        'result': result
-                    })
-                    break
-                    
-                time.sleep(1)
-
-        # Start monitoring in a separate thread
-        import threading
-        monitor_thread = threading.Thread(target=monitor_test, daemon=True)
-        monitor_thread.start()
+        logger.info(f"Test {test_id} started successfully with unified testing engine")
 
     except Exception as e:
         logger.error(f"WebSocket testing engine error: {e}")

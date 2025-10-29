@@ -119,6 +119,7 @@ try:
     from .fio_utilities import FioUtilities
     from .results_exporter import ResultsExporter
     from .test_runner import TestRunner, TestSuite, TestRunResult
+    from .unified_testing_engine import UnifiedTestingEngine
     
     # Export main classes
     __all__ = [
@@ -138,6 +139,7 @@ try:
         'TestRunner',
         'TestSuite', 
         'TestRunResult',
+        'UnifiedTestingEngine',
         'TestStatus',
         'PermissionLevel',
         'get_permission_level',
