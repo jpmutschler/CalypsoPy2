@@ -4,10 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fc3e30f9-c418-4920-a510-76a20644706b" name="Changes" comment="Errors Dashboard rework">
+    <list default="true" id="fc3e30f9-c418-4920-a510-76a20644706b" name="Changes" comment="Testing Engine and PCIe Discovery Test reqork">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/css/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/static/css/styles.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/js/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/js/app.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/js/errors.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/js/errors.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/static/js/testing.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/js/testing.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -120,15 +120,7 @@
       <workItem from="1760731352418" duration="11457000" />
       <workItem from="1760977989062" duration="18304000" />
       <workItem from="1761060349091" duration="8499000" />
-      <workItem from="1761667119967" duration="13377000" />
-    </task>
-    <task id="LOCAL-00002" summary="Initial Push of CalypsoPy+">
-      <option name="closed" value="true" />
-      <created>1758647947652</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1758647947652</updated>
+      <workItem from="1761667119967" duration="16142000" />
     </task>
     <task id="LOCAL-00003" summary="Initial Push of CalypsoPy+">
       <option name="closed" value="true" />
@@ -514,7 +506,15 @@
       <option name="project" value="LOCAL" />
       <updated>1761673807349</updated>
     </task>
-    <option name="localTasksCounter" value="51" />
+    <task id="LOCAL-00051" summary="Testing Engine and PCIe Discovery Test reqork">
+      <option name="closed" value="true" />
+      <created>1761745460381</created>
+      <option name="number" value="00051" />
+      <option name="presentableId" value="LOCAL-00051" />
+      <option name="project" value="LOCAL" />
+      <updated>1761745460381</updated>
+    </task>
+    <option name="localTasksCounter" value="52" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -532,7 +532,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Resets dashboard" />
     <MESSAGE value="Errors dashboard" />
     <MESSAGE value="Terminal dashboard" />
     <MESSAGE value="Advanced dashboard" />
@@ -557,7 +556,8 @@
     <MESSAGE value="Clock Dashboard" />
     <MESSAGE value="Clock Dashboard fixes" />
     <MESSAGE value="Errors Dashboard rework" />
-    <option name="LAST_COMMIT_MESSAGE" value="Errors Dashboard rework" />
+    <MESSAGE value="Testing Engine and PCIe Discovery Test reqork" />
+    <option name="LAST_COMMIT_MESSAGE" value="Testing Engine and PCIe Discovery Test reqork" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/CalypsoPy_$start.coverage" NAME="start Coverage Results" MODIFIED="1761673587066" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

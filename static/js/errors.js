@@ -197,9 +197,35 @@ class ErrorsDashboard {
             if (typeof window.linkStatusDashboard !== 'undefined' && window.linkStatusDashboard) {
                 console.log('🔍 Checking Link Status dashboard for active ports...');
                 
-                // Try to access the port data from the Link Status dashboard
-                if (window.linkStatusDashboard.portStates && Object.keys(window.linkStatusDashboard.portStates).length > 0) {
-                    console.log('🔍 Found portStates data in Link Status dashboard');
+                // Access the correct port data structure: portData.port_groups
+                if (window.linkStatusDashboard.portData && 
+                    window.linkStatusDashboard.portData.port_groups && 
+                    Object.keys(window.linkStatusDashboard.portData.port_groups).length > 0) {
+                    
+                    console.log('🔍 Found port_groups data in Link Status dashboard');
+                    
+                    // Iterate through each port group
+                    Object.entries(window.linkStatusDashboard.portData.port_groups).forEach(([groupKey, group]) => {
+                        if (group.ports && Array.isArray(group.ports)) {
+                            // Check each port in the group
+                            group.ports.forEach(port => {
+                                // Consider ports active if they have a non-idle status
+                                if (port.status && port.status.toLowerCase() !== 'idle') {
+                                    const portNumber = parseInt(port.port_number || port.port);
+                                    if (!isNaN(portNumber)) {
+                                        this.activePorts.add(portNumber);
+                                        console.log(`🔍 Found active port from Link Status: ${portNumber} (Group: ${group.name}, Status: ${port.status})`);
+                                        foundActivePorts = true;
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+                
+                // Fallback: Try accessing legacy port data structures for compatibility
+                if (!foundActivePorts && window.linkStatusDashboard.portStates && Object.keys(window.linkStatusDashboard.portStates).length > 0) {
+                    console.log('🔍 Found legacy portStates data in Link Status dashboard');
                     
                     Object.entries(window.linkStatusDashboard.portStates).forEach(([portKey, portData]) => {
                         // Consider ports active if they have an active status or are connected
@@ -216,25 +242,7 @@ class ErrorsDashboard {
                     });
                 }
                 
-                // Alternative: Check if there's a portData structure
-                if (!foundActivePorts && window.linkStatusDashboard.portData && Object.keys(window.linkStatusDashboard.portData).length > 0) {
-                    console.log('🔍 Found portData in Link Status dashboard');
-                    
-                    Object.entries(window.linkStatusDashboard.portData).forEach(([portKey, portData]) => {
-                        // Consider ports active if they have link width > 0 or non-idle status
-                        if ((portData.linkWidth && portData.linkWidth > 0) ||
-                            (portData.status && !portData.status.toLowerCase().includes('idle'))) {
-                            const portNumber = parseInt(portData.portNumber || portKey.replace('Port', ''));
-                            if (!isNaN(portNumber)) {
-                                this.activePorts.add(portNumber);
-                                console.log(`🔍 Found active port from Link Status: ${portNumber} (Width: ${portData.linkWidth}, Status: ${portData.status})`);
-                                foundActivePorts = true;
-                            }
-                        }
-                    });
-                }
-                
-                // Alternative: Try accessing parsed showport data if available
+                // Alternative fallback: Try accessing parsed showport data if available
                 if (!foundActivePorts && window.linkStatusDashboard.lastResponse) {
                     console.log('🔍 Trying to parse Link Status lastResponse for active ports');
                     
@@ -306,6 +314,9 @@ class ErrorsDashboard {
             return;
         }
 
+        // First refresh active ports from Link Status dashboard
+        this.loadActivePortsFromCache();
+
         this.addLogEntry('Refreshing error counters...', 'info');
         showNotification('Loading error counters...', 'info');
 
@@ -322,6 +333,18 @@ class ErrorsDashboard {
         } else {
             console.error('🔍 executeCommand function not found!');
             this.addLogEntry('executeCommand function not available', 'error');
+        }
+    }
+
+    // Method to be called by Link Status dashboard when port data is updated
+    onLinkStatusUpdate() {
+        console.log('🔍 Link Status data updated - refreshing active ports in Errors dashboard');
+        this.loadActivePortsFromCache();
+        
+        // If we have error data, refresh the display to apply new filtering
+        if (Object.keys(this.linkErrors).length > 0) {
+            this.updateDashboard();
+            this.addLogEntry('Active port filtering updated from Link Status dashboard', 'info');
         }
     }
 

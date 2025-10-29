@@ -6,6 +6,7 @@
 
 // Initialize Socket.IO connection
 const socket = io();
+window.socket = socket; // Make socket available globally for testing dashboard
 
 // Application state
 let currentDashboard = 'connection';
@@ -781,6 +782,12 @@ class LinkStatusDashboard {
             this.updatePhysicalLayout(parsedData);
             this.updatePortGroups(parsedData);
             this.updateMetrics(parsedData);
+            
+            // Notify errors dashboard that Link Status data has been updated
+            if (window.errorsDashboard && typeof window.errorsDashboard.onLinkStatusUpdate === 'function') {
+                console.log('🔍 Notifying Errors dashboard of Link Status update');
+                window.errorsDashboard.onLinkStatusUpdate();
+            }
         }
     }
 

@@ -429,12 +429,12 @@ class TestingDashboard {
                 });
                 
                 // Listen for testing engine completion
-                window.socket.on('test_completed', (data) => {
+                window.socket.on('test_complete', (data) => {
                     if (data.test_id === testId) {
                         this.handleTestResult(testId, data.result);
                         // Clean up listeners
                         window.socket.off('test_progress');
-                        window.socket.off('test_completed');
+                        window.socket.off('test_complete');
                         window.socket.off('test_error');
                     }
                 });
@@ -451,7 +451,7 @@ class TestingDashboard {
                         }
                         // Clean up listeners
                         window.socket.off('test_progress');
-                        window.socket.off('test_completed');
+                        window.socket.off('test_complete');
                         window.socket.off('test_error');
                     }
                 });
