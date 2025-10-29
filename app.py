@@ -60,6 +60,7 @@ try:
     from tests.test_runner import TestRunner
     from tests.pcie_discovery import PCIeDiscovery
     from tests.nvme_discovery import NVMeDiscovery
+    from tests.testing_engine import TestingEngine
     TESTING_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Testing modules not available: {e}")
@@ -121,6 +122,7 @@ try:
     from tests.test_runner import TestRunner
     from tests.pcie_discovery import PCIeDiscovery
     from tests.nvme_discovery import NVMeDiscovery
+    from tests.testing_engine import TestingEngine
     TESTING_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Testing modules not available: {e}")
@@ -809,6 +811,11 @@ socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=
 # Global manager instance
 calypso_manager = CalypsoPyManager()
 
+# Initialize testing engine with COM manager integration
+if TESTING_AVAILABLE:
+    testing_engine = TestingEngine(com_manager=calypso_manager, socket_io=socketio)
+    logger.info("Testing Engine initialized with COM manager integration")
+
 
 @app.route('/')
 def index():
@@ -1061,6 +1068,71 @@ def handle_run_test(data):
 
     except Exception as e:
         logger.error(f"WebSocket test error: {e}")
+        emit('test_error', {'message': str(e)})
+
+
+@socketio.on('run_test_engine')
+def handle_run_test_engine(data):
+    """WebSocket handler for running tests with the new testing engine"""
+    if not TESTING_AVAILABLE or not testing_engine:
+        emit('test_error', {'message': 'Testing engine not available'})
+        return
+
+    test_id = data.get('test_id')
+    options = data.get('options', {})
+
+    if not test_id:
+        emit('test_error', {'message': 'test_id required'})
+        return
+
+    logger.info(f"WebSocket: Running test {test_id} with testing engine")
+
+    try:
+        # Start test execution with testing engine
+        success = testing_engine.start_test_execution(test_id, options)
+        
+        if not success:
+            emit('test_error', {'message': f'Failed to start test {test_id}'})
+            return
+
+        emit('test_started', {
+            'test_id': test_id,
+            'message': f'Test {test_id} started with testing engine'
+        })
+
+        # Monitor test progress
+        def monitor_test():
+            import time
+            while True:
+                status = testing_engine.get_test_status(test_id)
+                if not status:
+                    break
+                    
+                emit('test_progress', {
+                    'test_id': test_id,
+                    'status': status['status'],
+                    'phase': status['phase'],
+                    'commands_completed': status['commands_completed'],
+                    'error_snapshots': status['error_snapshots']
+                })
+                
+                if status['status'] in ['completed', 'failed', 'stopped']:
+                    result = testing_engine.get_test_result(test_id)
+                    emit('test_complete', {
+                        'test_id': test_id,
+                        'result': result
+                    })
+                    break
+                    
+                time.sleep(1)
+
+        # Start monitoring in a separate thread
+        import threading
+        monitor_thread = threading.Thread(target=monitor_test, daemon=True)
+        monitor_thread.start()
+
+    except Exception as e:
+        logger.error(f"WebSocket testing engine error: {e}")
         emit('test_error', {'message': str(e)})
 
 

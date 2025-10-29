@@ -7847,3 +7847,429 @@ Testing Dashboard Styles
     background: rgba(239, 68, 68, 0.1);
     color: #ef4444;
 }
+
+/* ================================
+   Universal Test Report Print Styles
+   ================================ */
+
+/* Generalized print-specific styles for all test reports */
+@media print {
+    /* Print layout fundamentals */
+    body {
+        font-size: 12pt;
+        line-height: 1.4;
+        color: #000 !important;
+        background: white !important;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Hide non-essential elements when printing */
+    .nav, .navbar, .sidebar, .footer,
+    .btn, .button, .no-print,
+    .dropdown-menu, .modal, .tooltip,
+    .breadcrumb, .pagination,
+    #testingSidebar, .testing-sidebar,
+    .test-actions, .test-card-actions,
+    .navbar-brand, .nav-link,
+    .card-header .btn,
+    .card-header button {
+        display: none !important;
+    }
+
+    /* Page setup */
+    @page {
+        size: A4;
+        margin: 1in;
+        orphans: 3;
+        widows: 3;
+    }
+
+    /* Force color printing for important elements */
+    .test-report-card, .controller-card, .switch-card, 
+    .device-training-card, .device-card, .performance-card,
+    .error-analysis-card, .topology-card, .summary-card,
+    .metrics-card, .results-card {
+        print-color-adjust: exact !important;
+        -webkit-print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
+    /* ===== UNIVERSAL LAYOUT COMPONENTS ===== */
+
+    /* Main test results container */
+    .test-results-display, .test-results-container {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+    }
+
+    /* Test results header - consistent across all reports */
+    .test-results-header, .report-header {
+        page-break-after: avoid;
+        margin-bottom: 20pt;
+        border-bottom: 2pt solid #333;
+        padding-bottom: 10pt;
+    }
+
+    .test-results-header h1, .test-results-header h2,
+    .report-header h1, .report-header h2 {
+        color: #333 !important;
+        font-size: 18pt !important;
+        font-weight: bold !important;
+        margin: 0 0 5pt 0 !important;
+    }
+
+    .test-timestamp, .report-timestamp {
+        font-size: 10pt !important;
+        color: #666 !important;
+        margin: 0 !important;
+    }
+
+    /* ===== SECTION HEADERS ===== */
+    
+    /* Universal section headers for all test types */
+    .test-section h3, .report-section h3,
+    .pcie-infrastructure-section h3,
+    .nvme-devices-section h3,
+    .topology-section h3,
+    .error-analysis-section h3,
+    .performance-section h3,
+    .link-training-section h3,
+    .discovery-section h3,
+    .benchmark-section h3 {
+        color: #333 !important;
+        font-size: 14pt !important;
+        font-weight: bold !important;
+        margin: 15pt 0 10pt 0 !important;
+        page-break-after: avoid;
+        border-bottom: 1pt solid #ccc;
+        padding-bottom: 5pt;
+    }
+
+    /* ===== UNIVERSAL CARD LAYOUTS ===== */
+
+    /* Base card styling for all test report cards */
+    .test-report-card, .controller-card, .switch-card,
+    .device-training-card, .device-card, .performance-card,
+    .summary-card, .metrics-card, .results-card {
+        background: #f8f9fa !important;
+        border: 1pt solid #dee2e6 !important;
+        border-radius: 8pt !important;
+        padding: 12pt !important;
+        margin-bottom: 8pt !important;
+        page-break-inside: avoid;
+        box-shadow: none !important;
+    }
+
+    /* Specialized card backgrounds by type */
+    .controller-card, .switch-card {
+        background: #f8f9fa !important;
+    }
+
+    .device-training-card, .device-card {
+        background: #f1f5f9 !important;
+        border-color: #cbd5e1 !important;
+    }
+
+    .performance-card, .metrics-card {
+        background: #f0fdf4 !important;
+        border-color: #bbf7d0 !important;
+    }
+
+    .topology-card {
+        background: #fef3f2 !important;
+        border-color: #fecaca !important;
+    }
+
+    .error-analysis-card {
+        background: #fffbeb !important;
+        border-color: #fed7aa !important;
+    }
+
+    .summary-card {
+        background: #f8fafc !important;
+        border-color: #e2e8f0 !important;
+    }
+
+    /* ===== CARD HEADERS ===== */
+
+    /* Universal card header styling */
+    .test-report-card h4, .test-report-card h5,
+    .controller-card h4, .switch-card h4,
+    .device-training-card h4, .device-training-card h5,
+    .device-card h4, .device-card h5,
+    .performance-card h4, .performance-card h5,
+    .summary-card h4, .summary-card h5,
+    .metrics-card h4, .metrics-card h5,
+    .results-card h4, .results-card h5 {
+        font-size: 12pt !important;
+        font-weight: bold !important;
+        margin: 0 0 8pt 0 !important;
+        text-align: center;
+        page-break-after: avoid;
+    }
+
+    /* Color coding for different card types */
+    .controller-card h4, .switch-card h4 {
+        color: #dc2626 !important;
+    }
+
+    .device-training-card h4, .device-training-card h5,
+    .device-card h4, .device-card h5 {
+        color: #1e40af !important;
+    }
+
+    .performance-card h4, .performance-card h5,
+    .metrics-card h4, .metrics-card h5 {
+        color: #059669 !important;
+    }
+
+    .error-analysis-card h4, .error-analysis-card h5 {
+        color: #d97706 !important;
+    }
+
+    /* ===== UNIVERSAL GRID LAYOUTS ===== */
+
+    /* Side-by-side layouts (2 columns) */
+    .infrastructure-grid, .two-column-grid,
+    .side-by-side-layout {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 15pt !important;
+        page-break-inside: avoid;
+    }
+
+    /* Three-column layouts */
+    .three-column-grid, .device-grid,
+    .metrics-grid, .summary-grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 12pt !important;
+        margin-top: 10pt;
+    }
+
+    /* Responsive grid adjustments */
+    @media print and (max-width: 8.5in) {
+        .infrastructure-grid, .two-column-grid,
+        .side-by-side-layout {
+            grid-template-columns: 1fr !important;
+            gap: 10pt !important;
+        }
+        
+        .three-column-grid, .device-grid,
+        .metrics-grid, .summary-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 8pt !important;
+        }
+    }
+
+    @media print and (max-width: 6in) {
+        .three-column-grid, .device-grid,
+        .metrics-grid, .summary-grid {
+            grid-template-columns: 1fr !important;
+            gap: 6pt !important;
+        }
+    }
+
+    /* ===== UNIVERSAL INFO LAYOUTS ===== */
+
+    /* Standard info grids for key-value pairs */
+    .info-grid, .device-info-grid, .metrics-info-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8pt !important;
+    }
+
+    .info-item, .device-info-item, .metrics-info-item {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .info-label, .device-info-label, .metrics-info-label {
+        color: #666 !important;
+        font-size: 9pt !important;
+        font-weight: normal !important;
+        margin: 0 0 2pt 0 !important;
+    }
+
+    .info-value, .device-info-value, .metrics-info-value {
+        color: #333 !important;
+        font-size: 10pt !important;
+        font-weight: bold !important;
+        font-family: 'Courier New', monospace !important;
+        margin: 0 !important;
+    }
+
+    /* ===== SPECIALIZED CONTENT TYPES ===== */
+
+    /* Code/Terminal output blocks */
+    .topology-tree, .command-output, .terminal-output,
+    .error-details, .debug-output {
+        font-family: 'Courier New', monospace !important;
+        font-size: 9pt !important;
+        line-height: 1.3 !important;
+        color: #333 !important;
+        white-space: pre-wrap !important;
+        margin: 0 !important;
+        padding: 8pt !important;
+        background: white !important;
+        border-radius: 4pt !important;
+        border: 1pt solid #e5e7eb !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    /* Metrics and performance data */
+    .performance-metric, .benchmark-result,
+    .timing-result, .error-count {
+        text-align: center !important;
+        padding: 6pt !important;
+        background: white !important;
+        border-radius: 4pt !important;
+        border: 1pt solid #e5e7eb !important;
+        margin: 2pt !important;
+    }
+
+    .metric-value, .benchmark-value,
+    .timing-value, .error-summary-value {
+        font-size: 12pt !important;
+        font-weight: bold !important;
+        display: block !important;
+        margin: 0 0 2pt 0 !important;
+    }
+
+    .metric-label, .benchmark-label,
+    .timing-label, .error-summary-label {
+        color: #666 !important;
+        font-size: 8pt !important;
+        font-weight: normal !important;
+        text-transform: uppercase !important;
+        margin: 0 !important;
+    }
+
+    /* Status indicators */
+    .status-passed, .test-passed, .benchmark-passed {
+        color: #059669 !important;
+    }
+
+    .status-failed, .test-failed, .benchmark-failed {
+        color: #dc2626 !important;
+    }
+
+    .status-warning, .test-warning, .benchmark-warning {
+        color: #d97706 !important;
+    }
+
+    /* ===== PAGE BREAK MANAGEMENT ===== */
+
+    /* Sections that should stay together */
+    .test-section, .report-section,
+    .pcie-infrastructure-section,
+    .nvme-devices-section,
+    .topology-section,
+    .error-analysis-section,
+    .performance-section,
+    .link-training-section,
+    .discovery-section,
+    .benchmark-section {
+        page-break-inside: avoid;
+        margin-bottom: 15pt;
+    }
+
+    /* Cards that should not be split */
+    .test-report-card, .controller-card, .switch-card,
+    .device-training-card, .device-card, .performance-card,
+    .topology-card, .error-analysis-card, .summary-card,
+    .metrics-card, .results-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    /* Grid layouts that should stay together */
+    .infrastructure-grid, .two-column-grid,
+    .three-column-grid, .device-grid,
+    .side-by-side-layout, .metrics-grid,
+    .summary-grid {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    /* ===== TYPOGRAPHY IMPROVEMENTS ===== */
+
+    /* Universal heading improvements */
+    h1, h2, h3, h4, h5, h6 {
+        page-break-after: avoid;
+        font-family: Arial, sans-serif !important;
+    }
+
+    /* Ensure all text is readable */
+    p, span, div, li, td, th {
+        color: #333 !important;
+    }
+
+    /* Remove visual effects that don't print well */
+    * {
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    /* ===== SPECIALIZED TEST LAYOUTS ===== */
+
+    /* Performance test specific layouts */
+    .performance-summary {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 8pt !important;
+        margin-bottom: 10pt;
+    }
+
+    /* Link training specific layouts */
+    .training-timeline {
+        page-break-inside: avoid;
+        margin: 10pt 0;
+    }
+
+    /* Discovery test specific layouts */
+    .discovery-topology {
+        page-break-inside: avoid;
+        margin: 10pt 0;
+    }
+
+    /* Error analysis layouts */
+    .error-summary-grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 8pt !important;
+        margin-bottom: 10pt;
+    }
+
+    /* Benchmark results layouts */
+    .benchmark-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10pt !important;
+        margin: 10pt 0;
+    }
+
+    /* ===== MOBILE/NARROW PRINT ADJUSTMENTS ===== */
+
+    @media print and (max-width: 7in) {
+        .performance-summary {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+        
+        .benchmark-grid {
+            grid-template-columns: 1fr !important;
+        }
+    }
+
+    @media print and (max-width: 5in) {
+        .performance-summary,
+        .error-summary-grid {
+            grid-template-columns: 1fr !important;
+        }
+    }
+}
