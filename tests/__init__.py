@@ -113,9 +113,9 @@ try:
     from .sequential_read_performance import SequentialReadPerformanceTest
     from .sequential_write_performance import SequentialWritePerformanceTest
     from .random_iops_performance import RandomIOPSPerformanceTest
-    from .namespace_validation import NamespaceValidationTest
-    from .command_set_validation import CommandSetValidationTest
-    from .identify_structure_validation import IdentifyStructureValidationTest
+    from .namespace_validation import NamespaceValidator
+    from .command_set_validation import CommandSetValidator
+    from .identify_structure_validation import IdentifyStructureValidator
     from .fio_utilities import FioUtilities
     from .results_exporter import ResultsExporter
     from .test_runner import TestRunner, TestSuite, TestRunResult
@@ -130,9 +130,9 @@ try:
         'SequentialReadPerformanceTest',
         'SequentialWritePerformanceTest',
         'RandomIOPSPerformanceTest',
-        'NamespaceValidationTest',
-        'CommandSetValidationTest',
-        'IdentifyStructureValidationTest',
+        'NamespaceValidator',
+        'CommandSetValidator',
+        'IdentifyStructureValidator',
         'FioUtilities',
         'ResultsExporter',
         'TestRunner',

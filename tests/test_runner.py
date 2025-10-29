@@ -21,9 +21,9 @@ try:
     from .sequential_read_performance import SequentialReadPerformanceTest
     from .sequential_write_performance import SequentialWritePerformanceTest
     from .random_iops_performance import RandomIOPSPerformanceTest
-    from .namespace_validation import NamespaceValidationTest
-    from .command_set_validation import CommandSetValidationTest
-    from .identify_structure_validation import IdentifyStructureValidationTest
+    from .namespace_validation import NamespaceValidator
+    from .command_set_validation import CommandSetValidator
+    from .identify_structure_validation import IdentifyStructureValidator
 except ImportError:
     # Handle direct execution
     from pcie_discovery import PCIeDiscovery
@@ -34,9 +34,9 @@ except ImportError:
     from sequential_read_performance import SequentialReadPerformanceTest
     from sequential_write_performance import SequentialWritePerformanceTest
     from random_iops_performance import RandomIOPSPerformanceTest
-    from namespace_validation import NamespaceValidationTest
-    from command_set_validation import CommandSetValidationTest
-    from identify_structure_validation import IdentifyStructureValidationTest
+    from namespace_validation import NamespaceValidator
+    from command_set_validation import CommandSetValidator
+    from identify_structure_validation import IdentifyStructureValidator
 
 logger = logging.getLogger(__name__)
 
@@ -144,7 +144,7 @@ class TestRunner:
             'nvme_namespace_validation': TestSuite(
                 name='NVMe Namespace Validation',
                 description='Validate NVMe namespace configuration and capacity allocation against NVMe 2.x Base Specification',
-                test_class=NamespaceValidationTest,
+                test_class=NamespaceValidator,
                 requires_root=False,
                 requires_nvme_cli=True,
                 requires_nvme_devices=True  # Only enabled after NVMe discovery
@@ -152,7 +152,7 @@ class TestRunner:
             'nvme_command_set_validation': TestSuite(
                 name='NVMe Command Set Validation',
                 description='Test NVMe administrative and I/O command set compliance per NVMe 2.x specification',
-                test_class=CommandSetValidationTest,
+                test_class=CommandSetValidator,
                 requires_root=False,
                 requires_nvme_cli=True,
                 requires_nvme_devices=True  # Only enabled after NVMe discovery
@@ -160,7 +160,7 @@ class TestRunner:
             'nvme_identify_validation': TestSuite(
                 name='NVMe Identify Structure Validation',
                 description='Verify NVMe Identify Controller and Namespace structures for NVMe 2.x spec compliance',
-                test_class=IdentifyStructureValidationTest,
+                test_class=IdentifyStructureValidator,
                 requires_root=False,
                 requires_nvme_cli=True,
                 requires_nvme_devices=True  # Only enabled after NVMe discovery
